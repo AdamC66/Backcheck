@@ -1,0 +1,67 @@
+[
+  {
+    "id": "EPIC-1",
+    "project_id": "hockey-analytics-dashboard",
+    "title": "Auth & multi-tenancy foundation",
+    "description": "User, Role (lookup), Membership (polymorphic League/Team scope), Super Admin flag, JWT issuance/verification.",
+    "status": "in_progress",
+    "priority": "high"
+  },
+  {
+    "id": "EPIC-2",
+    "project_id": "hockey-analytics-dashboard",
+    "title": "League/Team/Season domain model",
+    "description": "League, Team, Season as first-class entities.",
+    "status": "backlog",
+    "priority": "high"
+  },
+  {
+    "id": "EPIC-3",
+    "project_id": "hockey-analytics-dashboard",
+    "title": "Player & roster history",
+    "description": "Player plus RosterEntry (player+team+season with joined_on/left_on) so trades and Super Admin moves preserve history instead of overwriting a current-team FK.",
+    "status": "backlog",
+    "priority": "medium"
+  },
+  {
+    "id": "EPIC-4",
+    "project_id": "hockey-analytics-dashboard",
+    "title": "Game & stats domain model",
+    "description": "Game, SkaterStatLine, GoalieStatLine as separate tables (not one combined wide table, per the prior attempt's lesson).",
+    "status": "backlog",
+    "priority": "medium"
+  },
+  {
+    "id": "EPIC-5",
+    "project_id": "hockey-analytics-dashboard",
+    "title": "Backend skeleton & infra",
+    "description": "rails new (API-only), Docker Compose (backend + db), health-check endpoint.",
+    "status": "backlog",
+    "priority": "high"
+  },
+  {
+    "id": "EPIC-6",
+    "project_id": "hockey-analytics-dashboard",
+    "title": "Frontend skeleton",
+    "description": "Vite vs Next decided and scaffolded, Tailwind configured, auth screens wired to backend JWT.",
+    "status": "backlog",
+    "priority": "high"
+  },
+  {
+    "id": "EPIC-7",
+    "project_id": "hockey-analytics-dashboard",
+    "title": "Super Admin tools",
+    "description": "Manual overrides: move a player between teams, edit records directly, bypassing normal scope checks.",
+    "status": "backlog",
+    "priority": "low"
+  },
+  {
+    "id": "EPIC-8",
+    "project_id": "hockey-analytics-dashboard",
+    "title": "External stats ingestion",
+    "description": "Get real stat data into the system. Blocked on deciding the data source (manual entry vs CSV vs provider API).",
+    "status": "blocked",
+    "priority": "low",
+    "blocked_reason": "External stats data source not yet decided (docs/DECISIONS.md)."
+  }
+]

@@ -24,9 +24,18 @@ Developer is new to Rails. Prefer idiomatic, conventional patterns over clever o
 - No raw SQL string interpolation — parameterize or use AR query methods.
 - Watch for N+1s: `includes`/`preload` when serializing associations. If unsure, check the query log, don't guess.
 
-## Auth, background jobs, external services
+## Auth & authorization
 
-Not yet decided. Don't scaffold a solution speculatively — add to `docs/DECISIONS.md` when a real requirement forces the choice.
+See `../docs/ARCHITECTURE.md` (Auth & multi-tenancy) and `../docs/DECISIONS.md` for the full model. Summary for backend work:
+
+- `User` uses `has_secure_password` (bcrypt). No Devise.
+- Login issues a hand-rolled JWT (id + expiry, signed with the app's secret). Verify it in a single `before_action`/concern shared by every controller that needs auth — don't re-implement token parsing per controller.
+- Permissions come from `Membership` (`user_id`, `role_id`, polymorphic `scopeable`), plus `User#is_super_admin`. `Role` is a lookup table — never hardcode role names as a Rails enum or a magic string scattered across controllers; reference `Role.find_by(key: ...)` or a constant defined once.
+- A controller action's authorization check should read as one clear question ("does this user have a qualifying membership for this scopeable, or are they super admin?"), not inline ad-hoc conditionals repeated per action. Whether that's hand-rolled or a policy gem (Pundit) is still open — see `DECISIONS.md` — but don't let the pattern drift per-controller in the meantime.
+
+## Background jobs, external services
+
+Not yet decided (data source for stats is still open — see `DECISIONS.md`). Whatever it ends up being, external sync work is a background job, never executed inline on the request/response path.
 
 ## Testing
 

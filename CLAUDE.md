@@ -1,10 +1,10 @@
 # Hockey Analytics Dashboard
 
-Dashboard for hockey team staff/admins to review their team's analytics. Scope is still being defined — see `docs/PLANNING.md`.
+Public-facing, multi-tenant hockey analytics dashboard: many leagues, each with many teams, staffed by league/team users with scoped roles (Super Admin > League Admin > team roles like GM/Assistant GM/Coaching Staff). Full scope is still being refined — see `docs/PLANNING.md` and the `planning/` epics/tasks board.
 
 ## Stack
 
-- Backend: Ruby on Rails, API-only, PostgreSQL, Dockerized. Developer is new to Rails — favor idiomatic, well-explained structure over clever shortcuts.
+- Backend: Ruby on Rails, API-only, PostgreSQL, Dockerized. Custom bcrypt+JWT auth (no Devise). Developer is new to Rails — favor idiomatic, well-explained structure over clever shortcuts.
 - Frontend: React + TypeScript, Tailwind. Vite vs Next.js undecided — see `docs/DECISIONS.md`.
 - Repo: monorepo, `backend/` and `frontend/` as siblings.
 
@@ -17,6 +17,7 @@ Dashboard for hockey team staff/admins to review their team's analytics. Scope i
 - `docs/ARCHITECTURE.md` — how backend and frontend fit together, Docker layout
 - `docs/DECISIONS.md` — decision log, check before re-litigating a settled choice
 - `docs/PLANNING.md` — current phase and scope
+- `planning/` — the actual epics/tasks board (JSON validated against `planning/schemas/`); `docs/PLANNING.md` is narrative context, this is the tracker
 
 ## Non-negotiables (full detail in docs/STANDARDS.md)
 

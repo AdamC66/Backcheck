@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "common.schema.json",
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Lowercase, hyphen-separated identifier (project ids, role keys)."
+    },
+    "ticketId": {
+      "type": "string",
+      "pattern": "^(EPIC|TASK)-[0-9]+$",
+      "description": "Human-referenceable ticket id, e.g. EPIC-3 or TASK-14."
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "default": "medium"
+    },
+    "workflowStatus": {
+      "type": "string",
+      "enum": ["backlog", "todo", "in_progress", "blocked", "done"],
+      "description": "Shared by epics and tasks so both move through one lifecycle."
+    },
+    "projectStatus": {
+      "type": "string",
+      "enum": ["planning", "active", "paused", "completed"]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "id": "hockey-analytics-dashboard",
+  "name": "Hockey Analytics Dashboard",
+  "description": "Multi-tenant hockey analytics dashboard for league/team staff. Rails API (bcrypt+JWT auth, Postgres, Docker) + React/TS/Tailwind frontend.",
+  "status": "active"
+}

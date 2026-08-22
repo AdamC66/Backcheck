@@ -1,0 +1,135 @@
+[
+  {
+    "id": "TASK-1",
+    "epic_id": "EPIC-1",
+    "title": "Design User/Role/Membership schema",
+    "type": "spike",
+    "status": "done",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-2",
+    "epic_id": "EPIC-1",
+    "title": "Implement JWT issuance & verification",
+    "type": "feature",
+    "status": "todo",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-3",
+    "epic_id": "EPIC-1",
+    "title": "Implement Membership-based authorization checks",
+    "type": "feature",
+    "status": "todo",
+    "priority": "high",
+    "acceptance_criteria": [
+      "A request from a user with no qualifying membership and no super-admin flag is rejected with 403",
+      "A league_admin can act on any team within their league without a team-level membership row"
+    ]
+  },
+  {
+    "id": "TASK-4",
+    "epic_id": "EPIC-1",
+    "title": "Seed initial Role lookup values",
+    "description": "league_admin, gm, assistant_gm, coaching_staff.",
+    "type": "chore",
+    "status": "todo",
+    "priority": "medium"
+  },
+  {
+    "id": "TASK-5",
+    "epic_id": "EPIC-2",
+    "title": "Design League/Team/Season schema",
+    "type": "spike",
+    "status": "done",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-6",
+    "epic_id": "EPIC-2",
+    "title": "Migrations for League, Team, Season",
+    "type": "feature",
+    "status": "todo",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-7",
+    "epic_id": "EPIC-3",
+    "title": "Design Player/RosterEntry schema",
+    "type": "spike",
+    "status": "done",
+    "priority": "medium"
+  },
+  {
+    "id": "TASK-8",
+    "epic_id": "EPIC-3",
+    "title": "Migrations for Player, RosterEntry",
+    "type": "feature",
+    "status": "todo",
+    "priority": "medium"
+  },
+  {
+    "id": "TASK-9",
+    "epic_id": "EPIC-4",
+    "title": "Design Game/SkaterStatLine/GoalieStatLine schema",
+    "type": "spike",
+    "status": "done",
+    "priority": "medium"
+  },
+  {
+    "id": "TASK-10",
+    "epic_id": "EPIC-4",
+    "title": "Migrations for Game + stat line tables",
+    "type": "feature",
+    "status": "todo",
+    "priority": "medium"
+  },
+  {
+    "id": "TASK-11",
+    "epic_id": "EPIC-5",
+    "title": "rails new --api, wire up Docker Compose (backend + db)",
+    "type": "chore",
+    "status": "todo",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-12",
+    "epic_id": "EPIC-5",
+    "title": "Health-check endpoint + first RSpec smoke test",
+    "type": "feature",
+    "status": "todo",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-13",
+    "epic_id": "EPIC-6",
+    "title": "Decide Vite vs Next, scaffold app + Tailwind",
+    "type": "chore",
+    "status": "todo",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-14",
+    "epic_id": "EPIC-6",
+    "title": "Login screen wired to backend JWT",
+    "type": "feature",
+    "status": "todo",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-15",
+    "epic_id": "EPIC-7",
+    "title": "Super Admin UI: move a player between teams, edit records",
+    "type": "feature",
+    "status": "todo",
+    "priority": "low"
+  },
+  {
+    "id": "TASK-16",
+    "epic_id": "EPIC-8",
+    "title": "Decide external stats data source",
+    "type": "spike",
+    "status": "todo",
+    "priority": "low"
+  }
+]

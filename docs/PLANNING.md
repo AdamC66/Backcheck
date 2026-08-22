@@ -1,26 +1,31 @@
 # Planning
 
-## Status: Phase 0 — Setup
+## Status: Phase 1 — Scope & data model
 
-Repo, standards, and architecture scaffolded. No application code yet. Scope below is a placeholder until it's defined.
+Repo, standards, architecture, and auth/domain model are scaffolded. The live backlog (epics + tasks) lives in `planning/` as JSON validated against `planning/schemas/` — this file stays as narrative context, not the task tracker.
 
 ## Phases
 
-- **Phase 0 — Setup** (current): repo, CLAUDE.md files, standards, Docker plan.
-- **Phase 1 — Scope & data model**: define what "team analytics" means concretely (see open questions below), design the core domain model.
-- **Phase 2 — Backend skeleton**: `rails new`, Docker Compose wired up, first migration, health-check endpoint.
-- **Phase 3 — Frontend skeleton**: Vite/Next scaffold (per decision), Tailwind configured, talks to backend health-check.
-- **Phase 4 — First vertical slice**: one real feature end-to-end (e.g. one team's roster + one stat view) to validate the whole stack before building out breadth.
-- **Phase 5+**: TBD, depends on what Phase 1 surfaces.
+- **Phase 0 — Setup** (done): repo, CLAUDE.md files, standards, Docker plan.
+- **Phase 1 — Scope & data model** (current): multi-tenancy/auth model settled, hockey domain model settled (informed by a prior attempt — see `DECISIONS.md`), epics/tasks tracked in `planning/`.
+- **Phase 2 — Backend skeleton**: `rails new`, Docker Compose wired up, first migration (users/roles/memberships), health-check endpoint.
+- **Phase 3 — Frontend skeleton**: Vite/Next scaffold (per decision), Tailwind configured, auth screens against the backend.
+- **Phase 4 — First vertical slice**: one real feature end-to-end (e.g. a league admin viewing one team's roster) to validate the whole stack, including auth/scoping, before building out breadth.
+- **Phase 5+**: TBD, driven by `planning/`.
 
-## Open questions blocking scope (Phase 1)
+## Resolved (previously open questions)
 
-- Who are the users, precisely — single team's admin, or multiple teams/orgs per install (multi-tenancy)?
-- Where does the underlying stat data come from — manual entry, CSV import, an external stats provider/API?
-- What's the minimum viable set of analytics team staff actually need first (e.g. player performance, line combinations, game-by-game trends, special teams)?
-- Roles: is every logged-in user an equal "admin," or are there tiers (head coach vs. assistant vs. analyst)?
-- Historical depth: current season only, or multi-season history from day one?
+- **Multi-tenancy**: yes — many leagues, each with many teams. See `ARCHITECTURE.md`.
+- **Roles**: Super Admin (global, one person) > League Admin (all teams in a league) > team-scoped roles (GM, Assistant GM, Coaching Staff, extensible without a migration).
+- **Auth mechanism**: custom bcrypt + JWT bearer token, not Devise, not cookies.
 
-## Backlog
+## Still open
 
-Empty — populate once Phase 1 answers land.
+- Where stat data comes from (manual entry / CSV / external provider) — see `DECISIONS.md`.
+- Exact API error envelope shape.
+- Historical depth (current season only vs. multi-season from day one) — the `Season` entity supports either; not yet decided how far back to actually populate.
+- Authorization enforcement mechanism (hand-rolled vs. Pundit).
+
+## Carried forward from the prior attempt (hockeywiz)
+
+See `DECISIONS.md` for the full review. Worth keeping: team rest/fatigue as a computed signal, season modeled as real data. Explicitly avoiding this time: hardcoded season strings, a combined skater+goalie stats table, blocking external API calls on the request path, zero auth/multi-tenancy, secrets in source, no tests.
