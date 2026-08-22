@@ -23,6 +23,10 @@ Backend (and Postgres) run via Docker Compose. Frontend containerization not req
 ### Frontend: React + TypeScript + Tailwind
 **Status:** Settled
 
+### Frontend import convention: absolute, except tests
+**Status:** Settled
+All component/hook/feature imports use the `@/` absolute alias, never relative parent traversal. Exception: a test file importing its own subject uses a relative import, so the test stays adjacent to the component through folder moves (e.g. a component promoted from a feature folder into shared `components/`). Component file itself is still never named `index.tsx` (see `frontend/CLAUDE.md`).
+
 ### Testing approach: smoke tests, no coverage gate
 **Status:** Settled
 Portfolio project — 1-2 tests per unit (happy path, plus a real edge case when one exists), not exhaustive coverage. No coverage tooling/gate. Shared test setup (factories, shared_examples, custom render/mock layer) abstracted into one place per stack so individual test files stay thin. See `TESTING.md`.

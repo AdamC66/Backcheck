@@ -9,9 +9,14 @@ Default assumption is a Vite-bundled SPA unless a requirement forces SSR/routing
 ## Component rules (strict)
 
 - One component per file. The file name matches the component name (`GameSummaryCard.tsx`, not `index.tsx`).
-- No folder created just to hold one file. A component only gets its own folder when it genuinely has multiple co-located files (e.g. a component + its own subcomponents it doesn't share). A lone `.tsx` plus an `index.ts` that just re-exports it is exactly what this rule forbids.
+- No folder created just to hold one file. A component gets its own folder once it has a co-located test: `GameSummaryCard/GameSummaryCard.tsx` + `GameSummaryCard/tests/GameSummaryCard.test.tsx`. The folder exists because there are two real files, not as a wrapper around one. A lone `.tsx` plus an `index.ts` that just re-exports it is exactly what this rule forbids — the component file itself is still never named `index.tsx`.
 - Components are built reusable by default: props-driven, no hidden dependence on a specific page's data shape. If a component only ever makes sense in one place, that's fine, but don't hardcode assumptions that block reuse for free.
 - No default exports for components — named exports only, so imports stay greppable and renames stay honest.
+
+## Imports (strict)
+
+- Absolute imports only: `@/components/GameSummaryCard`, never relative parent traversal (`../../components/GameSummaryCard`). `@` maps to `src/` — configured via tsconfig `paths` plus the matching bundler alias once the frontend is scaffolded.
+- Exception: a test file importing the thing it tests uses a relative import (`./GameSummaryCard`, not `@/components/.../GameSummaryCard`). This keeps a component and its test adjacent by construction — if the component is later promoted (moved from a feature folder into shared `components/` because it turned out to be general-purpose), the test moves with it and that import never needs touching. Shared test infrastructure (e.g. `test-utils.tsx`, mock handlers) is not "the thing under test" — those import absolute like normal code.
 
 ## Structure (starting point, will evolve)
 
@@ -44,6 +49,7 @@ Smoke-test approach — see `../docs/TESTING.md` for the shared philosophy (port
 - Vitest + React Testing Library. One happy-path test per component/hook/feature; a second only for a failure mode worth catching.
 - Test behavior (what the user sees/does), not implementation details.
 - Shared setup lives in one place: a custom `render` wrapper (`src/test-utils.tsx`) and one reusable mock API layer — not re-built per test file.
+- Tests live in a `tests/` subfolder next to what they test (see Component rules and Imports above), and import their subject relatively.
 
 ## More rules incoming
 
