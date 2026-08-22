@@ -1,17 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { fetchCurrentUser, login } from "@/api/auth";
+import { fetchCurrentUser, login } from "@/models/auth";
+import { fetchLeagues } from "@/models/leagues";
 import { TOKEN_KEY } from "@/lib/tokenStorage";
-import { SUPER_ADMIN } from "@/test-mocks";
+import { LEAGUES, SUPER_ADMIN } from "@/test-mocks";
 import { renderWithProviders, screen } from "@/test-utils";
 import { App } from "../App";
 
-vi.mock("@/api/auth");
+vi.mock("@/models/auth");
+vi.mock("@/models/leagues");
 
 describe("App routing", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.resetAllMocks();
+    vi.mocked(fetchLeagues).mockResolvedValue(LEAGUES);
   });
 
   it("lands on the dashboard after a successful login", async () => {

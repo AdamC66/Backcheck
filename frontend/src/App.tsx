@@ -1,8 +1,9 @@
 import { Navigate, Route, Routes } from "react-router";
-import { LoginPage } from "@/features/auth/LoginPage";
-import { RedirectIfAuthenticated } from "@/features/auth/RedirectIfAuthenticated";
-import { RequireAuth } from "@/features/auth/RequireAuth";
-import { DashboardPage } from "@/features/dashboard/DashboardPage";
+import { LoginPage } from "@/containers/LoginPage";
+import { RedirectIfAuthenticated } from "@/auth/RedirectIfAuthenticated";
+import { RequireAuth } from "@/auth/RequireAuth";
+import { DashboardPage } from "@/containers/DashboardPage";
+import { LeaguePage } from "@/containers/LeaguePage";
 
 export function App() {
   return (
@@ -20,6 +21,14 @@ export function App() {
         element={
           <RequireAuth>
             <DashboardPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/leagues/:slug"
+        element={
+          <RequireAuth>
+            <LeaguePage />
           </RequireAuth>
         }
       />

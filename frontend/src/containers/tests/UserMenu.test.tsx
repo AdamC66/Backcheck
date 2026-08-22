@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { fetchCurrentUser, logout } from "@/api/auth";
+import { fetchCurrentUser, logout } from "@/models/auth";
 import { TOKEN_KEY } from "@/lib/tokenStorage";
 import { SUPER_ADMIN } from "@/test-mocks";
 import { renderWithProviders, screen, waitFor } from "@/test-utils";
 import { UserMenu } from "../UserMenu";
 
-vi.mock("@/api/auth");
+vi.mock("@/models/auth");
 
 async function renderSignedIn() {
   localStorage.setItem(TOKEN_KEY, "test-token");

@@ -1,10 +1,15 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchCurrentUser, login as loginRequest, logout as logoutRequest } from "@/api/auth";
-import { ApiError } from "@/api/client";
-import { AuthContext, CURRENT_USER_KEY, type AuthContextValue } from "@/features/auth/authContext";
+import { AuthContext, type AuthContextValue } from "@/auth/authContext";
+import { ApiError } from "@/lib/apiClient";
 import { clearToken, readToken, writeToken } from "@/lib/tokenStorage";
-import type { LoginCredentials } from "@/types/auth";
+import {
+  fetchCurrentUser,
+  login as loginRequest,
+  logout as logoutRequest,
+  type LoginCredentials,
+} from "@/models/auth";
+import { CURRENT_USER_KEY } from "@/models/queryKeys";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();

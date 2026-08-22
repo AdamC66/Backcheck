@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { login } from "@/api/auth";
-import { ApiError } from "@/api/client";
+import { login } from "@/models/auth";
+import { ApiError } from "@/lib/apiClient";
 import { TOKEN_KEY } from "@/lib/tokenStorage";
 import { SUPER_ADMIN } from "@/test-mocks";
 import { renderWithProviders, screen, waitFor } from "@/test-utils";
 import { LoginPage } from "../LoginPage";
 
-vi.mock("@/api/auth");
+vi.mock("@/models/auth");
 
 async function submitCredentials() {
   await userEvent.type(screen.getByLabelText("Email"), "admin@example.com");

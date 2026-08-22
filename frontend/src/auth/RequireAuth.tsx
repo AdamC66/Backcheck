@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
-import { AuthPending } from "@/features/auth/AuthPending";
-import { useAuth } from "@/features/auth/useAuth";
+import { AuthPending } from "@/auth/AuthPending";
+import { useAuth } from "@/auth/useAuth";
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();

@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import type { LoginCredentials, User } from "@/types/auth";
+import type { LoginCredentials, User } from "@/models/auth";
 
 export interface AuthContextValue {
   user: User | null;
@@ -14,5 +14,3 @@ export interface AuthContextValue {
 // Lives apart from AuthProvider so that file can export only its component —
 // react-refresh can't hot-reload a module that mixes components with other values.
 export const AuthContext = createContext<AuthContextValue | null>(null);
-
-export const CURRENT_USER_KEY = ["currentUser"] as const;

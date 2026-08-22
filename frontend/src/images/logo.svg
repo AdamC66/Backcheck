@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <title>Backcheck — End Boards Badge</title>
+  <!-- Wordmark uses "Anton" (Google Fonts, OFL). Load it wherever this is embedded:
+       <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+       Falls back to a bold condensed sans if the font isn't loaded. -->
+  <defs>
+    <clipPath id="boards-clip"><rect x="0" y="0" width="200" height="200" rx="40"/></clipPath>
+  </defs>
+  <g clip-path="url(#boards-clip)">
+    <rect x="0" y="0" width="200" height="200" fill="#F7F9FA"/>
+    <rect x="0" y="0" width="200" height="16" fill="#D62839"/>
+    <rect x="0" y="172" width="200" height="28" fill="#F2B705"/>
+  </g>
+  <text x="100" y="127" text-anchor="middle" font-family="Anton, 'Arial Narrow', sans-serif" font-size="90" letter-spacing="-3" fill="#0E1B33">BC</text>
+</svg>

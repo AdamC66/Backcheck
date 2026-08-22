@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
-import { AuthPending } from "@/features/auth/AuthPending";
-import { returnPathFrom } from "@/features/auth/returnPath";
-import { useAuth } from "@/features/auth/useAuth";
+import { AuthPending } from "@/auth/AuthPending";
+import { returnPathFrom } from "@/lib/returnPath";
+import { useAuth } from "@/auth/useAuth";
 
 // The mirror of RequireAuth: keeps an authenticated user off /login. This is also what
 // performs the post-login redirect — logging in populates the user, this re-renders and

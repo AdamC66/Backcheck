@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Row } from "@/components/Row/Row";
 import { Text } from "@/components/Text/Text";
+import Logo from "@/images/logo.svg";
 
 export interface AppHeaderProps {
   title: string;
@@ -12,7 +13,10 @@ export function AppHeader({ title, actions }: AppHeaderProps) {
   return (
     <header className="border-b border-slate-200 bg-white">
       <Row justify="between" className="mx-auto max-w-6xl px-6 py-3">
-        <Text variant="subheading">{title}</Text>
+        <Row justify="start">
+          <img src={Logo} alt="backcheck-logo" className="size-8" />
+          <Text variant="subheading">{title}</Text>
+        </Row>
         {actions}
       </Row>
     </header>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/Avatar/Avatar";
 import { Text } from "@/components/Text/Text";
-import { useAuth } from "@/features/auth/useAuth";
+import { useAuth } from "@/auth/useAuth";
 
 export function UserMenu() {
   const { user, logout } = useAuth();

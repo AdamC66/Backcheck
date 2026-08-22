@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 import { render as rtlRender, type RenderOptions } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
-import { AuthProvider } from "@/features/auth/AuthProvider";
+import { AuthProvider } from "@/auth/AuthProvider";
 
 // Retries and caching make tests slow and order-dependent, so each render gets a
 // fresh client with both switched off.
