@@ -10,7 +10,6 @@ class TeamStanding < ApplicationRecord
   scope :on_date, ->(date) { where(as_of_date: date) }
   scope :ranked, -> { order(:league_sequence) }
 
-  # The most recent snapshot per team, for a season that may have hundreds of them.
   scope :latest_for_season, ->(season) {
     where(season: season)
       .where(as_of_date: where(season: season).select("MAX(as_of_date)"))

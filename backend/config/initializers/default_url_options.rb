@@ -1,6 +1,5 @@
-# Serializers build absolute logo URLs (Active Storage proxy routes) outside of any
-# request, so the route set needs a host of its own — in an API-only app nothing else
-# sets one, and the failure is a boot-time-invisible 500 on the first serialized logo.
+# Serializers build absolute URLs outside any request. Without a host here, the first
+# serialized logo 500s.
 Rails.application.routes.default_url_options =
   if Rails.env.test?
     { host: "www.example.com" }

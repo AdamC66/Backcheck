@@ -1,5 +1,5 @@
-# Pulls one team's whole season schedule in a single request. Every game comes back
-# twice across a full league sync — once per team — which the upsert absorbs.
+# One request per team. Across a league sync every game arrives twice, which the upsert
+# absorbs.
 class SyncTeamSchedule
   attr_reader :missing_teams
 

@@ -1,11 +1,7 @@
 require "net/http"
 
-# The only thing in the app that talks to the NHL. Nothing calls it from a request —
-# ingestion runs in jobs (see docs/DECISIONS.md).
-#
-# The API publishes no rate limit and returns no rate-limit headers, so the interval
-# between requests is self-imposed rather than negotiated. Treat it as a courtesy floor,
-# not a measured ceiling.
+# The API publishes no rate limit and sends no rate-limit headers, so the interval below
+# is a self-imposed floor rather than a measured one. Call it from jobs only.
 class NhlClient
   BASE_URL = "https://api-web.nhle.com".freeze
   USER_AGENT = "Backcheck/1.0 (hockey analytics dashboard; contact via repository)".freeze
@@ -22,8 +18,7 @@ class NhlClient
   TransportError = Class.new(Error)
 
   class << self
-    # Shared across every instance in the process so that separate services can't each
-    # keep their own private interval and collectively burst.
+    # Shared process-wide, or each service keeps its own interval and they burst together.
     attr_accessor :last_request_at
 
     def mutex

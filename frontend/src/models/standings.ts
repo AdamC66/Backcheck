@@ -34,7 +34,6 @@ export interface Standing {
   l10_record: StandingRecord;
 }
 
-/** Which season and date the rows describe — the API answers with defaults if unasked. */
 export interface StandingsMeta {
   season: string;
   as_of_date: string | null;

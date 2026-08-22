@@ -9,8 +9,7 @@ class Season < ApplicationRecord
   validates :starts_on, :ends_on, presence: true
   validate :ends_after_starts
 
-  # Returns nothing between seasons, which is the honest answer — the alternative is
-  # guessing that the most recent season is still "current" through the whole summer.
+  # Empty between seasons, rather than calling a finished season current all summer.
   scope :current, -> { where(starts_on: ..Date.current, ends_on: Date.current..) }
   scope :chronological, -> { order(:starts_on) }
 

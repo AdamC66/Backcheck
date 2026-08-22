@@ -1,6 +1,5 @@
 class CreateTeamStandings < ActiveRecord::Migration[8.1]
-  # One snapshot per team per date, rather than a single row overwritten in place, so
-  # "where did the wildcard race stand in January" stays answerable.
+  # A snapshot per team per date, so standings history survives.
   def change
     create_table :team_standings do |t|
       t.references :team, null: false, foreign_key: true

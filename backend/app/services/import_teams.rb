@@ -1,8 +1,5 @@
-# Loads one league's team manifest from the repo's `data/` directory into Team rows,
-# attaching each team's logo from the sibling `logos/` folder.
-#
-# Matching on abbreviation makes reruns idempotent, so a corrected manifest can simply
-# be re-seeded. The manifests' `nhl_affiliate` field is ignored until TeamAffiliation exists.
+# Keyed on abbreviation so a corrected manifest can just be re-seeded. The manifests'
+# `nhl_affiliate` field is ignored until TeamAffiliation exists.
 class ImportTeams
   MANIFEST_ROOT = Rails.root.join("..", "data")
 

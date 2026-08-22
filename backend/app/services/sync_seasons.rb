@@ -1,5 +1,4 @@
-# Upserts Season rows for the NHL from /v1/standings-season, which is the only endpoint
-# that carries a season's real start and end dates.
+# /v1/standings-season is the only endpoint carrying a season's real start and end dates.
 class SyncSeasons
   def initialize(league:, nhl_season_ids: nil, client: NhlClient.new)
     @league = league
@@ -36,8 +35,6 @@ class SyncSeasons
     season
   end
 
-  # 20252026 reads as "2025-26" everywhere a human sees it; the upstream integer stays
-  # in nhl_season_id as the join key.
   def label_for(nhl_season_id)
     start_year = nhl_season_id / 10_000
     end_year = nhl_season_id % 10_000

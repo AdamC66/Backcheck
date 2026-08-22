@@ -1,11 +1,9 @@
 require "webmock/rspec"
 
-# Every spec runs with real HTTP disabled, so a sync spec can never quietly depend on
-# the live NHL API (or hammer it on a loop).
+# No spec may reach the live NHL API.
 WebMock.disable_net_connect!(allow_localhost: true)
 
 module NhlApiHelpers
-  # Fixtures are trimmed recordings of real payloads — see spec/fixtures/files/nhl/.
   def nhl_fixture(name)
     Rails.root.join("spec/fixtures/files/nhl/#{name}.json").read
   end
@@ -24,7 +22,6 @@ end
 RSpec.configure do |config|
   config.include NhlApiHelpers
 
-  # The throttle's last-request timestamp is process-wide, so it has to be reset or the
-  # first request of each spec waits on the previous spec's.
+  # Process-wide, so without a reset each spec waits on the previous spec's request.
   config.before { NhlClient.last_request_at = nil }
 end

@@ -1,8 +1,5 @@
-# Attaches a logo file from the repo's `data/` directory to a record.
-#
-# Seeds run repeatedly, and attaching unconditionally would replace the blob every time,
-# orphaning the old one. Comparing checksums means a rerun is a no-op unless the artwork
-# actually changed — Active Storage's checksum is a base64 MD5 of the file.
+# Checksum-guarded because seeds rerun: attaching unconditionally replaces the blob every
+# time and orphans the old one.
 class AttachLogo
   def initialize(record, path)
     @record = record

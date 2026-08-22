@@ -61,8 +61,6 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   return data;
 }
 
-// For the endpoints whose `meta` is part of the answer rather than pagination trivia —
-// standings, for instance, report which season and date the rows describe.
 export function requestWithMeta<T, M>(
   path: string,
   init: RequestInit = {},

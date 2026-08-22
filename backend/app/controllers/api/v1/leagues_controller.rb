@@ -7,8 +7,7 @@ module Api
         render_data(leagues.map { |league| LeagueSerializer.new(league).as_json })
       end
 
-      # A league the user can't see is reported as missing rather than forbidden — a 403
-      # would confirm it exists to someone with no business knowing that.
+      # Missing, not forbidden: a 403 confirms the league exists.
       def show
         league = League.visible_to(current_user).with_logo.find_by(slug: params[:slug])
 

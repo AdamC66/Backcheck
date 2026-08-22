@@ -1,8 +1,7 @@
 class SyncDailyScoresJob < ApplicationJob
   queue_as :ingest
 
-  # Yesterday by default: by the time this runs, every game from that date has finished
-  # and been finalized, which a same-day sync can't promise.
+  # Yesterday, so every game from that date has finished and been finalized upstream.
   def perform(date = Date.yesterday)
     league = League.find_by!(slug: "nhl")
     sync = SyncDailyScores.new(league: league, date: date)

@@ -1,11 +1,10 @@
-# Turns one upstream game object into a Game row. The schedule and daily-score payloads
-# describe a game almost identically, so both syncs share this rather than each mapping
-# the same fields their own way.
+# Shared by both game syncs: the schedule and daily-score payloads describe a game
+# almost identically.
 class UpsertGame
   class UnknownSeason < StandardError; end
 
-  # Abbreviations the league has no team for. A game with an unknown team is skipped
-  # rather than raised on, but callers report the gap so it can't pass for a clean run.
+  # Unknown teams skip their game rather than raising; callers report these so a partial
+  # sync can't pass for a clean one.
   attr_reader :missing_teams
 
   def initialize(league:, payload:)
@@ -52,9 +51,8 @@ class UpsertGame
       raise(UnknownSeason, "No season #{nhl_season_id} — run SyncSeasons first")
   end
 
-  # Matched on abbreviation within the league, since that's the only identifier every
-  # payload carries. The numeric id is recorded when it appears, so it's available for
-  # later endpoints that key on it.
+  # Abbreviation is the only identifier every payload carries; the numeric id is stored
+  # opportunistically for endpoints that key on it.
   def team_for(side)
     abbreviation = side.fetch("abbrev")
     team = league.teams.find_by(abbreviation: abbreviation)

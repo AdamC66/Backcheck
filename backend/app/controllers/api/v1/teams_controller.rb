@@ -11,8 +11,7 @@ module Api
 
       attr_reader :team
 
-      # Mirrors the leagues controller: a team the caller can't see reads as missing
-      # rather than forbidden, so the endpoint can't be used to probe for existence.
+      # Missing, not forbidden — same reasoning as the leagues controller.
       def set_team
         @team = Team.find_by(id: params[:id] || params[:team_id])
 

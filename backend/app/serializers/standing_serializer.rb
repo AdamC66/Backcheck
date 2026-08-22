@@ -36,8 +36,6 @@ class StandingSerializer
 
   attr_reader :standing
 
-  # Splits ship as one object rather than nine sibling keys — they're only ever read
-  # together, and it keeps the payload legible.
   def record(wins, losses, ot_losses)
     { wins: wins, losses: losses, ot_losses: ot_losses }
   end

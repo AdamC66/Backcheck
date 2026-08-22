@@ -14,8 +14,7 @@ module Api
 
       private
 
-      # Defaults to the newest season we hold for the league rather than "now", which is
-      # nil for most of the summer.
+      # Newest season held, not the current one — there is none for most of the summer.
       def find_season(league)
         return league.seasons.chronological.last if params[:season].blank?
 

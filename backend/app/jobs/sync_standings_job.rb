@@ -1,6 +1,5 @@
 class SyncStandingsJob < ApplicationJob
-  # Every NHL request goes through this queue, which runs with concurrency 1 so the
-  # client's interval is the real pace rather than one of several parallel paces.
+  # The ingest queue runs one job at a time; that's what makes the client's interval real.
   queue_as :ingest
 
   def perform(date = Date.yesterday)

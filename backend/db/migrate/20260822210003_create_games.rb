@@ -8,8 +8,7 @@ class CreateGames < ActiveRecord::Migration[8.1]
 
       t.integer :game_type, null: false
       t.datetime :starts_at, null: false
-      # The venue-local calendar date. Distinct from starts_at, since a 7pm PT game is
-      # already "tomorrow" in UTC and would otherwise land on the wrong schedule day.
+      # Venue-local: a 7pm PT game is already tomorrow in UTC.
       t.date :game_date, null: false
       t.string :venue
       t.boolean :neutral_site, null: false, default: false

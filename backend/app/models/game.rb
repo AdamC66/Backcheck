@@ -1,6 +1,5 @@
 class Game < ApplicationRecord
-  # Upstream gameType. Preseason games share a schedule payload with the rest, so the
-  # distinction has to be stored rather than inferred from the date.
+  # Upstream gameType; preseason shares a payload with the rest, so it can't be inferred.
   GAME_TYPES = { preseason: 1, regular_season: 2, playoffs: 3 }.freeze
 
   belongs_to :season
@@ -19,8 +18,7 @@ class Game < ApplicationRecord
 
   private
 
-  # Everything is league-scoped, and a game is the one place three league-bound records
-  # meet — without this an NHL season could be paired with an AHL team.
+  # Without this an NHL season could be paired with an AHL team.
   def teams_belong_to_season_league
     return if season.blank?
 

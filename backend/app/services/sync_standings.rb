@@ -1,5 +1,3 @@
-# Writes one standings snapshot per team for a given date. Re-running for the same date
-# updates those rows rather than adding duplicates.
 class SyncStandings
   class UnknownSeason < StandardError; end
 
@@ -34,9 +32,8 @@ class SyncStandings
     standing
   end
 
-  # Abbreviations are only unique within a league — CGY is both the Calgary Flames and
-  # the AHL's Calgary Wranglers — and standings payloads carry no numeric team id, so
-  # this lookup has to be league-scoped or it silently writes to the wrong team.
+  # Must stay league-scoped: CGY is both the Flames and the AHL's Wranglers, and
+  # standings payloads carry no numeric team id to disambiguate.
   def team_for(row)
     abbreviation = row.dig("teamAbbrev", "default")
     team = league.teams.find_by(abbreviation: abbreviation)

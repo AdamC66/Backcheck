@@ -2,8 +2,7 @@ namespace :nhl do
   desc "Backfill NHL seasons, end-of-season standings, and schedules. Usage: rake 'nhl:backfill[20242025,20252026]'"
   task :backfill, [ :season_ids ] => :environment do |_task, args|
     league = League.find_by!(slug: "nhl")
-    # Rake splits bracketed arguments on commas, so a list arrives as separate values
-    # rather than one string — args.to_a gathers them back up.
+    # Rake splits bracketed arguments on commas, so a list arrives as separate values.
     requested = args.to_a.flat_map { |value| value.to_s.split(/[,\s]+/) }.map(&:to_i).reject(&:zero?)
     abort("Pass at least one season, e.g. rake 'nhl:backfill[20252026]'") if requested.empty?
 
@@ -12,8 +11,7 @@ namespace :nhl do
     seasons.each { |season| puts "  #{season.label} (#{season.starts_on}..#{season.ends_on})" }
 
     seasons.each do |season|
-      # A completed season gets a single end-of-season snapshot; the live one is left to
-      # the daily job, which builds up the day-by-day history from here on.
+      # Completed seasons get one final snapshot; the live one is the daily job's job.
       if season.ends_on.past?
         puts "Standings #{season.label} (final, #{season.ends_on})…"
         sync = SyncStandings.new(league: league, date: season.ends_on)

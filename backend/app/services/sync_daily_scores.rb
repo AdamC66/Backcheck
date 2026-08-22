@@ -1,5 +1,3 @@
-# The daily delta: refreshes score and state for one date's games. Cheaper than
-# re-pulling a full schedule, and it's what keeps a live season current.
 class SyncDailyScores
   attr_reader :missing_teams
 
