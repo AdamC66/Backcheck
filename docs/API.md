@@ -85,13 +85,31 @@ current row. Rows come back in `league_sequence` order.
 | --- | --- |
 | GET | `/teams/:id` |
 | GET | `/teams/:id/games` |
+| GET | `/leagues/:league_slug/games` |
+
+Both game endpoints return the same chronological list of the shape below, and both take
+`game_type` (`regular_season` excludes preseason and playoffs) and a `from`/`to` date
+range in `YYYY-MM-DD`. A malformed date, a `to` before `from`, or a range over the cap
+answers **422 `invalid_range`** rather than quietly returning something else.
+
+**`/teams/:id/games`** — one team's home and away fixtures.
 
 | Param | Default | Notes |
 | --- | --- | --- |
 | `season` | newest season held for the team's league | Label form, e.g. `2025-26` |
-| `game_type` | all types | `regular_season` to exclude preseason and playoffs |
+| `from` / `to` | the whole season | No cap; a season is ~88 games |
 
-Games are chronological and include both home and away fixtures.
+With no range the season alone bounds the results, which deliberately includes preseason
+and playoff dates. Bounding by the season's `starts_on`/`ends_on` would not: those are the
+*standings* window, and September and playoff games fall outside it.
+
+**`/leagues/:league_slug/games`** — every game in the league over a range, for a scoreboard.
+
+| Param | Default | Notes |
+| --- | --- | --- |
+| `from` | the last date with games | Not today — today is empty all summer |
+| `to` | same as `from` | One day unless widened |
+| range width | — | **Capped at 31 days.** A season is 1,312 games |
 
 ```jsonc
 // GET /api/v1/teams/28/games?game_type=regular_season
@@ -106,8 +124,11 @@ Games are chronological and include both home and away fixtures.
     "home": { "team": { /* team object */ }, "score": 5 },
     "away": { "team": { /* team object */ }, "score": 2 }
   } ],
-  "meta": { "season": "2025-26", "count": 82 } }
+  "meta": { "season": "2025-26", "from": "2025-09-21", "to": "2026-04-15", "count": 88 } }
 ```
+
+The league endpoint's `meta` carries `from`, `to`, and `count` but no `season`, since a
+range can cross one.
 
 ## Logo files
 

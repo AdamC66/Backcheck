@@ -32,6 +32,34 @@ RSpec.describe "GET /api/v1/teams/:team_id/games", type: :request do
     expect(response.parsed_body["data"].map { |game| game["game_type"] }).to eq([ "regular_season" ])
   end
 
+  it "narrows to a date range when asked, and reports it" do
+    create(:game, season: season, home_team: team, away_team: opponent,
+                  game_date: Date.new(2025, 10, 8))
+    november = create(:game, season: season, home_team: team, away_team: opponent,
+                             game_date: Date.new(2025, 11, 12))
+
+    get "/api/v1/teams/#{team.id}/games", params: { from: "2025-11-01", to: "2025-11-30" },
+        headers: auth_headers(super_admin)
+
+    expect(response.parsed_body["data"].map { |game| game["id"] }).to eq([ november.id ])
+    expect(response.parsed_body["meta"]).to include("from" => "2025-11-01", "to" => "2025-11-30")
+  end
+
+  it "includes games outside the standings window when no range is given" do
+    preseason = create(:game, season: season, home_team: team, away_team: opponent,
+                              game_date: season.starts_on - 2.weeks,
+                              game_type: Game::GAME_TYPES[:preseason])
+    playoff = create(:game, season: season, home_team: team, away_team: opponent,
+                            game_date: season.ends_on + 1.week,
+                            game_type: Game::GAME_TYPES[:playoffs])
+
+    get "/api/v1/teams/#{team.id}/games", headers: auth_headers(super_admin)
+
+    expect(response.parsed_body["data"].map { |game| game["id"] }).to eq([ preseason.id, playoff.id ])
+    expect(response.parsed_body["meta"]).to include("from" => preseason.game_date.to_s,
+                                                    "to" => playoff.game_date.to_s)
+  end
+
   it "hides a team the caller has no membership for" do
     team
 

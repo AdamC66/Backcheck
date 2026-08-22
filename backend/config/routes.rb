@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
       resources :leagues, only: [ :index, :show ], param: :slug do
         resources :standings, only: [ :index ]
+        resources :games, only: [ :index ], controller: "league_games"
       end
 
       resources :teams, only: [ :show ] do
