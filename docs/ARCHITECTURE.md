@@ -42,12 +42,15 @@ This is a public-facing, multi-tenant app: many leagues, each with many teams, e
 
 Authorization checks (e.g. "can this user edit this team's roster?") are a single question against a user's memberships plus the super-admin flag — not scattered role-string comparisons across controllers. Exact enforcement mechanism (a policy-object layer, hand-rolled or via a gem like Pundit) is left open until the backend is scaffolded; the data model above is settled regardless of that choice.
 
+**Affiliate visibility.** A team's staff also get read access to that team's affiliate chain (e.g. an NHL GM can see their AHL and ECHL affiliates' rosters/stats) — see `TeamAffiliation` below. This is one-directional: affiliate staff do *not* get visibility up into the parent club. A Membership scope check on a Team must walk the affiliate chain downward from that team, not just match the Team row directly.
+
 ## Domain model
 
 Informed by a prior (pre-AI, Django-based) attempt at this same domain — see `DECISIONS.md` for what was carried forward and what's deliberately being done differently this time (that old app had zero multi-tenancy, a hardcoded season string, and a combined skater+goalie stats table, among other things).
 
 - **League** — name, slug. Owns many Teams.
 - **Team** — name, city, belongs to a League.
+- **TeamAffiliation** — self-join on Team: `parent_team_id`, `affiliate_team_id`, `started_on`/`ended_on`. Models the NHL→AHL→ECHL organizational chain (e.g. Ottawa Senators → Belleville Senators) the same history-preserving way `RosterEntry` handles player movement — affiliations change (an ECHL affiliate especially), so this is never a plain FK overwritten in place. Arbitrary depth (a chain, not a hardcoded 3-tier column set), since a team can be both an affiliate and a parent.
 - **Season** — a first-class entity (`label`, `starts_on`, `ends_on`), not a hardcoded string. The old attempt baked `"20192020"`-style strings into business logic; this time season-scoped data (rosters, stats, schedule) all carry a real `season_id`.
 - **Player** — bio fields (name, birth date, position, shoots/catches, height/weight), no direct `team_id`.
 - **RosterEntry** — join of `player`, `team`, and `season` with `joined_on`/`left_on`. A trade or a Super Admin moving a player is: close the old entry, open a new one. This preserves full team history per player instead of overwriting a single current-team foreign key.
@@ -58,12 +61,9 @@ External stats data source (scrape, provider API, manual entry) is still an open
 
 ## Docker
 
-- Local dev default: backend and frontend run natively (Makefile); Postgres runs in Docker (container + named volume `db_data`) via `make db-up`/`init`/`start` — nobody needs a local Postgres install.
-- Fully-dockerized alternative: `docker compose up` runs `backend` (built from `Dockerfile.dev`) alongside `db` — not what the Makefile targets use.
-
 - `docker-compose.yml` at repo root defines `backend` + `db` (and anything else that needs to run alongside, e.g. a job runner, once one exists).
-- `backend/Dockerfile` is Rails-generated (production/Kamal — do not use for local dev). `backend/Dockerfile.dev` is what `docker-compose.yml` actually builds: no multi-stage/precompile, source mounted as a volume for live reload.
-- `db` (Postgres 16) + `backend` (built from `Dockerfile.dev`) are wired up in `docker-compose.yml` at repo root.
+- Backend `Dockerfile` lives in `backend/`.
+- No compose services are scaffolded yet — added once `rails new` happens, so the Gemfile/Dockerfile have real dependencies to build against.
 
 ## Data flow (placeholder)
 

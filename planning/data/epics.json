@@ -11,8 +11,8 @@
     "id": "EPIC-2",
     "project_id": "hockey-analytics-dashboard",
     "title": "League/Team/Season domain model",
-    "description": "League, Team, Season as first-class entities.",
-    "status": "done",
+    "description": "League, Team, Season as first-class entities, plus TeamAffiliation (NHL/AHL/ECHL affiliate chain).",
+    "status": "in_progress",
     "priority": "high"
   },
   {

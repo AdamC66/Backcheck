@@ -25,7 +25,8 @@
     "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. Controller-level 403 enforcement still pending — no protected resource controller exists yet to wire it into.",
     "acceptance_criteria": [
       "A request from a user with no qualifying membership and no super-admin flag is rejected with 403",
-      "A league_admin can act on any team within their league without a team-level membership row"
+      "A league_admin can act on any team within their league without a team-level membership row",
+      "A team-scoped user (e.g. gm) is authorized for that team's affiliates (TASK-17) as read-only, downward only"
     ]
   },
   {
@@ -52,6 +53,15 @@
     "type": "feature",
     "status": "done",
     "priority": "high"
+  },
+  {
+    "id": "TASK-17",
+    "epic_id": "EPIC-2",
+    "title": "Migration + model for TeamAffiliation (hierarchical team relationships)",
+    "type": "feature",
+    "status": "todo",
+    "priority": "high",
+    "description": "Self-join on Team: parent_team_id, affiliate_team_id, started_on/ended_on. Models the NHL/AHL/ECHL affiliate chain (e.g. Ottawa Senators -> Belleville Senators), history-preserving like RosterEntry. Coordinate with TASK-3 — its downward-visibility check depends on this table existing."
   },
   {
     "id": "TASK-7",
