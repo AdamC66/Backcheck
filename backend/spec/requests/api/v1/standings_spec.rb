@@ -1,0 +1,53 @@
+require "rails_helper"
+
+RSpec.describe "GET /api/v1/leagues/:league_slug/standings", type: :request do
+  let(:league) { create(:league, slug: "nhl", abbreviation: "NHL") }
+  let(:season) { create(:season, league: league, label: "2025-26") }
+  let(:super_admin) { create(:user, is_super_admin: true) }
+
+  def standing_for(team, attributes = {})
+    create(:team_standing, { team: team, season: season, as_of_date: season.ends_on }.merge(attributes))
+  end
+
+  it "returns the latest snapshot per team, in league order" do
+    leader = create(:team, league: league, abbreviation: "COL")
+    chaser = create(:team, league: league, abbreviation: "DAL")
+    standing_for(leader, league_sequence: 1, points: 121)
+    standing_for(chaser, league_sequence: 2, points: 112)
+
+    get "/api/v1/leagues/nhl/standings", headers: auth_headers(super_admin)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body["data"].map { |row| row.dig("team", "abbreviation") }).to eq(%w[COL DAL])
+    expect(response.parsed_body.dig("data", 0, "points")).to eq(121)
+    expect(response.parsed_body.dig("meta", "season")).to eq("2025-26")
+  end
+
+  it "ignores older snapshots unless a date is asked for" do
+    team = create(:team, league: league)
+    standing_for(team, as_of_date: Date.new(2026, 1, 1), points: 50)
+    standing_for(team, as_of_date: Date.new(2026, 4, 17), points: 100)
+
+    get "/api/v1/leagues/nhl/standings", headers: auth_headers(super_admin)
+    expect(response.parsed_body["data"].map { |row| row["points"] }).to eq([ 100 ])
+
+    get "/api/v1/leagues/nhl/standings", params: { date: "2026-01-01" }, headers: auth_headers(super_admin)
+    expect(response.parsed_body["data"].map { |row| row["points"] }).to eq([ 50 ])
+  end
+
+  it "reports an unknown season" do
+    season
+
+    get "/api/v1/leagues/nhl/standings", params: { season: "1999-00" }, headers: auth_headers(super_admin)
+
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it "hides a league the caller can't see" do
+    season
+
+    get "/api/v1/leagues/nhl/standings", headers: auth_headers(create(:user))
+
+    expect(response).to have_http_status(:not_found)
+  end
+end

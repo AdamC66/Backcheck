@@ -8,7 +8,13 @@ Rails.application.routes.draw do
       post "login", to: "sessions#create"
       delete "logout", to: "sessions#destroy"
 
-      resources :leagues, only: [ :index, :show ], param: :slug
+      resources :leagues, only: [ :index, :show ], param: :slug do
+        resources :standings, only: [ :index ]
+      end
+
+      resources :teams, only: [ :show ] do
+        resources :games, only: [ :index ], controller: "team_games"
+      end
     end
   end
 end
