@@ -18,13 +18,14 @@ interface ErrorBody {
   error?: { code?: string; message?: string };
 }
 
-interface DataBody<T> {
+export interface Envelope<T, M> {
   data: T;
+  meta?: M;
 }
 
 // The API always answers with a `data` or `error` envelope, so unwrapping and error
 // translation happen once here instead of in every hook (see docs/DECISIONS.md).
-export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function send<T, M>(path: string, init: RequestInit): Promise<Envelope<T, M>> {
   const token = readToken();
 
   const response = await fetch(`${API_URL}${path}`, {
@@ -37,7 +38,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   });
 
   if (response.status === 204) {
-    return undefined as T;
+    return { data: undefined as T };
   }
 
   const body: unknown = await response.json().catch(() => null);
@@ -51,5 +52,20 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     );
   }
 
-  return (body as DataBody<T>).data;
+  return body as Envelope<T, M>;
+}
+
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const { data } = await send<T, never>(path, init);
+
+  return data;
+}
+
+// For the endpoints whose `meta` is part of the answer rather than pagination trivia —
+// standings, for instance, report which season and date the rows describe.
+export function requestWithMeta<T, M>(
+  path: string,
+  init: RequestInit = {},
+): Promise<Envelope<T, M>> {
+  return send<T, M>(path, init);
 }
