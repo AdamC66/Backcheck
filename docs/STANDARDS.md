@@ -21,7 +21,7 @@ Good: `# Rails' default JSON serializer chokes on BigDecimal here, so we cast ex
 
 ## Git workflow
 
-- `main` is always deployable (once there's something to deploy).
+- `master` is always deployable (once there's something to deploy).
 - Feature branches: `feature/<short-description>`, `fix/<short-description>`.
 - Commit messages: imperative mood, present tense (`Add game stats serializer`, not `Added` or `Adding`). Body explains why when the subject line isn't self-evident.
 - Squash noisy WIP commits before merging; keep meaningful commits intact.

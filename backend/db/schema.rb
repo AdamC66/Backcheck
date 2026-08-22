@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_22_150006) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_160001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -33,6 +33,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_150006) do
     t.index ["scopeable_type", "scopeable_id"], name: "index_memberships_on_scopeable"
     t.index ["user_id", "role_id", "scopeable_type", "scopeable_id"], name: "index_memberships_on_user_role_and_scope", unique: true
     t.index ["user_id"], name: "index_memberships_on_user_id"
+  end
+
+  create_table "revoked_tokens", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "jti", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_revoked_tokens_on_expires_at"
+    t.index ["jti"], name: "index_revoked_tokens_on_jti", unique: true
   end
 
   create_table "roles", force: :cascade do |t|

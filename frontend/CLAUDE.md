@@ -2,9 +2,9 @@
 
 Applies inside `frontend/`. Read `../docs/STANDARDS.md` first — comment policy and git workflow apply here too.
 
-## Framework: Vite vs Next.js — undecided
+## Framework: Vite (settled)
 
-Default assumption is a Vite-bundled SPA unless a requirement forces SSR/routing-on-the-server (SEO, server-side data fetching, etc.) — this is a staff-only internal dashboard, which leans away from needing Next. Don't scaffold either until this is confirmed; record the final call in `docs/DECISIONS.md`.
+Vite-bundled SPA, React 19, Tailwind v4 (via `@tailwindcss/vite`, configured in CSS — there is no `tailwind.config.js`). Nothing here needs SSR or SEO. Don't reopen this without a concrete requirement; see `docs/DECISIONS.md`.
 
 ## Component rules (strict)
 
@@ -15,8 +15,8 @@ Default assumption is a Vite-bundled SPA unless a requirement forces SSR/routing
 
 ## Imports (strict)
 
-- Absolute imports only: `@/components/GameSummaryCard`, never relative parent traversal (`../../components/GameSummaryCard`). `@` maps to `src/` — configured via tsconfig `paths` plus the matching bundler alias once the frontend is scaffolded.
-- Exception: a test file importing the thing it tests uses a relative import (`./GameSummaryCard`, not `@/components/.../GameSummaryCard`). This keeps a component and its test adjacent by construction — if the component is later promoted (moved from a feature folder into shared `components/` because it turned out to be general-purpose), the test moves with it and that import never needs touching. Shared test infrastructure (e.g. `test-utils.tsx`, mock handlers) is not "the thing under test" — those import absolute like normal code.
+- Absolute imports only: `@/components/GameSummaryCard`, never relative parent traversal (`../../components/GameSummaryCard`). `@` maps to `src/` — declared in **two** places that must stay in sync: `paths` in `tsconfig.app.json` (no `baseUrl`; it's deprecated in TS 6) and `resolve.alias` in `vite.config.ts`. Change one, change both, or types and the bundle disagree.
+- Exception: a test file importing the thing it tests uses a relative import — which, given tests live in a `tests/` subfolder, means `../GameSummaryCard`, not `@/components/.../GameSummaryCard`. This keeps a component and its test adjacent by construction — if the component is later promoted (moved from a feature folder into shared `components/` because it turned out to be general-purpose), the test moves with it and that import never needs touching. Shared test infrastructure (e.g. `test-utils.tsx`, mock handlers) is not "the thing under test" — those import absolute like normal code.
 
 ## Structure (starting point, will evolve)
 
@@ -49,7 +49,18 @@ Default assumption is a Vite-bundled SPA unless a requirement forces SSR/routing
 
 ## State management
 
-Not yet decided (React Query vs. plain fetch+hooks vs. something heavier depends on how much server state ends up client-cached). Don't introduce a state library speculatively — add to `docs/DECISIONS.md` when the need is concrete.
+TanStack React Query owns server state; `useState` covers local UI only (form fields, toggles). No Redux/Zustand — nothing here is client-owned enough to need one.
+
+- Components never call `fetch`. Request functions live in `src/api/`, and only `src/api/client.ts` knows about the `data`/`error` envelope, the base URL, and the bearer header. A hook that unwraps `data` itself is a bug.
+- Failed requests throw `ApiError` (`code`, `message`, `status`). Branch on `code`, never on `message` text.
+- Query keys are defined next to their feature and exported (e.g. `CURRENT_USER_KEY`), not written inline as string arrays at each call site.
+
+## Auth & routing
+
+- Identity comes from `useAuth()` (`src/features/auth/`). It reads a React Query cache entry rather than keeping a second copy of the user, so there's one source of truth.
+- The token lives in `localStorage` via `src/lib/tokenStorage.ts` — always through those helpers, never `localStorage` directly (every access needs the try/catch they already have).
+- Route protection is `<RequireAuth>`. It shows a loading state while a stored token is being verified instead of redirecting, so refreshes don't flash the login screen.
+- A context that provides a component _and_ other values must be split across files — `react-refresh/only-export-components` fails a module that mixes them. See `authContext.ts` / `AuthProvider.tsx` / `useAuth.ts` for the shape.
 
 ## Testing
 
@@ -57,7 +68,8 @@ Smoke-test approach — see `../docs/TESTING.md` for the shared philosophy (port
 
 - Vitest + React Testing Library. One happy-path test per component/hook/feature; a second only for a failure mode worth catching.
 - Test behavior (what the user sees/does), not implementation details.
-- Shared setup lives in one place: a custom `render` wrapper (`src/test-utils.tsx`) and one reusable mock API layer — not re-built per test file.
+- Shared setup lives in one place: `renderWithProviders` (`src/test-utils.tsx`) for anything needing the query client, router, or auth context; plain RTL `render` for a standalone primitive. Fixtures live in `src/test-mocks.ts` — don't invent a second shape for "a user".
+- Vitest globals are off deliberately: import `describe`/`it`/`expect` from `vitest`. The consequence is that RTL's auto-cleanup isn't registered for you — `src/test-setup.ts` does it, and that file is also where the Node 26 `localStorage` polyfill lives. Don't remove either without reading the comments.
 - Tests live in a `tests/` subfolder next to what they test (see Component rules and Imports above), and import their subject relatively.
 
 ## More rules incoming

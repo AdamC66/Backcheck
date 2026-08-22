@@ -3,6 +3,10 @@ class User < ApplicationRecord
 
   has_many :memberships, dependent: :destroy
 
+  # Applies to finder queries too, so login lookups match regardless of how the
+  # address was typed — without every caller remembering to downcase.
+  normalizes :email, with: ->(email) { email.strip.downcase }
+
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
 
   # A super admin bypasses scope checks entirely — see docs/ARCHITECTURE.md.

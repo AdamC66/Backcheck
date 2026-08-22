@@ -18,19 +18,31 @@ Single repo, two independently runnable apps. They communicate over HTTP only �
 
 - `backend`: Rails API container, talks to `db` (Postgres) container. Exposes JSON over HTTP.
 - `db`: Postgres container, named volume for persistence.
-- `frontend`: runs via its own dev server (Vite or Next — see `DECISIONS.md`) against the backend's HTTP API. Not necessarily containerized for local dev; only the backend + database are Dockerized per the original requirement. Revisit if frontend containerization is needed for parity with a deploy target later.
+- `frontend`: runs via its own Vite dev server (port 5173, `strictPort`) against the backend's HTTP API. Not necessarily containerized for local dev; only the backend + database are Dockerized per the original requirement. Revisit if frontend containerization is needed for parity with a deploy target later.
 
 ## Backend ↔ Frontend contract
 
 - REST-ish JSON over HTTP, namespaced under `/api/v1/`.
 - Auth: JWT bearer token in the `Authorization` header (not a cookie — see Auth section below). Chosen specifically to sidestep cross-origin cookie friction between two separately-hosted apps.
-- CORS: backend allows the frontend's dev origin explicitly, not a wildcard.
+- CORS: never a wildcard. Deployed environments name their origins in `FRONTEND_ORIGIN`; local dev accepts any `localhost`/`127.0.0.1` port, because a dev server that drifts to another port otherwise fails as an unexplained CORS error. See `DECISIONS.md`.
+- Envelope: every response is `{ data, meta? }` or `{ error: { code, message, details? } }` — see `DECISIONS.md`.
 
 ## Auth & multi-tenancy
 
 This is a public-facing, multi-tenant app: many leagues, each with many teams, each with staff who should only see/edit what they're scoped to.
 
-**Identity.** `User` has an email + `password_digest` (`has_secure_password`, bcrypt — no Devise). On login, the backend issues a signed JWT (custom-issued, not a gem) containing the user id and expiry; the frontend attaches it as `Authorization: Bearer <token>` on every request. No server-side session state.
+**Identity.** `User` has an email + `password_digest` (`has_secure_password`, bcrypt — no Devise). On login, the backend issues a signed JWT (custom-issued, not a gem) containing the user id, a `jti`, and an expiry; the frontend attaches it as `Authorization: Bearer <token>` on every request.
+
+Sessions are stateless *except* for revocation: logout records the token's `jti` in `revoked_tokens`, and `authenticate_user!` rejects any listed token, so logout genuinely invalidates rather than just dropping the token client-side. `PurgeRevokedTokensJob` clears rows once their token would have expired anyway.
+
+| Endpoint | Auth | Purpose |
+| --- | --- | --- |
+| `POST /api/v1/login` | public | Exchange credentials for a token + user |
+| `DELETE /api/v1/logout` | bearer | Revoke the presented token (204) |
+| `GET /api/v1/me` | bearer | Rehydrate identity / confirm a stored token |
+| `GET /api/v1/health` | public | Liveness probe |
+
+There is no account-creation endpoint yet — the single Super Admin is seeded (`db/seeds.rb`). On the client, identity is held by `AuthProvider` and reached through `useAuth()`; `RequireAuth` and `RedirectIfAuthenticated` own both directions of the login redirect.
 
 **Authorization is scoped, not a flat role.** A user's permissions come from one or more `Membership` rows, each of which binds the user to a role *within a specific scope* — a league or a team. The same user can hold different roles in different scopes (e.g. GM of one team, and separately invited as coaching staff on another).
 
@@ -61,9 +73,12 @@ External stats data source (scrape, provider API, manual entry) is still an open
 
 ## Docker
 
+- Local dev default: backend and frontend run natively (Makefile); Postgres runs in Docker (container + named volume `db_data`) via `make db-up`/`init`/`start` — nobody needs a local Postgres install.
+- Fully-dockerized alternative: `docker compose up` runs `backend` (built from `Dockerfile.dev`) alongside `db` — not what the Makefile targets use.
+
 - `docker-compose.yml` at repo root defines `backend` + `db` (and anything else that needs to run alongside, e.g. a job runner, once one exists).
-- Backend `Dockerfile` lives in `backend/`.
-- No compose services are scaffolded yet — added once `rails new` happens, so the Gemfile/Dockerfile have real dependencies to build against.
+- `backend/Dockerfile` is Rails-generated (production/Kamal — do not use for local dev). `backend/Dockerfile.dev` is what `docker-compose.yml` actually builds: no multi-stage/precompile, source mounted as a volume for live reload.
+- `db` (Postgres 16) + `backend` (built from `Dockerfile.dev`) are wired up in `docker-compose.yml` at repo root.
 
 ## Data flow (placeholder)
 

@@ -1,6 +1,6 @@
-# Hockey Analytics Dashboard
+# Backcheck
 
-Public-facing, multi-tenant hockey analytics dashboard: many leagues, each with many teams, staffed by league/team users with scoped roles (Super Admin > League Admin > team roles like GM/Assistant GM/Coaching Staff). Full scope is still being refined — see `docs/PLANNING.md` and the `planning/` epics/tasks board.
+Backcheck is a public-facing, multi-tenant hockey analytics dashboard: many leagues, each with many teams, staffed by league/team users with scoped roles (Super Admin > League Admin > team roles like GM/Assistant GM/Coaching Staff). Full scope is still being refined — see `docs/PLANNING.md` and the `planning/` epics/tasks board.
 
 ## Stack
 

@@ -7,3 +7,18 @@
 ].each { |attrs| Role.find_or_create_by!(key: attrs[:key]) { |r| r.assign_attributes(attrs) } }
 
 puts "Seeded #{Role.count} roles."
+
+# There is no account-creation endpoint yet, so the one Super Admin is seeded.
+if Rails.env.production? && !ENV.key?("SUPER_ADMIN_PASSWORD")
+  raise "Refusing to seed a default-password Super Admin in production — set SUPER_ADMIN_PASSWORD."
+end
+
+admin_email = ENV.fetch("SUPER_ADMIN_EMAIL", "admin@example.com")
+admin_password = ENV.fetch("SUPER_ADMIN_PASSWORD", "password123")
+
+admin = User.find_or_initialize_by(email: admin_email)
+admin.password = admin_password if admin.new_record?
+admin.is_super_admin = true
+admin.save!
+
+puts "Super Admin: #{admin.email}"

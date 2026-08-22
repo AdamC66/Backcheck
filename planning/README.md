@@ -14,7 +14,7 @@ Tasks reference their epic (`epic_id`); epics don't list their tasks back — on
 
 ## IDs
 
-`EPIC-<n>` / `TASK-<n>`, sequential, never reused even if a ticket is dropped. Project id is a slug (`hockey-analytics-dashboard`).
+`EPIC-<n>` / `TASK-<n>`, sequential, never reused even if a ticket is dropped. Project id is a slug (`backcheck`).
 
 ## Workflow
 

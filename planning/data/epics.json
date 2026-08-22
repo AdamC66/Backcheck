@@ -1,7 +1,7 @@
 [
   {
     "id": "EPIC-1",
-    "project_id": "hockey-analytics-dashboard",
+    "project_id": "backcheck",
     "title": "Auth & multi-tenancy foundation",
     "description": "User, Role (lookup), Membership (polymorphic League/Team scope), Super Admin flag, JWT issuance/verification.",
     "status": "in_progress",
@@ -9,7 +9,7 @@
   },
   {
     "id": "EPIC-2",
-    "project_id": "hockey-analytics-dashboard",
+    "project_id": "backcheck",
     "title": "League/Team/Season domain model",
     "description": "League, Team, Season as first-class entities, plus TeamAffiliation (NHL/AHL/ECHL affiliate chain).",
     "status": "in_progress",
@@ -17,7 +17,7 @@
   },
   {
     "id": "EPIC-3",
-    "project_id": "hockey-analytics-dashboard",
+    "project_id": "backcheck",
     "title": "Player & roster history",
     "description": "Player plus RosterEntry (player+team+season with joined_on/left_on) so trades and Super Admin moves preserve history instead of overwriting a current-team FK.",
     "status": "backlog",
@@ -25,7 +25,7 @@
   },
   {
     "id": "EPIC-4",
-    "project_id": "hockey-analytics-dashboard",
+    "project_id": "backcheck",
     "title": "Game & stats domain model",
     "description": "Game, SkaterStatLine, GoalieStatLine as separate tables (not one combined wide table, per the prior attempt's lesson).",
     "status": "backlog",
@@ -33,7 +33,7 @@
   },
   {
     "id": "EPIC-5",
-    "project_id": "hockey-analytics-dashboard",
+    "project_id": "backcheck",
     "title": "Backend skeleton & infra",
     "description": "rails new (API-only), Docker Compose (backend + db), health-check endpoint.",
     "status": "done",
@@ -41,7 +41,7 @@
   },
   {
     "id": "EPIC-6",
-    "project_id": "hockey-analytics-dashboard",
+    "project_id": "backcheck",
     "title": "Frontend skeleton",
     "description": "Vite vs Next decided and scaffolded, Tailwind configured, auth screens wired to backend JWT.",
     "status": "in_progress",
@@ -49,7 +49,7 @@
   },
   {
     "id": "EPIC-7",
-    "project_id": "hockey-analytics-dashboard",
+    "project_id": "backcheck",
     "title": "Super Admin tools",
     "description": "Manual overrides: move a player between teams, edit records directly, bypassing normal scope checks.",
     "status": "backlog",
@@ -57,7 +57,7 @@
   },
   {
     "id": "EPIC-8",
-    "project_id": "hockey-analytics-dashboard",
+    "project_id": "backcheck",
     "title": "External stats ingestion",
     "description": "Get real stat data into the system. Blocked on deciding the data source (manual entry vs CSV vs provider API).",
     "status": "blocked",

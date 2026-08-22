@@ -5,6 +5,6 @@ RSpec.describe "GET /api/v1/health", type: :request do
     get "/api/v1/health"
 
     expect(response).to have_http_status(:ok)
-    expect(JSON.parse(response.body)).to eq("status" => "ok")
+    expect(response.parsed_body).to eq("data" => { "status" => "ok" })
   end
 end

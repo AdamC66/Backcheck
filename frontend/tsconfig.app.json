@@ -16,7 +16,12 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Absolute imports — must stay in sync with the alias in vite.config.ts.
+       No baseUrl: it's deprecated in TS 6, and paths resolve against this file. */
+    "paths": { "@/*": ["./src/*"] },
+
     /* Linting */
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,

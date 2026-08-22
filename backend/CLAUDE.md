@@ -15,8 +15,10 @@ Developer is new to Rails. Prefer idiomatic, conventional patterns over clever o
 ## API conventions
 
 - All routes under `/api/v1/...`. Breaking changes get a new version, not an in-place change.
-- Consistent envelope for responses and errors (exact shape TBD — record it in `docs/DECISIONS.md` once picked, don't let it drift endpoint to endpoint).
+- One envelope, no exceptions: success is `{ data: ..., meta?: ... }`, failure is `{ error: { code, message, details? } }`. Always go through `render_data` / `render_error` (the `ApiResponses` concern) — never `render json:` a bare hash from a controller.
+- `code` is a stable machine-readable string the frontend can branch on (`invalid_credentials`, `unauthorized`); `message` is for humans and may be reworded freely.
 - Status codes used correctly: 422 for validation failures, 404 for missing records, 401/403 for auth — not 200-with-an-error-field.
+- CORS (`config/initializers/cors.rb`): local dev allows any `localhost`/`127.0.0.1` port, because a Vite server that drifts to `:5174` otherwise surfaces as an unexplained CORS failure. Deployed environments must set `FRONTEND_ORIGIN` (comma-separated for more than one) — nothing is allowed by default outside dev.
 
 ## Data
 
@@ -28,8 +30,9 @@ Developer is new to Rails. Prefer idiomatic, conventional patterns over clever o
 
 See `../docs/ARCHITECTURE.md` (Auth & multi-tenancy) and `../docs/DECISIONS.md` for the full model. Summary for backend work:
 
-- `User` uses `has_secure_password` (bcrypt). No Devise.
-- Login issues a hand-rolled JWT (id + expiry, signed with the app's secret). Verify it in a single `before_action`/concern shared by every controller that needs auth — don't re-implement token parsing per controller.
+- `User` uses `has_secure_password` (bcrypt). No Devise. Email is normalized (`normalizes :email`), which also covers finder queries — don't re-downcase at call sites.
+- Login issues a hand-rolled JWT (`user_id` + `jti` + expiry, signed with the app's secret). Verification lives only in `Api::V1::BaseController#authenticate_user!` — don't re-implement token parsing per controller. Controllers needing public access inherit `BaseController` and `skip_before_action :authenticate_user!` for those actions, so authentication stays opt-*out*.
+- Logout revokes for real: the token's `jti` goes into `revoked_tokens` and every authenticated request checks it. That check is why a stolen token stops working after logout, so don't "optimize" it away.
 - Permissions come from `Membership` (`user_id`, `role_id`, polymorphic `scopeable`), plus `User#is_super_admin`. `Role` is a lookup table — never hardcode role names as a Rails enum or a magic string scattered across controllers; reference `Role.find_by(key: ...)` or a constant defined once.
 - A controller action's authorization check should read as one clear question ("does this user have a qualifying membership for this scopeable, or are they super admin?"), not inline ad-hoc conditionals repeated per action. Whether that's hand-rolled or a policy gem (Pundit) is still open — see `DECISIONS.md` — but don't let the pattern drift per-controller in the meantime.
 

@@ -1,6 +1,6 @@
 {
-  "id": "hockey-analytics-dashboard",
-  "name": "Hockey Analytics Dashboard",
+  "id": "backcheck",
+  "name": "Backcheck",
   "description": "Multi-tenant hockey analytics dashboard for league/team staff. Rails API (bcrypt+JWT auth, Postgres, Docker) + React/TS/Tailwind frontend.",
   "status": "active"
 }
