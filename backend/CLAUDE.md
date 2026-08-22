@@ -48,7 +48,12 @@ Active Storage (`has_one_attached`), not files committed to a public directory �
 
 ## Background jobs, external services
 
-Not yet decided (data source for stats is still open — see `DECISIONS.md`). Whatever it ends up being, external sync work is a background job, never executed inline on the request/response path.
+Stats come from the NHL's public web API — see `../docs/DECISIONS.md` for the design and `../docs/API.md` for the endpoints consumed.
+
+- `app/clients/` holds anything that talks to a third party. `NhlClient` is the only thing allowed to make an outbound HTTP call, and **only a job may call it** — never a controller, service-called-from-a-controller, or model callback. The prior attempt fetched inline from a resolver; that's the mistake this rule exists to prevent.
+- Ingestion jobs are `queue_as :ingest`, which `config/queue.yml` runs single-threaded. That's what makes the client's request interval real, so don't move an ingestion job onto another queue.
+- Sync services (`SyncStandings`, `SyncTeamSchedule`, …) take an injectable `client:` so specs pass a throttle-free one. They report unmatched records (`missing_teams`) rather than raising or silently skipping — a partial sync should be visible, not look clean.
+- Specs never hit the network: webmock blocks it globally, and `spec/support/nhl_api_helpers.rb` provides `stub_nhl` plus trimmed real payloads in `spec/fixtures/files/nhl/`.
 
 ## Testing
 

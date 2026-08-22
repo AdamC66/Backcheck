@@ -141,9 +141,32 @@ Deployment still points at `Disk`; a mounted volume keeps `backend/storage/` acr
 **Status:** Open
 The data model (Role/Membership/scope) is settled; how it's enforced in controllers — hand-rolled scope checks vs. a policy-object gem (e.g. Pundit) — is left until the backend exists.
 
-### External stats data source
-**Status:** Open
-Manual entry, CSV import, or a live provider/scrape — not yet decided. Whatever it is, sync happens in a background job, never inline on the request path (see `ARCHITECTURE.md`).
+### External stats data source: the NHL's public web API
+**Status:** Settled
+`api-web.nhle.com` (the endpoints catalogued in [Zmalski/NHL-API-Reference](https://github.com/Zmalski/NHL-API-Reference)) — undocumented but public, free, and the source of truth for the data it serves. Replaces the dead `statsapi.web.nhl.com` the prior attempt used. Manual entry and CSV import were the alternatives; both are worse versions of the same data, and neither survives a nightly refresh.
+
+The API publishes **no rate limit and returns no rate-limit headers** — it's Cloudflare-fronted with a ~14s cache. That means politeness is entirely self-imposed, so ingestion is throttled by construction rather than by observation:
+- `NhlClient` enforces a minimum interval between requests (default 1s, `NHL_API_MIN_INTERVAL`), tracked with a monotonic clock on a process-wide mutex so separate services can't each keep a private interval and collectively burst.
+- Every ingestion job runs `queue_as :ingest`, and `config/queue.yml` gives that queue **one thread in one process**. Queues are now listed explicitly instead of `"*"`, because a wildcard worker would run three syncs in parallel and turn one request per second into three. A new queue needs adding there or nothing runs it.
+- Retries are capped at 3 with exponential backoff on 429/5xx/timeouts. A 404 doesn't retry — a season that doesn't exist won't start existing.
+
+Nothing calls the client from a request. Data lands via jobs (`SyncStandingsJob`, `SyncDailyScoresJob`, `SyncTeamScheduleJob`), which is the explicit correction of the prior attempt's "if the data is older than six hours, go fetch it" inside a resolver.
+
+**Historical vs. daily.** Backfill is a rake task (`rake 'nhl:backfill[20242025,20252026]'`), currently the two most recent seasons; widening it is a re-run, not a code change. Daily syncs are two `recurring.yml` entries at 9am UTC (~5am Eastern, late enough that West Coast games are final): standings and scores for yesterday. Three requests a day.
+
+Every write is an upsert on a natural key (`nhl_game_id`; `team + season + as_of_date`), so re-running anything is safe.
+
+### Standings as dated snapshots
+**Status:** Settled
+`team_standings` is keyed `(team, season, as_of_date)` — one row per team per day, not one row overwritten in place as the prior attempt did. It makes "where did the wildcard race stand in January" answerable and matches how the upstream `/v1/standings/{date}` endpoint thinks. Cost is ~5,700 rows per season, which is nothing.
+
+Completed seasons get a single end-of-season snapshot rather than a day-by-day backfill (1 request instead of ~180); the live season accumulates dailies from here on. `as_of_date` is taken from the payload rather than the requested date, which has a useful side effect: an offseason sync returns the final standings still dated to the end of the season, so it updates the existing rows instead of inventing a new snapshot every quiet day.
+
+We store ~30 of the 82 fields per team. The omitted ones are percentages and per-split sequences that are derivable or unused; because each sync re-reads the whole payload, adding one back later is a migration, not a re-fetch.
+
+### webmock in the test group
+**Status:** Settled
+Real HTTP is disabled in every spec (`WebMock.disable_net_connect!(allow_localhost: true)`), so an NHL sync spec can't quietly depend on the live API or hammer it in a loop. Fixtures in `spec/fixtures/files/nhl/` are trimmed recordings of real payloads — kept small by dropping teams and games, never by editing fields, so the shapes stay honest. VCR was the alternative and is more machine than this needs when four endpoints are involved.
 
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

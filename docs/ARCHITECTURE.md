@@ -44,7 +44,12 @@ Sessions are stateless *except* for revocation: logout records the token's `jti`
 | `GET /api/v1/health` | public | Liveness probe |
 | `GET /api/v1/leagues` | bearer | Leagues visible to the caller (all of them for a Super Admin) |
 | `GET /api/v1/leagues/:slug` | bearer | One league with its teams; 404 (not 403) if the caller can't see it |
+| `GET /api/v1/leagues/:slug/standings` | bearer | Dated standings snapshots for a season (`season`, `date` params) |
+| `GET /api/v1/teams/:id` | bearer | One team |
+| `GET /api/v1/teams/:id/games` | bearer | A team's games for a season (`season`, `game_type` params) |
 | `GET /rails/active_storage/blobs/proxy/...` | signed URL | Logo bytes, streamed by Active Storage. Public by design — an `<img>` tag can't send a bearer token |
+
+Full request/response shapes live in `API.md`.
 
 There is no account-creation endpoint yet — the single Super Admin is seeded (`db/seeds.rb`). On the client, identity is held by `AuthProvider` and reached through `useAuth()`; `RequireAuth` and `RedirectIfAuthenticated` own both directions of the login redirect.
 
@@ -67,13 +72,14 @@ Informed by a prior (pre-AI, Django-based) attempt at this same domain — see `
 - **League** — name, slug, abbreviation, `tier` (rank in the affiliation hierarchy: NHL 1, AHL 2, ECHL 3), and a `logo` Active Storage attachment. Owns many Teams. Seeded from `db/seeds.rb`; artwork originates in `data/*.svg`.
 - **Team** — full name ("Anaheim Ducks"), abbreviation (unique within its league — CGY is both the Flames and the Wranglers), a `logo` Active Storage attachment, and up to three hex colors. Belongs to a League. Seeded from `data/<slug>-teams/teams.json` by `ImportTeams`, keyed on abbreviation so a corrected manifest can be re-seeded.
 - **TeamAffiliation** — self-join on Team: `parent_team_id`, `affiliate_team_id`, `started_on`/`ended_on`. Models the NHL→AHL→ECHL organizational chain (e.g. Ottawa Senators → Belleville Senators) the same history-preserving way `RosterEntry` handles player movement — affiliations change (an ECHL affiliate especially), so this is never a plain FK overwritten in place. Arbitrary depth (a chain, not a hardcoded 3-tier column set), since a team can be both an affiliate and a parent.
-- **Season** — a first-class entity (`label`, `starts_on`, `ends_on`), not a hardcoded string. The old attempt baked `"20192020"`-style strings into business logic; this time season-scoped data (rosters, stats, schedule) all carry a real `season_id`.
+- **Season** — a first-class entity (`label`, `starts_on`, `ends_on`), not a hardcoded string, and **belongs to a League**: the AHL's 2025-26 is a different row with different dates than the NHL's. `nhl_season_id` (20252026) holds the upstream key on NHL rows. The old attempt baked `"20192020"`-style strings into business logic; this time season-scoped data (rosters, stats, schedule) all carry a real `season_id`. `Season.current` returns nothing between seasons, which is the honest answer rather than a guess.
 - **Player** — bio fields (name, birth date, position, shoots/catches, height/weight), no direct `team_id`.
 - **RosterEntry** — join of `player`, `team`, and `season` with `joined_on`/`left_on`. A trade or a Super Admin moving a player is: close the old entry, open a new one. This preserves full team history per player instead of overwriting a single current-team foreign key.
-- **Game** — `season_id`, home/away `team_id`, date, scores, status. A team's rest state (back-to-back vs. days off) is a genuinely useful signal the old app computed inline (`calc_difficulty`); this time it's a derived/computed value, not duplicated raw data — exact implementation (computed on read vs. a refreshed materialized column) is a backend detail to decide later.
+- **Game** — `nhl_game_id`, `season_id`, home/away `team_id`, `game_type` (preseason/regular/playoffs), `starts_at` plus a venue-local `game_date`, venue, scores, `state`, and `last_period_type` (REG/OT/SO). Validates that both teams and the season share a league. A team's rest state (back-to-back vs. days off) is a genuinely useful signal the old app computed inline (`calc_difficulty`); this time it's a derived/computed value, not duplicated raw data — exact implementation (computed on read vs. a refreshed materialized column) is a backend detail to decide later.
+- **TeamStanding** — a dated standings snapshot per team per season (`as_of_date`), covering record, goals, streak, placement sequences, and home/road/L10 splits. History-preserving rather than a single row overwritten each sync — see `DECISIONS.md`.
 - **SkaterStatLine** / **GoalieStatLine** — kept as two separate tables, not one wide nullable table covering both stat families (the old app's approach). Each links a player to a game (or a season for aggregates).
 
-External stats data source (scrape, provider API, manual entry) is still an open question — see `PLANNING.md`. Whatever it is, the old app's pattern of blocking, synchronous external calls inline in request handlers (with a literal `sleep(3)`) is explicitly not being repeated; any external sync belongs in a background job, not the request/response path.
+Stat data comes from the NHL's public web API (`api-web.nhle.com`) — see `DECISIONS.md` for the ingestion design. The old app's pattern of blocking, synchronous external calls inline in request handlers (with a literal `sleep(3)`) is explicitly not repeated: `NhlClient` is called only from jobs on a single-threaded `ingest` queue, and the request path only ever reads what's already in Postgres.
 
 ## Docker
 

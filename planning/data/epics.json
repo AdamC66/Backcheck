@@ -28,7 +28,7 @@
     "project_id": "backcheck",
     "title": "Game & stats domain model",
     "description": "Game, SkaterStatLine, GoalieStatLine as separate tables (not one combined wide table, per the prior attempt's lesson).",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium"
   },
   {
@@ -59,8 +59,8 @@
     "id": "EPIC-8",
     "project_id": "backcheck",
     "title": "External stats ingestion",
-    "description": "Get real stat data into the system. Blocked on deciding the data source (manual entry vs CSV vs provider API).",
-    "status": "blocked",
+    "description": "Get real stat data into the system from the NHL's public web API (api-web.nhle.com). Throttled client called only from jobs; historical backfill by rake task, daily syncs via recurring.yml.",
+    "status": "in_progress",
     "priority": "low",
     "blocked_reason": "External stats data source not yet decided (docs/DECISIONS.md)."
   }

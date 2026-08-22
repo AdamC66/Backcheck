@@ -100,6 +100,51 @@
     "description": "Logos were files committed to frontend/public, so changing one meant a frontend redeploy. Now has_one_attached :logo on League and Team, Disk service (S3-compatible later), seeded from data/ via AttachLogo with a checksum guard so reruns don't orphan blobs. Serializers emit absolute proxy URLs; the logo filename columns are dropped. SVG is served inline via a documented exception to Active Storage's binary-serving default \u2014 revisit if an upload endpoint is added."
   },
   {
+    "id": "TASK-22",
+    "epic_id": "EPIC-8",
+    "title": "NhlClient: throttled, retrying HTTP client for api-web.nhle.com",
+    "type": "feature",
+    "status": "done",
+    "priority": "high",
+    "description": "Net::HTTP, no new runtime gem. Process-wide minimum interval on a monotonic clock, exponential backoff on 429/5xx/timeout capped at 3 attempts, 404 not retried, typed errors. Paired with a single-threaded ingest queue in config/queue.yml."
+  },
+  {
+    "id": "TASK-23",
+    "epic_id": "EPIC-8",
+    "title": "Sync services and jobs for seasons, standings, and games",
+    "type": "feature",
+    "status": "done",
+    "priority": "high",
+    "description": "SyncSeasons, SyncStandings, SyncTeamSchedule, SyncDailyScores, sharing UpsertGame. All upsert on natural keys so reruns are safe, and all report unmatched teams instead of skipping silently. Wrapped by jobs on queue_as :ingest."
+  },
+  {
+    "id": "TASK-24",
+    "epic_id": "EPIC-8",
+    "title": "Backfill task and daily recurring syncs",
+    "type": "chore",
+    "status": "done",
+    "priority": "medium",
+    "description": "rake 'nhl:backfill[20242025,20252026]' loaded 3,001 games and 64 standings rows in ~2 min. Daily standings + scores at 9am UTC in recurring.yml. Widening the season range is a re-run, not a code change."
+  },
+  {
+    "id": "TASK-25",
+    "epic_id": "EPIC-4",
+    "title": "Read API for standings and team games, plus docs/API.md",
+    "type": "feature",
+    "status": "done",
+    "priority": "medium",
+    "description": "GET /leagues/:slug/standings (season + date params, dated snapshots) and GET /teams/:id/games (season + game_type). Scoped by League.visible_to and User#authorized_for_team?; unauthorized reads as 404. docs/API.md covers our endpoints and the upstream ones we consume."
+  },
+  {
+    "id": "TASK-26",
+    "epic_id": "EPIC-4",
+    "title": "Migrations for SkaterStatLine and GoalieStatLine",
+    "type": "feature",
+    "status": "todo",
+    "priority": "medium",
+    "description": "Two separate tables, not one wide nullable table. Source is /v1/club-stats/{team}/{season}/{game-type} plus player game logs. Depends on TASK-8 (Player, RosterEntry)."
+  },
+  {
     "id": "TASK-7",
     "epic_id": "EPIC-3",
     "title": "Design Player/RosterEntry schema",
@@ -128,8 +173,9 @@
     "epic_id": "EPIC-4",
     "title": "Migrations for Game + stat line tables",
     "type": "feature",
-    "status": "todo",
-    "priority": "medium"
+    "status": "done",
+    "priority": "medium",
+    "description": "Game table shipped with NHL ingestion (nhl_game_id, season, home/away teams, type, venue-local date, scores, state, last period type). SkaterStatLine/GoalieStatLine remain outstanding \u2014 tracked as TASK-26."
   },
   {
     "id": "TASK-11",
@@ -178,7 +224,8 @@
     "epic_id": "EPIC-8",
     "title": "Decide external stats data source",
     "type": "spike",
-    "status": "todo",
-    "priority": "low"
+    "status": "done",
+    "priority": "low",
+    "description": "Settled: the NHL's public web API (api-web.nhle.com), catalogued at github.com/Zmalski/NHL-API-Reference. Replaces the dead statsapi.web.nhl.com the prior attempt used. See docs/DECISIONS.md."
   }
 ]
