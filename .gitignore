@@ -1,0 +1,34 @@
+# --- Rails / Ruby ---
+/backend/log/*
+/backend/tmp/*
+/backend/storage/*
+/backend/.byebug_history
+/backend/config/master.key
+/backend/config/credentials/*.key
+!/backend/log/.keep
+!/backend/tmp/.keep
+/backend/vendor/bundle
+/backend/.bundle
+
+# --- Node / React ---
+/frontend/node_modules
+/frontend/dist
+/frontend/.next
+/frontend/build
+/frontend/.vite
+/frontend/coverage
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Docker ---
+*.pid
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
