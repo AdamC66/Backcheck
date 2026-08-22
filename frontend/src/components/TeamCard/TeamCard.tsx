@@ -31,7 +31,9 @@ export function TeamCard({ team }: TeamCardProps) {
           </div>
 
           <Stack gap="none" className="min-w-0">
-            <Text variant="label">{team.name}</Text>
+            <Text variant="label" className="block truncate">
+              {team.name}
+            </Text>
             <Text variant="caption">{team.abbreviation}</Text>
           </Stack>
         </Row>

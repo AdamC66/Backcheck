@@ -21,6 +21,28 @@ describe("StandingsTable", () => {
     expect(screen.getByText("-46")).toBeInTheDocument();
   });
 
+  it("ranks by the sequence it's given, with a prefix when asked", () => {
+    render(
+      <StandingsTable
+        standings={STANDINGS.data}
+        rankKey="wildcard_sequence"
+        rankPrefix="WC"
+        cutlineAfter={0}
+      />,
+    );
+
+    const rows = screen.getAllByRole("row").slice(1);
+
+    expect(within(rows[0]).getByText("WC0")).toBeInTheDocument();
+    expect(screen.getByText("Playoff cut")).toBeInTheDocument();
+  });
+
+  it("draws no cut line unless one is asked for", () => {
+    render(<StandingsTable standings={STANDINGS.data} />);
+
+    expect(screen.queryByText("Playoff cut")).not.toBeInTheDocument();
+  });
+
   it("formats the streak and points percentage the way a standings table does", () => {
     render(<StandingsTable standings={STANDINGS.data} />);
 

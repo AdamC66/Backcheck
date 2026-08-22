@@ -18,6 +18,19 @@ export const TEAM_USER: User = {
   is_super_admin: false,
 };
 
+export function teamFor(id: number, abbreviation: string): Team {
+  return {
+    id,
+    name: `${abbreviation} Club`,
+    abbreviation,
+    nhl_team_id: id,
+    logo_url: null,
+    primary_color: null,
+    secondary_color: null,
+    tertiary_color: null,
+  };
+}
+
 export const LEAGUES: League[] = [
   {
     id: 1,
@@ -50,6 +63,7 @@ export const TEAMS: Team[] = [
     id: 1,
     name: "Anaheim Ducks",
     abbreviation: "ANA",
+    nhl_team_id: 24,
     logo_url: "http://localhost:3000/rails/active_storage/blobs/proxy/ana/anaheim.png",
     primary_color: "#F47A38",
     secondary_color: "#B9975B",
@@ -59,6 +73,7 @@ export const TEAMS: Team[] = [
     id: 2,
     name: "Boston Bruins",
     abbreviation: "BOS",
+    nhl_team_id: 6,
     logo_url: null,
     primary_color: null,
     secondary_color: null,
@@ -68,7 +83,8 @@ export const TEAMS: Team[] = [
 
 export const LEAGUE_WITH_TEAMS: LeagueWithTeams = { ...LEAGUES[0], teams: TEAMS };
 
-function standingFor(team: Team, overrides: Partial<Standing>): Standing {
+// Exported so grouping tests can build a whole league without redefining the shape.
+export function standingFor(team: Team, overrides: Partial<Standing> = {}): Standing {
   return {
     team,
     as_of_date: "2026-04-17",

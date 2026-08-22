@@ -1,7 +1,12 @@
+import { Fragment } from "react";
+import type { RankKey } from "@/lib/standingsViews";
 import type { Standing, StandingRecord } from "@/models/standings";
 
 export interface StandingsTableProps {
   standings: Standing[];
+  rankKey?: RankKey;
+  rankPrefix?: string;
+  cutlineAfter?: number;
 }
 
 const NUMERIC_COLUMNS = [
@@ -11,6 +16,8 @@ const NUMERIC_COLUMNS = [
   { key: "ot_losses", label: "OTL", title: "Overtime losses" },
   { key: "points", label: "PTS", title: "Points" },
 ] as const;
+
+const COLUMN_COUNT = 2 + NUMERIC_COLUMNS.length + 4;
 
 const HEADER_CELL = "px-3 py-2 font-medium whitespace-nowrap";
 const NUMERIC_CELL = "px-3 py-2 text-right tabular-nums whitespace-nowrap";
@@ -34,10 +41,13 @@ function differentialTone(differential: number) {
   return differential < 0 ? "text-red-600" : "text-slate-500";
 }
 
-export function StandingsTable({ standings }: StandingsTableProps) {
+export function StandingsTable({
+  standings,
+  rankKey = "league_sequence",
+  rankPrefix = "",
+  cutlineAfter,
+}: StandingsTableProps) {
   return (
-    // The table is wider than a phone; it scrolls inside the card rather than pushing
-    // the page sideways.
     <div className="overflow-x-auto">
       <table className="w-full min-w-3xl border-collapse text-sm">
         <thead>
@@ -79,44 +89,57 @@ export function StandingsTable({ standings }: StandingsTableProps) {
 
         <tbody>
           {standings.map((standing, index) => (
-            <tr key={standing.team.id} className="border-b border-slate-100 last:border-0">
-              <td className={`${NUMERIC_CELL} text-slate-500`}>
-                {standing.league_sequence ?? index + 1}
-              </td>
-
-              <th scope="row" className="px-3 py-2 text-left font-medium text-slate-800">
-                <span className="flex items-center gap-2">
-                  {standing.team.logo_url === null ? null : (
-                    <img src={standing.team.logo_url} alt="" className="h-5 w-5 object-contain" />
-                  )}
-                  <span className="whitespace-nowrap">{standing.team.name}</span>
-                </span>
-              </th>
-
-              {NUMERIC_COLUMNS.map((column) => (
-                <td
-                  key={column.key}
-                  className={`${NUMERIC_CELL} ${column.key === "points" ? "font-semibold text-slate-900" : "text-slate-700"}`}
-                >
-                  {standing[column.key]}
+            <Fragment key={standing.team.id}>
+              <tr className="border-b border-slate-100 last:border-0">
+                <td className={`${NUMERIC_CELL} text-slate-500`}>
+                  {`${rankPrefix}${standing[rankKey] ?? index + 1}`}
                 </td>
-              ))}
 
-              <td className={`${NUMERIC_CELL} text-slate-700`}>
-                {formatPointPctg(standing.point_pctg)}
-              </td>
-              <td className={`${NUMERIC_CELL} ${differentialTone(standing.goal_differential)}`}>
-                {standing.goal_differential > 0
-                  ? `+${standing.goal_differential}`
-                  : standing.goal_differential}
-              </td>
-              <td className={`${NUMERIC_CELL} text-slate-700`}>
-                {formatRecord(standing.l10_record)}
-              </td>
-              <td className={`${NUMERIC_CELL} text-slate-700`}>
-                {formatStreak(standing.streak_code, standing.streak_count)}
-              </td>
-            </tr>
+                <th scope="row" className="px-3 py-2 text-left font-medium text-slate-800">
+                  <span className="flex items-center gap-2">
+                    {standing.team.logo_url === null ? null : (
+                      <img src={standing.team.logo_url} alt="" className="h-5 w-5 object-contain" />
+                    )}
+                    <span className="whitespace-nowrap">{standing.team.name}</span>
+                  </span>
+                </th>
+
+                {NUMERIC_COLUMNS.map((column) => (
+                  <td
+                    key={column.key}
+                    className={`${NUMERIC_CELL} ${column.key === "points" ? "font-semibold text-slate-900" : "text-slate-700"}`}
+                  >
+                    {standing[column.key]}
+                  </td>
+                ))}
+
+                <td className={`${NUMERIC_CELL} text-slate-700`}>
+                  {formatPointPctg(standing.point_pctg)}
+                </td>
+                <td className={`${NUMERIC_CELL} ${differentialTone(standing.goal_differential)}`}>
+                  {standing.goal_differential > 0
+                    ? `+${standing.goal_differential}`
+                    : standing.goal_differential}
+                </td>
+                <td className={`${NUMERIC_CELL} text-slate-700`}>
+                  {formatRecord(standing.l10_record)}
+                </td>
+                <td className={`${NUMERIC_CELL} text-slate-700`}>
+                  {formatStreak(standing.streak_code, standing.streak_count)}
+                </td>
+              </tr>
+
+              {cutlineAfter === index ? (
+                <tr>
+                  <td
+                    colSpan={COLUMN_COUNT}
+                    className="border-y-2 border-dashed border-slate-300 px-3 py-1 text-xs tracking-wide text-slate-500 uppercase"
+                  >
+                    Playoff cut
+                  </td>
+                </tr>
+              ) : null}
+            </Fragment>
           ))}
         </tbody>
       </table>
