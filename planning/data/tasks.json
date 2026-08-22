@@ -12,7 +12,7 @@
     "epic_id": "EPIC-1",
     "title": "Implement JWT issuance & verification",
     "type": "feature",
-    "status": "todo",
+    "status": "done",
     "priority": "high"
   },
   {
@@ -20,8 +20,9 @@
     "epic_id": "EPIC-1",
     "title": "Implement Membership-based authorization checks",
     "type": "feature",
-    "status": "todo",
+    "status": "in_progress",
     "priority": "high",
+    "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. Controller-level 403 enforcement still pending — no protected resource controller exists yet to wire it into.",
     "acceptance_criteria": [
       "A request from a user with no qualifying membership and no super-admin flag is rejected with 403",
       "A league_admin can act on any team within their league without a team-level membership row"
@@ -33,7 +34,7 @@
     "title": "Seed initial Role lookup values",
     "description": "league_admin, gm, assistant_gm, coaching_staff.",
     "type": "chore",
-    "status": "todo",
+    "status": "done",
     "priority": "medium"
   },
   {
@@ -49,7 +50,7 @@
     "epic_id": "EPIC-2",
     "title": "Migrations for League, Team, Season",
     "type": "feature",
-    "status": "todo",
+    "status": "done",
     "priority": "high"
   },
   {
@@ -89,7 +90,7 @@
     "epic_id": "EPIC-5",
     "title": "rails new --api, wire up Docker Compose (backend + db)",
     "type": "chore",
-    "status": "todo",
+    "status": "done",
     "priority": "high"
   },
   {
@@ -97,7 +98,7 @@
     "epic_id": "EPIC-5",
     "title": "Health-check endpoint + first RSpec smoke test",
     "type": "feature",
-    "status": "todo",
+    "status": "done",
     "priority": "high"
   },
   {
@@ -105,8 +106,9 @@
     "epic_id": "EPIC-6",
     "title": "Decide Vite vs Next, scaffold app + Tailwind",
     "type": "chore",
-    "status": "todo",
-    "priority": "high"
+    "status": "in_progress",
+    "priority": "high",
+    "description": "Vite + React + TS scaffolded. Tailwind, the @ import alias, and the components/features/hooks/api folder structure from frontend/CLAUDE.md are still pending."
   },
   {
     "id": "TASK-14",

@@ -45,6 +45,16 @@ Smoke-test approach — see `../docs/TESTING.md` for the shared philosophy (port
 - Factories (FactoryBot), not fixtures. Shared setup goes in `shared_examples`/`spec/support/`, not copy-pasted per spec.
 - Request specs (not controller specs) for endpoints.
 
-## Docker
+## Formatting & linting
 
-Backend runs in Docker (see `../docs/ARCHITECTURE.md` for the compose layout). Don't assume a local Ruby install — commands run through `docker compose run`/`exec` unless stated otherwise.
+RuboCop is the formatter here 
+
+- `rubocop-rails-omakase` is the style (see `.rubocop.yml`). It's deliberately the "don't configure it" preset — add an override only for a rule that actively causes problems, not to win a style argument.
+- `bin/rubocop -a` formats. **Never `-A`** — that enables unsafe corrections that can change behavior, unlike a real formatter.
+- Pre-commit runs `-a` on staged Ruby and aborts the commit if anything is left uncorrectable. Hook lives in `../frontend/.husky/` (husky owns the git hooks path — see `../docs/DECISIONS.md`).
+- Omakase is lenient by design: it enforces layout (`[ :a, :b ]` spacing, commas) but leaves things like `a+b` alone. A clean RuboCop run is not a claim that the code reads well.
+
+## Ruby version & Docker
+
+- Ruby 3.4.10, pinned in `.mise.toml` (and `.ruby-version`). A local install exists so RuboCop and RSpec run in the terminal and in the pre-commit hook without paying container startup on every commit.
+- Local dev runs Rails natively against a dockerized Postgres — `make init` then `make start` from the repo root, which is why the local Ruby matters beyond static tooling. `docker compose up` still runs the whole backend in a container; see `../docs/ARCHITECTURE.md` for both layouts.

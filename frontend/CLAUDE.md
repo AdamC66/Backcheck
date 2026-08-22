@@ -33,6 +33,15 @@ Default assumption is a Vite-bundled SPA unless a requirement forces SSR/routing
 - No `any`. If the type is genuinely unknown, use `unknown` and narrow it.
 - Props get an explicit interface/type, not inferred from usage.
 
+## Formatting & linting
+
+- Prettier owns formatting, ESLint owns correctness. `eslint-config-prettier` is extended **last** in `eslint.config.js` — never add a stylistic ESLint rule that Prettier already decides.
+- Config is `.prettierrc.json`: defaults plus `printWidth: 100`. Don't hand-format against it; run `npm run format`.
+- `npm run lint` / `npm run format:check` are the read-only checks; `npm run format` writes.
+- Pre-commit (husky + lint-staged, hooks in `.husky/`): staged `.ts`/`.tsx` get `eslint --fix` then `prettier --write`; other staged files get `prettier --write`. A lint error `--fix` can't resolve aborts the commit. Fix it — don't reach for `--no-verify`.
+- `.husky/pre-commit` is the whole repo's hook, not just the frontend's — it also runs RuboCop over staged Ruby (see `../backend/CLAUDE.md`). It lives here because husky needs a `package.json`, and this is the only one. Don't assume changes to it are frontend-only.
+- Node 26 (`.nvmrc`). Older Node breaks this toolchain in confusing ways — ESLint 10 stack-traces instead of printing the violation.
+
 ## Styling
 
 - Tailwind utility classes in JSX. No separate CSS files per component.

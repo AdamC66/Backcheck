@@ -1,0 +1,24 @@
+#!/bin/sh
+# Git runs hooks from the repo root. Each half runs in a subshell so its `cd` doesn't leak
+# into the other, and so a failure exits the hook instead of falling through to the next stage.
+
+( cd frontend && npx lint-staged ) || exit 1
+
+staged_rb=$(git diff --cached --name-only --diff-filter=ACMR \
+  -- 'backend/*.rb' 'backend/*.rake' 'backend/Gemfile' 'backend/Rakefile')
+[ -z "$staged_rb" ] && exit 0
+
+# The shell git launches a hook from may not have mise activated (an IDE's git UI won't),
+# so Ruby 3.4 is resolved explicitly rather than trusting PATH.
+if command -v mise >/dev/null 2>&1; then
+  ruby_exec="mise exec --"
+else
+  ruby_exec=""
+fi
+
+# --force-exclusion keeps rubocop's own Exclude list (db/schema.rb, vendor/) honoured
+# even though the paths are passed explicitly.
+( cd backend && echo "$staged_rb" | sed 's|^backend/||' \
+    | xargs $ruby_exec bin/rubocop -a --force-exclusion ) || exit 1
+
+echo "$staged_rb" | xargs git add

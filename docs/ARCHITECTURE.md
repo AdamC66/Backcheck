@@ -58,9 +58,12 @@ External stats data source (scrape, provider API, manual entry) is still an open
 
 ## Docker
 
+- Local dev default: backend and frontend run natively (Makefile); Postgres runs in Docker (container + named volume `db_data`) via `make db-up`/`init`/`start` — nobody needs a local Postgres install.
+- Fully-dockerized alternative: `docker compose up` runs `backend` (built from `Dockerfile.dev`) alongside `db` — not what the Makefile targets use.
+
 - `docker-compose.yml` at repo root defines `backend` + `db` (and anything else that needs to run alongside, e.g. a job runner, once one exists).
-- Backend `Dockerfile` lives in `backend/`.
-- No compose services are scaffolded yet — added once `rails new` happens, so the Gemfile/Dockerfile have real dependencies to build against.
+- `backend/Dockerfile` is Rails-generated (production/Kamal — do not use for local dev). `backend/Dockerfile.dev` is what `docker-compose.yml` actually builds: no multi-stage/precompile, source mounted as a volume for live reload.
+- `db` (Postgres 16) + `backend` (built from `Dockerfile.dev`) are wired up in `docker-compose.yml` at repo root.
 
 ## Data flow (placeholder)
 

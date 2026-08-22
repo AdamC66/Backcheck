@@ -12,7 +12,7 @@
     "project_id": "hockey-analytics-dashboard",
     "title": "League/Team/Season domain model",
     "description": "League, Team, Season as first-class entities.",
-    "status": "backlog",
+    "status": "done",
     "priority": "high"
   },
   {
@@ -36,7 +36,7 @@
     "project_id": "hockey-analytics-dashboard",
     "title": "Backend skeleton & infra",
     "description": "rails new (API-only), Docker Compose (backend + db), health-check endpoint.",
-    "status": "backlog",
+    "status": "done",
     "priority": "high"
   },
   {
@@ -44,7 +44,7 @@
     "project_id": "hockey-analytics-dashboard",
     "title": "Frontend skeleton",
     "description": "Vite vs Next decided and scaffolded, Tailwind configured, auth screens wired to backend JWT.",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "high"
   },
   {
