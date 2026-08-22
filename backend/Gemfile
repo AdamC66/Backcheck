@@ -43,6 +43,9 @@ group :development, :test do
   gem "rspec-rails"
   gem "factory_bot_rails"
 
+  # Blocks real HTTP in specs, so an NHL sync spec can never depend on the live API.
+  gem "webmock", require: false
+
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
   gem "bundler-audit", require: false
 

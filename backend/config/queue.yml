@@ -1,11 +1,19 @@
+# Queues are listed explicitly rather than with "*", because the ingest queue has to be
+# the only consumer of its own jobs. A wildcard worker would happily run three NHL syncs
+# in parallel and turn the client's one-request-per-second interval into three.
+# A new queue needs adding here, or nothing will run it.
 default: &default
   dispatchers:
     - polling_interval: 1
       batch_size: 500
   workers:
-    - queues: "*"
+    - queues: default
       threads: 3
       processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
+      polling_interval: 1
+    - queues: ingest
+      threads: 1
+      processes: 1
       polling_interval: 1
 
 development:

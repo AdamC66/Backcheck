@@ -16,3 +16,13 @@ production:
   purge_revoked_tokens:
     class: PurgeRevokedTokensJob
     schedule: every day at 4am
+  # 9am UTC is ~5am Eastern: late enough that every West Coast game from the previous
+  # day has finished and been finalized upstream.
+  sync_nhl_standings:
+    class: SyncStandingsJob
+    queue: ingest
+    schedule: every day at 9am
+  sync_nhl_scores:
+    class: SyncDailyScoresJob
+    queue: ingest
+    schedule: every day at 9am
