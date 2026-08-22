@@ -1,7 +1,18 @@
 class Season < ApplicationRecord
-  validates :label, presence: true, uniqueness: true
+  belongs_to :league
+
+  has_many :games, dependent: :restrict_with_error
+  has_many :team_standings, dependent: :destroy
+
+  validates :label, presence: true, uniqueness: { scope: :league_id }
+  validates :nhl_season_id, uniqueness: true, allow_nil: true
   validates :starts_on, :ends_on, presence: true
   validate :ends_after_starts
+
+  # Returns nothing between seasons, which is the honest answer — the alternative is
+  # guessing that the most recent season is still "current" through the whole summer.
+  scope :current, -> { where(starts_on: ..Date.current, ends_on: Date.current..) }
+  scope :chronological, -> { order(:starts_on) }
 
   private
 

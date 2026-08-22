@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_22_194600) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_210004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_194600) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "games", force: :cascade do |t|
+    t.integer "away_score"
+    t.bigint "away_team_id", null: false
+    t.datetime "created_at", null: false
+    t.date "game_date", null: false
+    t.integer "game_type", null: false
+    t.integer "home_score"
+    t.bigint "home_team_id", null: false
+    t.string "last_period_type"
+    t.boolean "neutral_site", default: false, null: false
+    t.bigint "nhl_game_id", null: false
+    t.bigint "season_id", null: false
+    t.datetime "starts_at", null: false
+    t.string "state", null: false
+    t.datetime "updated_at", null: false
+    t.string "venue"
+    t.index ["away_team_id"], name: "index_games_on_away_team_id"
+    t.index ["home_team_id"], name: "index_games_on_home_team_id"
+    t.index ["nhl_game_id"], name: "index_games_on_nhl_game_id", unique: true
+    t.index ["season_id", "game_date"], name: "index_games_on_season_id_and_game_date"
+    t.index ["season_id"], name: "index_games_on_season_id"
   end
 
   create_table "leagues", force: :cascade do |t|
@@ -88,9 +111,53 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_194600) do
     t.datetime "created_at", null: false
     t.date "ends_on", null: false
     t.string "label", null: false
+    t.bigint "league_id", null: false
+    t.integer "nhl_season_id"
     t.date "starts_on", null: false
     t.datetime "updated_at", null: false
-    t.index ["label"], name: "index_seasons_on_label", unique: true
+    t.index ["league_id", "label"], name: "index_seasons_on_league_id_and_label", unique: true
+    t.index ["league_id"], name: "index_seasons_on_league_id"
+    t.index ["nhl_season_id"], name: "index_seasons_on_nhl_season_id", unique: true
+  end
+
+  create_table "team_standings", force: :cascade do |t|
+    t.date "as_of_date", null: false
+    t.string "conference_name"
+    t.integer "conference_sequence"
+    t.datetime "created_at", null: false
+    t.string "division_name"
+    t.integer "division_sequence"
+    t.integer "games_played", null: false
+    t.integer "goal_differential", null: false
+    t.integer "goals_against", null: false
+    t.integer "goals_for", null: false
+    t.integer "home_losses"
+    t.integer "home_ot_losses"
+    t.integer "home_wins"
+    t.integer "l10_losses"
+    t.integer "l10_ot_losses"
+    t.integer "l10_wins"
+    t.integer "league_sequence"
+    t.integer "losses", null: false
+    t.integer "ot_losses", null: false
+    t.decimal "point_pctg", precision: 6, scale: 5
+    t.integer "points", null: false
+    t.integer "regulation_plus_ot_wins"
+    t.integer "regulation_wins"
+    t.integer "road_losses"
+    t.integer "road_ot_losses"
+    t.integer "road_wins"
+    t.bigint "season_id", null: false
+    t.string "streak_code"
+    t.integer "streak_count"
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "wildcard_sequence"
+    t.integer "wins", null: false
+    t.index ["season_id", "as_of_date"], name: "index_team_standings_on_season_id_and_as_of_date"
+    t.index ["season_id"], name: "index_team_standings_on_season_id"
+    t.index ["team_id", "season_id", "as_of_date"], name: "index_team_standings_on_team_season_and_date", unique: true
+    t.index ["team_id"], name: "index_team_standings_on_team_id"
   end
 
   create_table "teams", force: :cascade do |t|
@@ -98,12 +165,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_194600) do
     t.datetime "created_at", null: false
     t.bigint "league_id", null: false
     t.string "name", null: false
+    t.integer "nhl_team_id"
     t.string "primary_color"
     t.string "secondary_color"
     t.string "tertiary_color"
     t.datetime "updated_at", null: false
     t.index ["league_id", "abbreviation"], name: "index_teams_on_league_id_and_abbreviation", unique: true
     t.index ["league_id"], name: "index_teams_on_league_id"
+    t.index ["nhl_team_id"], name: "index_teams_on_nhl_team_id", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -117,7 +186,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_194600) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "games", "seasons"
+  add_foreign_key "games", "teams", column: "away_team_id"
+  add_foreign_key "games", "teams", column: "home_team_id"
   add_foreign_key "memberships", "roles"
   add_foreign_key "memberships", "users"
+  add_foreign_key "seasons", "leagues"
+  add_foreign_key "team_standings", "seasons"
+  add_foreign_key "team_standings", "teams"
   add_foreign_key "teams", "leagues"
 end

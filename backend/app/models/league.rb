@@ -1,5 +1,6 @@
 class League < ApplicationRecord
   has_many :teams, dependent: :restrict_with_error
+  has_many :seasons, dependent: :restrict_with_error
   has_one_attached :logo
 
   validates :name, presence: true
