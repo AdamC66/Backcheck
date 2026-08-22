@@ -3,180 +3,319 @@
     "abbreviation": "ADK",
     "name": "Adirondack Thunder",
     "nhl_affiliate": "NJD",
-    "logo": "ADK.png"
+    "logo": "ADK.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#A3AAAD",
+      "tertiary": "#D2202F"
+    }
   },
   {
     "abbreviation": "ALN",
     "name": "Allen Americans",
     "nhl_affiliate": "OTT",
-    "logo": "ALN.png"
+    "logo": "ALN.png",
+    "colors": {
+      "primary": "#0B2240",
+      "secondary": "#63656A",
+      "tertiary": "#AB1A2D"
+    }
   },
   {
     "abbreviation": "ATL",
     "name": "Atlanta Gladiators",
     "nhl_affiliate": "NSH",
-    "logo": "ATL.png"
+    "logo": "ATL.png",
+    "colors": {
+      "primary": "#F8A01B",
+      "secondary": "#081E3F",
+      "tertiary": "#78BAE6"
+    }
   },
   {
     "abbreviation": "BLM",
     "name": "Bloomington Bison",
     "nhl_affiliate": "WPG",
-    "logo": "BLM.png"
+    "logo": "BLM.png",
+    "colors": {
+      "primary": "#D81830",
+      "secondary": "#48C0F0"
+    }
   },
   {
     "abbreviation": "CIN",
     "name": "Cincinnati Cyclones",
     "nhl_affiliate": "TOR",
-    "logo": "CIN.png"
+    "logo": "CIN.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#DE0E2C",
+      "tertiary": "#BFC0C1"
+    }
   },
   {
     "abbreviation": "FLA",
     "name": "Florida Everblades",
     "nhl_affiliate": "PIT",
-    "logo": "FLA.png"
+    "logo": "FLA.png",
+    "colors": {
+      "primary": "#00703C",
+      "secondary": "#8CC63F",
+      "tertiary": "#003E7E"
+    }
   },
   {
     "abbreviation": "FW",
     "name": "Fort Wayne Komets",
     "nhl_affiliate": "EDM",
-    "logo": "FW.png"
+    "logo": "FW.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#ED5816"
+    }
   },
   {
     "abbreviation": "GSO",
     "name": "Greensboro Gargoyles",
     "nhl_affiliate": "CAR",
-    "logo": "GSO.png"
+    "logo": "GSO.png",
+    "colors": {
+      "primary": "#3C246C",
+      "secondary": "#906C24"
+    }
   },
   {
     "abbreviation": "GRN",
     "name": "Greenville Swamp Rabbits",
     "nhl_affiliate": "LAK",
-    "logo": "GRN.png"
+    "logo": "GRN.png",
+    "colors": {
+      "primary": "#C06128",
+      "secondary": "#11244B",
+      "tertiary": "#E4B022"
+    }
   },
   {
     "abbreviation": "IDH",
     "name": "Idaho Steelheads",
     "nhl_affiliate": "DAL",
-    "logo": "IDH.png"
+    "logo": "IDH.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#00457C",
+      "tertiary": "#C3CDCF"
+    }
   },
   {
     "abbreviation": "IND",
     "name": "Indy Fuel",
     "nhl_affiliate": "CHI",
-    "logo": "IND.png"
+    "logo": "IND.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#B92A30",
+      "tertiary": "#FFC557"
+    }
   },
   {
     "abbreviation": "JAX",
     "name": "Jacksonville Icemen",
     "nhl_affiliate": "MIN",
-    "logo": "JAX.png"
+    "logo": "JAX.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#9CA8B0",
+      "tertiary": "#0C1E3F"
+    }
   },
   {
     "abbreviation": "KAL",
     "name": "Kalamazoo Wings",
     "nhl_affiliate": "VAN",
-    "logo": "KAL.png"
+    "logo": "KAL.png",
+    "colors": {
+      "primary": "#283C82",
+      "secondary": "#D72E3A"
+    }
   },
   {
     "abbreviation": "KC",
     "name": "Kansas City Mavericks",
     "nhl_affiliate": "SEA",
-    "logo": "KC.png"
+    "logo": "KC.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#F16024",
+      "tertiary": "#AAAAAA"
+    }
   },
   {
     "abbreviation": "ME",
     "name": "Maine Mariners",
     "nhl_affiliate": "BOS",
-    "logo": "ME.png"
+    "logo": "ME.png",
+    "colors": {
+      "primary": "#00354F",
+      "secondary": "#00AC43",
+      "tertiary": "#C6C6C6"
+    }
   },
   {
     "abbreviation": "NM",
     "name": "New Mexico Goatheads",
     "nhl_affiliate": "COL",
-    "logo": "NM.png"
+    "logo": "NM.png",
+    "colors": {
+      "primary": "#780C18",
+      "secondary": "#009CCC"
+    }
   },
   {
     "abbreviation": "NFK",
     "name": "Norfolk Admirals",
     "nhl_affiliate": null,
-    "logo": "NFK.png"
+    "logo": "NFK.png",
+    "colors": {
+      "primary": "#012369",
+      "secondary": "#FCC345"
+    }
   },
   {
     "abbreviation": "ORL",
     "name": "Orlando Solar Bears",
     "nhl_affiliate": "TBL",
-    "logo": "ORL.png"
+    "logo": "ORL.png",
+    "colors": {
+      "primary": "#4B2A91",
+      "secondary": "#FCD006",
+      "tertiary": "#F36717"
+    }
   },
   {
     "abbreviation": "RC",
     "name": "Rapid City Rush",
     "nhl_affiliate": "CGY",
-    "logo": "RC.png"
+    "logo": "RC.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#C41230",
+      "tertiary": "#CBB778"
+    }
   },
   {
     "abbreviation": "RDG",
     "name": "Reading Royals",
     "nhl_affiliate": "PHI",
-    "logo": "RDG.png"
+    "logo": "RDG.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#5C3896",
+      "tertiary": "#A8B1B7"
+    }
   },
   {
     "abbreviation": "SAV",
     "name": "Savannah Ghost Pirates",
     "nhl_affiliate": "FLA",
-    "logo": "SAV.png"
+    "logo": "SAV.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#35D42F",
+      "tertiary": "#C2C6C8"
+    }
   },
   {
     "abbreviation": "SC",
     "name": "South Carolina Stingrays",
     "nhl_affiliate": "WSH",
-    "logo": "SC.png"
+    "logo": "SC.png",
+    "colors": {
+      "primary": "#003466",
+      "secondary": "#C4112F",
+      "tertiary": "#B7B7B7"
+    }
   },
   {
     "abbreviation": "TAH",
     "name": "Tahoe Knight Monsters",
     "nhl_affiliate": "VGK",
-    "logo": "TAH.png"
+    "logo": "TAH.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#B49054"
+    }
   },
   {
     "abbreviation": "TOL",
     "name": "Toledo Walleye",
     "nhl_affiliate": "DET",
-    "logo": "TOL.png"
+    "logo": "TOL.png",
+    "colors": {
+      "primary": "#6799C8",
+      "secondary": "#FFC425",
+      "tertiary": "#002B5C"
+    }
   },
   {
     "abbreviation": "TRE",
     "name": "Trenton Ironhawks",
     "nhl_affiliate": "NYI",
-    "logo": "TRE.png"
+    "logo": "TRE.png",
+    "colors": {
+      "primary": "#0084C0",
+      "secondary": "#A8B4B4"
+    }
   },
   {
     "abbreviation": "TR",
-    "name": "Trois-Rivi\u00e8res Lions",
+    "name": "Trois-Rivières Lions",
     "nhl_affiliate": "MTL",
-    "logo": "TR.png"
+    "logo": "TR.png",
+    "colors": {
+      "primary": "#D0D2CD",
+      "secondary": "#1E4183"
+    }
   },
   {
     "abbreviation": "TUL",
     "name": "Tulsa Oilers",
     "nhl_affiliate": "ANA",
-    "logo": "TUL.png"
+    "logo": "TUL.png",
+    "colors": {
+      "primary": "#111E3A",
+      "secondary": "#792131",
+      "tertiary": "#BABBBB"
+    }
   },
   {
     "abbreviation": "WHL",
     "name": "Wheeling Nailers",
     "nhl_affiliate": "CBJ",
-    "logo": "WHL.png"
+    "logo": "WHL.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#B5A167"
+    }
   },
   {
     "abbreviation": "WIC",
     "name": "Wichita Thunder",
     "nhl_affiliate": "SJS",
-    "logo": "WIC.png"
+    "logo": "WIC.png",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#0059AB",
+      "tertiary": "#0E3860"
+    }
   },
   {
     "abbreviation": "WOR",
     "name": "Worcester Railers",
     "nhl_affiliate": "STL",
-    "logo": "WOR.png"
+    "logo": "WOR.png",
+    "colors": {
+      "primary": "#002856",
+      "secondary": "#ADB2B7"
+    }
   }
 ]
