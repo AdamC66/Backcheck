@@ -1,0 +1,4 @@
+[
+  { "abbreviation": "ANA", "name": "Anaheim Ducks", "logo": "test-logo.png", "colors": { "primary": "#F47A38", "secondary": "#B9975B", "tertiary": "#C1C6C8" } },
+  { "abbreviation": "ABB", "name": "Abbotsford Canucks", "nhl_affiliate": "VAN", "logo": "missing-logo.png" }
+]

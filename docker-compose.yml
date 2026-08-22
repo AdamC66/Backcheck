@@ -16,6 +16,9 @@ services:
     command: bash -c "bin/rails db:prepare && bin/rails server -b 0.0.0.0"
     volumes:
       - ./backend:/app
+      # Seed manifests live outside the build context; the container's WORKDIR is /app,
+      # so this lands them exactly where ImportTeams looks (Rails.root/../data).
+      - ./data:/data:ro
       - bundle_cache:/usr/local/bundle
     ports:
       - "3000:3000"

@@ -7,6 +7,8 @@ Rails.application.routes.draw do
       get "me", to: "current_user#show"
       post "login", to: "sessions#create"
       delete "logout", to: "sessions#destroy"
+
+      resources :leagues, only: [ :index, :show ], param: :slug
     end
   end
 end

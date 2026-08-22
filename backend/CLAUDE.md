@@ -36,6 +36,16 @@ See `../docs/ARCHITECTURE.md` (Auth & multi-tenancy) and `../docs/DECISIONS.md` 
 - Permissions come from `Membership` (`user_id`, `role_id`, polymorphic `scopeable`), plus `User#is_super_admin`. `Role` is a lookup table — never hardcode role names as a Rails enum or a magic string scattered across controllers; reference `Role.find_by(key: ...)` or a constant defined once.
 - A controller action's authorization check should read as one clear question ("does this user have a qualifying membership for this scopeable, or are they super admin?"), not inline ad-hoc conditionals repeated per action. Whether that's hand-rolled or a policy gem (Pundit) is still open — see `DECISIONS.md` — but don't let the pattern drift per-controller in the meantime.
 
+## File storage
+
+Active Storage (`has_one_attached`), not files committed to a public directory — it's Rails' equivalent of Django's `FileField` + django-storages, with metadata in `active_storage_*` tables and bytes in a per-environment service (`config/storage.yml`). Full reasoning in `../docs/DECISIONS.md`; the rules that matter when adding an attachment:
+
+- Serialize with `rails_storage_proxy_url` via the `LogoUrl` helper — stable and cacheable. Not `rails_blob_url`, whose redirect target expires and will rot inside a cached response.
+- Add a `with_logo`-style scope (`includes(<name>_attachment: :blob)`) wherever a collection is serialized, or every row costs two extra queries.
+- Seed attachments through `AttachLogo`, which skips when the file's checksum already matches. Attaching unconditionally replaces the blob on every seed run and orphans the old one.
+- Absolute URLs need `Rails.application.routes.default_url_options` (`config/initializers/default_url_options.rb`). There's no request context in a serializer, so a missing host is a 500, not a relative URL.
+- **Changing how a blob is *served* doesn't reach clients that already fetched it.** Proxy responses carry `cache-control: immutable, max-age=100 years`, and the URL is keyed by blob id, not by content or content type — so a fix to content type or disposition leaves every cached copy broken, and an `immutable` entry survives a normal reload. `AttachLogo`'s checksum guard won't help either: the bytes didn't change. The fix is to replace the blob (`purge` then re-attach), which mints a new id and therefore a new URL.
+
 ## Background jobs, external services
 
 Not yet decided (data source for stats is still open — see `DECISIONS.md`). Whatever it ends up being, external sync work is a background job, never executed inline on the request/response path.

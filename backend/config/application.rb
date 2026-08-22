@@ -40,5 +40,13 @@ module Backend
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # League crests are SVG, and Active Storage serves SVG as a forced download by
+    # default — an inline SVG can carry <script>, so it's unsafe to render from an origin
+    # that holds credentials. This one holds none (auth is a bearer token the frontend
+    # keeps) and only the seeds can write a blob today. Revisit when an upload endpoint
+    # lands: sanitize SVG on the way in, or rasterize and keep this default.
+    config.active_storage.content_types_to_serve_as_binary -= [ "image/svg+xml" ]
+    config.active_storage.content_types_allowed_inline |= [ "image/svg+xml" ]
   end
 end

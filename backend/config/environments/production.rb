@@ -18,7 +18,8 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
+  # Disk service backed by a mounted volume for now; switching to S3/R2 is a change to
+  # this line plus a service block in config/storage.yml — see docs/DECISIONS.md.
   config.active_storage.service = :local
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
