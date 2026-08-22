@@ -30,8 +30,11 @@ Not yet decided. Don't scaffold a solution speculatively — add to `docs/DECISI
 
 ## Testing
 
-- RSpec. A model/service/endpoint isn't done until its spec exists.
-- Factories (FactoryBot), not fixtures.
+Smoke-test approach — see `../docs/TESTING.md` for the shared philosophy (portfolio project, not chasing coverage).
+
+- RSpec. One happy-path spec per model/service/endpoint; a second only for a failure mode worth catching.
+- Factories (FactoryBot), not fixtures. Shared setup goes in `shared_examples`/`spec/support/`, not copy-pasted per spec.
+- Request specs (not controller specs) for endpoints.
 
 ## Docker
 

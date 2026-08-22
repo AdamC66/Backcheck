@@ -23,6 +23,10 @@ Backend (and Postgres) run via Docker Compose. Frontend containerization not req
 ### Frontend: React + TypeScript + Tailwind
 **Status:** Settled
 
+### Testing approach: smoke tests, no coverage gate
+**Status:** Settled
+Portfolio project — 1-2 tests per unit (happy path, plus a real edge case when one exists), not exhaustive coverage. No coverage tooling/gate. Shared test setup (factories, shared_examples, custom render/mock layer) abstracted into one place per stack so individual test files stay thin. See `TESTING.md`.
+
 ### Frontend bundler: Vite vs Next.js
 **Status:** Open — leaning Vite
 This is a staff-only internal dashboard, not a public/SEO-driven site, which weakens the case for Next's SSR/routing. Vite is the lighter default. Revisit if a concrete requirement (auth-gated SSR, server data fetching, image optimization at scale) makes the case for Next. Decide before scaffolding either.

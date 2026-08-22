@@ -13,6 +13,7 @@ Dashboard for hockey team staff/admins to review their team's analytics. Scope i
 - `backend/CLAUDE.md` — Rails conventions
 - `frontend/CLAUDE.md` — React/TS conventions
 - `docs/STANDARDS.md` — comment policy, git workflow, definition of done (applies everywhere)
+- `docs/TESTING.md` — testing philosophy: smoke tests only, abstract shared setup (applies everywhere)
 - `docs/ARCHITECTURE.md` — how backend and frontend fit together, Docker layout
 - `docs/DECISIONS.md` — decision log, check before re-litigating a settled choice
 - `docs/PLANNING.md` — current phase and scope

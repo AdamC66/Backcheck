@@ -30,7 +30,7 @@ Good: `# Rails' default JSON serializer chokes on BigDecimal here, so we cast ex
 
 A change is done when:
 1. It does what it claims, and nothing else snuck in.
-2. Tests exist for new logic and pass (backend: RSpec; frontend: Vitest/RTL).
+2. A smoke test exists for new logic and passes (backend: RSpec; frontend: Vitest/RTL) — see `TESTING.md` for how much is enough.
 3. No stray comments, dead code, or console/debug output left in.
 4. Docs updated if the change affects architecture, an established convention, or a decision already logged in `DECISIONS.md`.
 

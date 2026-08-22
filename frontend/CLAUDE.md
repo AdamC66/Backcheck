@@ -39,8 +39,11 @@ Not yet decided (React Query vs. plain fetch+hooks vs. something heavier depends
 
 ## Testing
 
-- Vitest + React Testing Library.
+Smoke-test approach — see `../docs/TESTING.md` for the shared philosophy (portfolio project, not chasing coverage).
+
+- Vitest + React Testing Library. One happy-path test per component/hook/feature; a second only for a failure mode worth catching.
 - Test behavior (what the user sees/does), not implementation details.
+- Shared setup lives in one place: a custom `render` wrapper (`src/test-utils.tsx`) and one reusable mock API layer — not re-built per test file.
 
 ## More rules incoming
 
