@@ -22,7 +22,7 @@
     "type": "feature",
     "status": "in_progress",
     "priority": "high",
-    "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. Controller-level 403 enforcement still pending — no protected resource controller exists yet to wire it into.",
+    "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. Controller-level 403 enforcement still pending \u2014 no protected resource controller exists yet to wire it into.",
     "acceptance_criteria": [
       "A request from a user with no qualifying membership and no super-admin flag is rejected with 403",
       "A league_admin can act on any team within their league without a team-level membership row",
@@ -61,16 +61,43 @@
     "type": "feature",
     "status": "todo",
     "priority": "high",
-    "description": "Self-join on Team: parent_team_id, affiliate_team_id, started_on/ended_on. Models the NHL/AHL/ECHL affiliate chain (e.g. Ottawa Senators -> Belleville Senators), history-preserving like RosterEntry. Coordinate with TASK-3 — its downward-visibility check depends on this table existing."
+    "description": "Self-join on Team: parent_team_id, affiliate_team_id, started_on/ended_on. Models the NHL/AHL/ECHL affiliate chain (e.g. Ottawa Senators -> Belleville Senators), history-preserving like RosterEntry. Includes backfilling rows from each AHL/ECHL manifest's nhl_affiliate abbreviation (TASK-18 seeded the Team rows but ignores that field). Coordinate with TASK-3 \u2014 its downward-visibility check depends on this table existing."
   },
   {
     "id": "TASK-18",
     "epic_id": "EPIC-2",
-    "title": "Seed AHL and ECHL as real League/Team rows",
+    "title": "Seed NHL, AHL, and ECHL teams as real Team rows",
     "type": "chore",
-    "status": "todo",
+    "status": "done",
     "priority": "medium",
-    "description": "Load data/ahl-teams/teams.json and data/echl-teams/teams.json into League + Team rows (two new League rows: AHL, ECHL), then backfill TeamAffiliation rows from each team's nhl_affiliate field / data/nhl-teams/affiliations.json so affiliate_team_id points at real Team rows instead of name strings. Depends on TASK-6 (League/Team migrations) and TASK-17 (TeamAffiliation)."
+    "description": "Adds abbreviation/logo/colors to teams, drops the unused city column, and loads data/{nhl,ahl,echl}-teams/teams.json (94 teams) via the ImportTeams service, keyed on abbreviation so reruns update rather than duplicate. Team logos copied into frontend/public/teams/<league-slug>/. Affiliation backfill from nhl_affiliate belongs to TASK-17."
+  },
+  {
+    "id": "TASK-19",
+    "epic_id": "EPIC-2",
+    "title": "Seed the three leagues and list them on the dashboard",
+    "type": "feature",
+    "status": "done",
+    "priority": "high",
+    "description": "Adds abbreviation/tier/logo to leagues, seeds NHL/AHL/ECHL, exposes GET /api/v1/leagues scoped by membership (Super Admin sees all), and renders them on the dashboard home page. League SVGs copied from data/ into frontend/public/leagues/."
+  },
+  {
+    "id": "TASK-20",
+    "epic_id": "EPIC-2",
+    "title": "League detail page: click into a league, see its teams",
+    "type": "feature",
+    "status": "done",
+    "priority": "medium",
+    "description": "GET /api/v1/leagues/:slug returns one league with its teams (404 rather than 403 when the caller can't see it, so the endpoint doesn't confirm existence). Frontend route /leagues/:slug -> LeaguePage container, TeamCard component, useLeague model. Dashboard league cards link into it."
+  },
+  {
+    "id": "TASK-21",
+    "epic_id": "EPIC-2",
+    "title": "Move league/team logos into Active Storage",
+    "type": "chore",
+    "status": "done",
+    "priority": "medium",
+    "description": "Logos were files committed to frontend/public, so changing one meant a frontend redeploy. Now has_one_attached :logo on League and Team, Disk service (S3-compatible later), seeded from data/ via AttachLogo with a checksum guard so reruns don't orphan blobs. Serializers emit absolute proxy URLs; the logo filename columns are dropped. SVG is served inline via a documented exception to Active Storage's binary-serving default \u2014 revisit if an upload endpoint is added."
   },
   {
     "id": "TASK-7",
@@ -125,17 +152,18 @@
     "epic_id": "EPIC-6",
     "title": "Decide Vite vs Next, scaffold app + Tailwind",
     "type": "chore",
-    "status": "in_progress",
+    "status": "done",
     "priority": "high",
-    "description": "Vite + React + TS scaffolded. Tailwind, the @ import alias, and the components/features/hooks/api folder structure from frontend/CLAUDE.md are still pending."
+    "description": "Vite + React + TS + Tailwind v4 scaffolded, @ alias wired in tsconfig.app.json and vite.config.ts. Folder structure settled as containers/components/models/auth/lib (see docs/DECISIONS.md) \u2014 the earlier features/api layout was replaced."
   },
   {
     "id": "TASK-14",
     "epic_id": "EPIC-6",
     "title": "Login screen wired to backend JWT",
     "type": "feature",
-    "status": "todo",
-    "priority": "high"
+    "status": "done",
+    "priority": "high",
+    "description": "LoginPage posts to /api/v1/login, AuthProvider stores the JWT and hydrates identity from /me; RequireAuth and RedirectIfAuthenticated own both directions of the redirect."
   },
   {
     "id": "TASK-15",

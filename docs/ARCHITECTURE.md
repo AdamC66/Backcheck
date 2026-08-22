@@ -18,6 +18,7 @@ Single repo, two independently runnable apps. They communicate over HTTP only �
 
 - `backend`: Rails API container, talks to `db` (Postgres) container. Exposes JSON over HTTP.
 - `db`: Postgres container, named volume for persistence.
+- Uploaded/seeded files (logos) live in Active Storage's Disk service at `backend/storage/`, which the dockerized backend keeps via its source bind mount. A real deployment needs a mounted volume there, or a switch to S3 — see `DECISIONS.md`.
 - `frontend`: runs via its own Vite dev server (port 5173, `strictPort`) against the backend's HTTP API. Not necessarily containerized for local dev; only the backend + database are Dockerized per the original requirement. Revisit if frontend containerization is needed for parity with a deploy target later.
 
 ## Backend ↔ Frontend contract
@@ -41,6 +42,9 @@ Sessions are stateless *except* for revocation: logout records the token's `jti`
 | `DELETE /api/v1/logout` | bearer | Revoke the presented token (204) |
 | `GET /api/v1/me` | bearer | Rehydrate identity / confirm a stored token |
 | `GET /api/v1/health` | public | Liveness probe |
+| `GET /api/v1/leagues` | bearer | Leagues visible to the caller (all of them for a Super Admin) |
+| `GET /api/v1/leagues/:slug` | bearer | One league with its teams; 404 (not 403) if the caller can't see it |
+| `GET /rails/active_storage/blobs/proxy/...` | signed URL | Logo bytes, streamed by Active Storage. Public by design — an `<img>` tag can't send a bearer token |
 
 There is no account-creation endpoint yet — the single Super Admin is seeded (`db/seeds.rb`). On the client, identity is held by `AuthProvider` and reached through `useAuth()`; `RequireAuth` and `RedirectIfAuthenticated` own both directions of the login redirect.
 
@@ -60,8 +64,8 @@ Authorization checks (e.g. "can this user edit this team's roster?") are a singl
 
 Informed by a prior (pre-AI, Django-based) attempt at this same domain — see `DECISIONS.md` for what was carried forward and what's deliberately being done differently this time (that old app had zero multi-tenancy, a hardcoded season string, and a combined skater+goalie stats table, among other things).
 
-- **League** — name, slug. Owns many Teams.
-- **Team** — name, city, belongs to a League.
+- **League** — name, slug, abbreviation, `tier` (rank in the affiliation hierarchy: NHL 1, AHL 2, ECHL 3), and a `logo` Active Storage attachment. Owns many Teams. Seeded from `db/seeds.rb`; artwork originates in `data/*.svg`.
+- **Team** — full name ("Anaheim Ducks"), abbreviation (unique within its league — CGY is both the Flames and the Wranglers), a `logo` Active Storage attachment, and up to three hex colors. Belongs to a League. Seeded from `data/<slug>-teams/teams.json` by `ImportTeams`, keyed on abbreviation so a corrected manifest can be re-seeded.
 - **TeamAffiliation** — self-join on Team: `parent_team_id`, `affiliate_team_id`, `started_on`/`ended_on`. Models the NHL→AHL→ECHL organizational chain (e.g. Ottawa Senators → Belleville Senators) the same history-preserving way `RosterEntry` handles player movement — affiliations change (an ECHL affiliate especially), so this is never a plain FK overwritten in place. Arbitrary depth (a chain, not a hardcoded 3-tier column set), since a team can be both an affiliate and a parent.
 - **Season** — a first-class entity (`label`, `starts_on`, `ends_on`), not a hardcoded string. The old attempt baked `"20192020"`-style strings into business logic; this time season-scoped data (rosters, stats, schedule) all carry a real `season_id`.
 - **Player** — bio fields (name, birth date, position, shoots/catches, height/weight), no direct `team_id`.

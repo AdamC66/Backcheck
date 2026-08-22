@@ -69,7 +69,7 @@ Vite, as the earlier lean suggested. Nothing in the dashboard needs SSR or SEO, 
 
 ### API response/error envelope shape
 **Status:** Settled
-Success responses wrap in `data`, with `meta` reserved for pagination and similar: `{ "data": {...}, "meta": {...} }`. Errors always take one shape with a machine-readable code: `{ "error": { "code": "invalid_credentials", "message": "...", "details": {...} } }`. `details` and `meta` are omitted when empty rather than sent as null. Enforced through the `ApiResponses` controller concern (`render_data` / `render_error`) so no controller hand-rolls a payload, and unwrapped in exactly one place on the client (`src/api/client.ts`), which is what makes every react-query hook typed the same way. Alternatives considered: flat top-level resources (less ceremony, but pagination metadata then has nowhere to live except headers) and full JSON:API (solves problems a solo dashboard doesn't have yet, and needs a serializer gem).
+Success responses wrap in `data`, with `meta` reserved for pagination and similar: `{ "data": {...}, "meta": {...} }`. Errors always take one shape with a machine-readable code: `{ "error": { "code": "invalid_credentials", "message": "...", "details": {...} } }`. `details` and `meta` are omitted when empty rather than sent as null. Enforced through the `ApiResponses` controller concern (`render_data` / `render_error`) so no controller hand-rolls a payload, and unwrapped in exactly one place on the client (`src/lib/apiClient.ts`), which is what makes every react-query hook typed the same way. Alternatives considered: flat top-level resources (less ceremony, but pagination metadata then has nowhere to live except headers) and full JSON:API (solves problems a solo dashboard doesn't have yet, and needs a serializer gem).
 
 ### Frontend state management: TanStack React Query
 **Status:** Settled
@@ -94,6 +94,48 @@ Both directions of the auth redirect are route guards, not page logic: `RequireA
 ### Project name: Backcheck
 **Status:** Settled
 "Backcheck" — a hockey term (tracking back defensively) that doubles as a data verb, which is the whole point of the portmanteau. Replaces the working title "Hockey Analytics Dashboard" and the older `hockeywiz` attempt. Deliberately not in the `Puck*` namespace, which is crowded (PuckPedia, Puckalytics, PuckPulse, PuckStats, PuckRank), and deliberately not cap-flavored — CapFriendly/PuckPedia/General Fanager are contract sites, this is hockey ops. Known collision: BackCheck was Canada's leading background-screening firm, acquired by Sterling in 2012; different Nice class and different buyer, and Sterling has been retiring the name, so it's a yellow flag only if this is ever commercialized. `backcheck.hockey` is the intended domain — the TLD does the disambiguating. The repo directory is still `hockey-analytics-dashboard`; renaming it is a separate step, and `ARCHITECTURE.md`'s layout tree tracks the real directory name until then.
+
+### League branding columns, and where logo files live
+**Status:** Settled
+`leagues` carries `abbreviation` (unique), `tier`, and `logo` alongside name/slug. `tier` is an integer rank in the affiliation hierarchy (NHL 1, AHL 2, ECHL 3) rather than a display-order column: it's the same fact the NHL→AHL→ECHL chain in `data/` already encodes, so `TeamAffiliation` can validate against it later, and sorting by it falls out for free. Ordering in the frontend was the alternative — rejected because a hardcoded league order in a component is a fact about the sport living in the view layer.
+
+**Superseded on the logo column** — see "Logo storage: Active Storage" below. `leagues.logo`/`teams.logo` originally held a bare file name resolved against `frontend/public/`; both columns are gone.
+
+### Frontend layout: containers / components / models
+**Status:** Settled
+Replaces the `features/` + `api/` + `types/` layout. `containers/` holds pages and anything stateful or data-fetching; `components/` is strictly presentational; `models/` is the data layer (request functions, React Query hooks, payload types) organized by domain rather than by feature. The old split put a feature's UI, hooks, and fetchers in one folder, which reads well until two features want the same data and the fetcher has to live in someone's folder.
+
+Two mechanical constraints fell out of it, both worth keeping:
+- Request functions and their hooks are separate modules (`models/leagues.ts` / `models/useLeagues.ts`). When both live in one file, a hook's call to its own module's request function goes through an internal binding that `vi.mock` of that module cannot intercept — the test mocks the fetcher and the real one runs anyway.
+- Query keys live in `models/queryKeys.ts`, apart from request functions. Vitest's auto-mock empties exported arrays, so a key defined beside a mocked fetcher becomes `[]` — and once two keys are both `[]`, the queries collide in the cache and one query's data shows up as another's. That failure presents as a nonsense type error far from the cause.
+
+Auth is the one exception to the split: provider, context, `useAuth`, and both route guards stay together in `src/auth/`. Identity is cross-cutting, and scattering six small files across three folders to satisfy the rule made it harder to follow, not easier. `api/client.ts` became `lib/apiClient.ts` — it's infrastructure the models are built on, not a model.
+
+### Team branding columns; no city column
+**Status:** Settled
+Colors are three nullable `#RRGGBB` columns (`primary_color`, `secondary_color`, `tertiary_color`), not a `jsonb` blob. The set is fixed and known, validation is a plain format check, and a jsonb column would let key names drift with nothing enforcing the shape the frontend reads. Seven NHL teams have no tertiary; AHL and ECHL have no colors collected yet — all null, which is the same nullable case either way.
+
+`teams.city` was dropped rather than populated. The manifests only carry full names, and splitting them needs hand-correction for every multi-word nickname (Golden Knights, Maple Leafs, Swamp Rabbits) and multi-word city (Wilkes-Barre/Scranton, Coachella Valley). When location genuinely matters it'll be a real model — arena, timezone for rest calculations — not a string carved out of the team name.
+
+`abbreviation` is unique *within a league*, not globally: CGY is both the Calgary Flames and the Calgary Wranglers.
+
+Seeding reads `data/` directly (`Rails.root/../data`) instead of copying manifests into `backend/`, so there's one source of truth for the raw data. The dockerized backend mounts `./data:/data:ro` for this — its build context is `./backend`, so nothing above it exists in the container otherwise.
+
+### Logo storage: Active Storage, Disk now and S3-compatible later
+**Status:** Settled
+League and team logos are Active Storage attachments (`has_one_attached :logo`), not files shipped in `frontend/public/`. The old arrangement made a logo change a frontend redeploy, which is wrong for data that belongs to the domain — teams rebrand, leagues gain and lose franchises. Copies under `frontend/public/{leagues,teams}/` were deleted and the `logo` filename columns dropped (they'd also have collided with the `logo` reader the attachment defines).
+
+Worth being precise about what this means, coming from Django: Active Storage is `FileField` + django-storages, not bytes in Postgres. Metadata goes in `active_storage_blobs` / `active_storage_attachments`; the bytes go to a *service* configured per environment in `config/storage.yml` — `Disk` today, S3/GCS/Azure by changing one line, with no application code affected. `data/` remains the source of truth for seeding; the storage service is the runtime store.
+
+Details that were decided rather than defaulted:
+- **Proxy URLs, not redirect URLs.** `rails_storage_proxy_url` returns a stable, CDN-cacheable URL the app streams. The default redirect URL hands out a signed service URL that can expire while sitting inside an already-cached JSON response.
+- **SVG is served inline.** Active Storage forces SVG to download by default, because an inline SVG can carry `<script>` — real, but it also means `<img src>` renders nothing. The exception is safe here: this origin holds no credentials (auth is a bearer token the frontend keeps) and only the seeds can write a blob. **When an upload endpoint lands, that reasoning expires** — sanitize SVG on the way in, or rasterize and restore the default.
+- **`Rails.application.routes.default_url_options`** is set in `config/initializers/default_url_options.rb` (`APP_HOST`/`APP_PROTOCOL` in production). Absolute URLs are built outside any request, and without a host the first serialized logo 500s.
+- **Attachment is checksum-guarded** (`AttachLogo`). Re-attaching on every seed run would replace each blob and orphan the old one; comparing Active Storage's base64-MD5 makes a rerun a no-op.
+- **Variants are not used.** 94 logos at ~10-20KB need no resizing, and variants would put libvips in the Docker image. (The boot-time "vips not installed" warning is that unused default announcing itself.)
+- **N+1** is handled by a `with_logo` scope (`includes(logo_attachment: :blob)`) on both models — serializing 32 teams is otherwise 32 extra queries.
+
+Deployment still points at `Disk`; a mounted volume keeps `backend/storage/` across restarts. Switching to S3/R2 means adding `aws-sdk-s3`, a service block, and changing `config.active_storage.service` — deliberately deferred until there's somewhere to deploy.
 
 ### Authorization enforcement mechanism
 **Status:** Open
