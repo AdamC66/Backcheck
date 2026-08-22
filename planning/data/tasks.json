@@ -64,6 +64,15 @@
     "description": "Self-join on Team: parent_team_id, affiliate_team_id, started_on/ended_on. Models the NHL/AHL/ECHL affiliate chain (e.g. Ottawa Senators -> Belleville Senators), history-preserving like RosterEntry. Coordinate with TASK-3 — its downward-visibility check depends on this table existing."
   },
   {
+    "id": "TASK-18",
+    "epic_id": "EPIC-2",
+    "title": "Seed AHL and ECHL as real League/Team rows",
+    "type": "chore",
+    "status": "todo",
+    "priority": "medium",
+    "description": "Load data/ahl-teams/teams.json and data/echl-teams/teams.json into League + Team rows (two new League rows: AHL, ECHL), then backfill TeamAffiliation rows from each team's nhl_affiliate field / data/nhl-teams/affiliations.json so affiliate_team_id points at real Team rows instead of name strings. Depends on TASK-6 (League/Team migrations) and TASK-17 (TeamAffiliation)."
+  },
+  {
     "id": "TASK-7",
     "epic_id": "EPIC-3",
     "title": "Design Player/RosterEntry schema",

@@ -1,0 +1,194 @@
+[
+  {
+    "abbreviation": "ABB",
+    "name": "Abbotsford Canucks",
+    "nhl_affiliate": "VAN",
+    "logo": "ABB.png"
+  },
+  {
+    "abbreviation": "BAK",
+    "name": "Bakersfield Condors",
+    "nhl_affiliate": "EDM",
+    "logo": "BAK.png"
+  },
+  {
+    "abbreviation": "BEL",
+    "name": "Belleville Senators",
+    "nhl_affiliate": "OTT",
+    "logo": "BEL.png"
+  },
+  {
+    "abbreviation": "CGY",
+    "name": "Calgary Wranglers",
+    "nhl_affiliate": "CGY",
+    "logo": "CGY.png"
+  },
+  {
+    "abbreviation": "CLT",
+    "name": "Charlotte Checkers",
+    "nhl_affiliate": "FLA",
+    "logo": "CLT.png"
+  },
+  {
+    "abbreviation": "CHI",
+    "name": "Chicago Wolves",
+    "nhl_affiliate": "CAR",
+    "logo": "CHI.png"
+  },
+  {
+    "abbreviation": "CLE",
+    "name": "Cleveland Monsters",
+    "nhl_affiliate": "CBJ",
+    "logo": "CLE.png"
+  },
+  {
+    "abbreviation": "CV",
+    "name": "Coachella Valley Firebirds",
+    "nhl_affiliate": "SEA",
+    "logo": "CV.png"
+  },
+  {
+    "abbreviation": "COL",
+    "name": "Colorado Eagles",
+    "nhl_affiliate": "COL",
+    "logo": "COL.png"
+  },
+  {
+    "abbreviation": "GR",
+    "name": "Grand Rapids Griffins",
+    "nhl_affiliate": "DET",
+    "logo": "GR.png"
+  },
+  {
+    "abbreviation": "HAM",
+    "name": "Hamilton Hammers",
+    "nhl_affiliate": "NYI",
+    "logo": "HAM.png"
+  },
+  {
+    "abbreviation": "HFD",
+    "name": "Hartford Wolf Pack",
+    "nhl_affiliate": "NYR",
+    "logo": "HFD.png"
+  },
+  {
+    "abbreviation": "HSK",
+    "name": "Henderson Silver Knights",
+    "nhl_affiliate": "VGK",
+    "logo": "HSK.png"
+  },
+  {
+    "abbreviation": "HER",
+    "name": "Hershey Bears",
+    "nhl_affiliate": "WSH",
+    "logo": "HER.png"
+  },
+  {
+    "abbreviation": "IA",
+    "name": "Iowa Wild",
+    "nhl_affiliate": "MIN",
+    "logo": "IA.png"
+  },
+  {
+    "abbreviation": "LAV",
+    "name": "Laval Rocket",
+    "nhl_affiliate": "MTL",
+    "logo": "LAV.png"
+  },
+  {
+    "abbreviation": "LV",
+    "name": "Lehigh Valley Phantoms",
+    "nhl_affiliate": "PHI",
+    "logo": "LV.png"
+  },
+  {
+    "abbreviation": "MB",
+    "name": "Manitoba Moose",
+    "nhl_affiliate": "WPG",
+    "logo": "MB.png"
+  },
+  {
+    "abbreviation": "MIL",
+    "name": "Milwaukee Admirals",
+    "nhl_affiliate": "NSH",
+    "logo": "MIL.png"
+  },
+  {
+    "abbreviation": "ONT",
+    "name": "Ontario Reign",
+    "nhl_affiliate": "LAK",
+    "logo": "ONT.png"
+  },
+  {
+    "abbreviation": "PRO",
+    "name": "Providence Bruins",
+    "nhl_affiliate": "BOS",
+    "logo": "PRO.png"
+  },
+  {
+    "abbreviation": "ROC",
+    "name": "Rochester Americans",
+    "nhl_affiliate": "BUF",
+    "logo": "ROC.png"
+  },
+  {
+    "abbreviation": "RFD",
+    "name": "Rockford IceHogs",
+    "nhl_affiliate": "CHI",
+    "logo": "RFD.png"
+  },
+  {
+    "abbreviation": "SD",
+    "name": "San Diego Gulls",
+    "nhl_affiliate": "ANA",
+    "logo": "SD.png"
+  },
+  {
+    "abbreviation": "SJ",
+    "name": "San Jose Barracuda",
+    "nhl_affiliate": "SJS",
+    "logo": "SJ.png"
+  },
+  {
+    "abbreviation": "SPR",
+    "name": "Springfield Thunderbirds",
+    "nhl_affiliate": "STL",
+    "logo": "SPR.png"
+  },
+  {
+    "abbreviation": "SYR",
+    "name": "Syracuse Crunch",
+    "nhl_affiliate": "TBL",
+    "logo": "SYR.png"
+  },
+  {
+    "abbreviation": "TEX",
+    "name": "Texas Stars",
+    "nhl_affiliate": "DAL",
+    "logo": "TEX.png"
+  },
+  {
+    "abbreviation": "TOR",
+    "name": "Toronto Marlies",
+    "nhl_affiliate": "TOR",
+    "logo": "TOR.png"
+  },
+  {
+    "abbreviation": "TUC",
+    "name": "Tucson Roadrunners",
+    "nhl_affiliate": "UTA",
+    "logo": "TUC.png"
+  },
+  {
+    "abbreviation": "UTC",
+    "name": "Utica Comets",
+    "nhl_affiliate": "NJD",
+    "logo": "UTC.png"
+  },
+  {
+    "abbreviation": "WBS",
+    "name": "Wilkes-Barre/Scranton Penguins",
+    "nhl_affiliate": "PIT",
+    "logo": "WBS.png"
+  }
+]

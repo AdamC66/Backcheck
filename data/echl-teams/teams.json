@@ -1,0 +1,182 @@
+[
+  {
+    "abbreviation": "ADK",
+    "name": "Adirondack Thunder",
+    "nhl_affiliate": "NJD",
+    "logo": "ADK.png"
+  },
+  {
+    "abbreviation": "ALN",
+    "name": "Allen Americans",
+    "nhl_affiliate": "OTT",
+    "logo": "ALN.png"
+  },
+  {
+    "abbreviation": "ATL",
+    "name": "Atlanta Gladiators",
+    "nhl_affiliate": "NSH",
+    "logo": "ATL.png"
+  },
+  {
+    "abbreviation": "BLM",
+    "name": "Bloomington Bison",
+    "nhl_affiliate": "WPG",
+    "logo": "BLM.png"
+  },
+  {
+    "abbreviation": "CIN",
+    "name": "Cincinnati Cyclones",
+    "nhl_affiliate": "TOR",
+    "logo": "CIN.png"
+  },
+  {
+    "abbreviation": "FLA",
+    "name": "Florida Everblades",
+    "nhl_affiliate": "PIT",
+    "logo": "FLA.png"
+  },
+  {
+    "abbreviation": "FW",
+    "name": "Fort Wayne Komets",
+    "nhl_affiliate": "EDM",
+    "logo": "FW.png"
+  },
+  {
+    "abbreviation": "GSO",
+    "name": "Greensboro Gargoyles",
+    "nhl_affiliate": "CAR",
+    "logo": "GSO.png"
+  },
+  {
+    "abbreviation": "GRN",
+    "name": "Greenville Swamp Rabbits",
+    "nhl_affiliate": "LAK",
+    "logo": "GRN.png"
+  },
+  {
+    "abbreviation": "IDH",
+    "name": "Idaho Steelheads",
+    "nhl_affiliate": "DAL",
+    "logo": "IDH.png"
+  },
+  {
+    "abbreviation": "IND",
+    "name": "Indy Fuel",
+    "nhl_affiliate": "CHI",
+    "logo": "IND.png"
+  },
+  {
+    "abbreviation": "JAX",
+    "name": "Jacksonville Icemen",
+    "nhl_affiliate": "MIN",
+    "logo": "JAX.png"
+  },
+  {
+    "abbreviation": "KAL",
+    "name": "Kalamazoo Wings",
+    "nhl_affiliate": "VAN",
+    "logo": "KAL.png"
+  },
+  {
+    "abbreviation": "KC",
+    "name": "Kansas City Mavericks",
+    "nhl_affiliate": "SEA",
+    "logo": "KC.png"
+  },
+  {
+    "abbreviation": "ME",
+    "name": "Maine Mariners",
+    "nhl_affiliate": "BOS",
+    "logo": "ME.png"
+  },
+  {
+    "abbreviation": "NM",
+    "name": "New Mexico Goatheads",
+    "nhl_affiliate": "COL",
+    "logo": "NM.png"
+  },
+  {
+    "abbreviation": "NFK",
+    "name": "Norfolk Admirals",
+    "nhl_affiliate": null,
+    "logo": "NFK.png"
+  },
+  {
+    "abbreviation": "ORL",
+    "name": "Orlando Solar Bears",
+    "nhl_affiliate": "TBL",
+    "logo": "ORL.png"
+  },
+  {
+    "abbreviation": "RC",
+    "name": "Rapid City Rush",
+    "nhl_affiliate": "CGY",
+    "logo": "RC.png"
+  },
+  {
+    "abbreviation": "RDG",
+    "name": "Reading Royals",
+    "nhl_affiliate": "PHI",
+    "logo": "RDG.png"
+  },
+  {
+    "abbreviation": "SAV",
+    "name": "Savannah Ghost Pirates",
+    "nhl_affiliate": "FLA",
+    "logo": "SAV.png"
+  },
+  {
+    "abbreviation": "SC",
+    "name": "South Carolina Stingrays",
+    "nhl_affiliate": "WSH",
+    "logo": "SC.png"
+  },
+  {
+    "abbreviation": "TAH",
+    "name": "Tahoe Knight Monsters",
+    "nhl_affiliate": "VGK",
+    "logo": "TAH.png"
+  },
+  {
+    "abbreviation": "TOL",
+    "name": "Toledo Walleye",
+    "nhl_affiliate": "DET",
+    "logo": "TOL.png"
+  },
+  {
+    "abbreviation": "TRE",
+    "name": "Trenton Ironhawks",
+    "nhl_affiliate": "NYI",
+    "logo": "TRE.png"
+  },
+  {
+    "abbreviation": "TR",
+    "name": "Trois-Rivi\u00e8res Lions",
+    "nhl_affiliate": "MTL",
+    "logo": "TR.png"
+  },
+  {
+    "abbreviation": "TUL",
+    "name": "Tulsa Oilers",
+    "nhl_affiliate": "ANA",
+    "logo": "TUL.png"
+  },
+  {
+    "abbreviation": "WHL",
+    "name": "Wheeling Nailers",
+    "nhl_affiliate": "CBJ",
+    "logo": "WHL.png"
+  },
+  {
+    "abbreviation": "WIC",
+    "name": "Wichita Thunder",
+    "nhl_affiliate": "SJS",
+    "logo": "WIC.png"
+  },
+  {
+    "abbreviation": "WOR",
+    "name": "Worcester Railers",
+    "nhl_affiliate": "STL",
+    "logo": "WOR.png"
+  }
+]
