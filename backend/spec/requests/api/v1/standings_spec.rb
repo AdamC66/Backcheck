@@ -34,4 +34,25 @@ RSpec.describe "GET /api/v1/leagues/:league_slug/standings", type: :request do
     get "/api/v1/leagues/nhl/standings", params: { date: "2026-01-01" }, headers: auth_headers(super_admin)
     expect(response.parsed_body["data"].map { |row| row["points"] }).to eq([ 50 ])
   end
+
+  it "skips a newer season that's been seeded but has no standings yet" do
+    team = create(:team, league: league)
+    standing_for(team, points: 90)
+    create(:season, league: league, label: "2026-27", starts_on: Date.new(2026, 10, 1), ends_on: Date.new(2027, 4, 1))
+
+    get "/api/v1/leagues/nhl/standings", headers: auth_headers(super_admin)
+
+    expect(response.parsed_body.dig("meta", "season")).to eq("2025-26")
+  end
+
+  it "returns the requested season empty rather than substituting one that has data" do
+    team = create(:team, league: league)
+    standing_for(team, points: 90)
+    create(:season, league: league, label: "2026-27", starts_on: Date.new(2026, 10, 1), ends_on: Date.new(2027, 4, 1))
+
+    get "/api/v1/leagues/nhl/standings", params: { season: "2026-27" }, headers: auth_headers(super_admin)
+
+    expect(response.parsed_body["data"]).to eq([])
+    expect(response.parsed_body.dig("meta", "season")).to eq("2026-27")
+  end
 end

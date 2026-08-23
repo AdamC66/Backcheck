@@ -14,11 +14,15 @@ module Api
 
       private
 
-      # Newest season held, not the current one — there is none for most of the summer.
+      # Newest season *with standings*, not the current one — there is none for most of
+      # the summer, and not just the newest season row: a season is seeded ahead of its
+      # own data (SyncSeasons runs before the games it will hold exist), so the newest
+      # row can be a real season with nothing in it yet. An explicit ?season= is taken
+      # as asked, empty or not.
       def find_season(league)
-        return league.seasons.chronological.last if params[:season].blank?
+        return league.seasons.find_by(label: params[:season]) if params[:season].present?
 
-        league.seasons.find_by(label: params[:season])
+        league.seasons.where(id: TeamStanding.select(:season_id)).chronological.last
       end
 
       def standings(season)

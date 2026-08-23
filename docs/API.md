@@ -53,7 +53,7 @@ A **team** object, used everywhere a team appears:
 
 | Param | Default | Notes |
 | --- | --- | --- |
-| `season` | newest season held for the league | Label form, e.g. `2025-26` |
+| `season` | newest season *with standings* | Label form, e.g. `2025-26`. A season is seeded ahead of its own data, so the newest row can be empty — this skips it. An explicit `season` is returned as asked, empty or not |
 | `date` | latest snapshot in the season | `YYYY-MM-DD`; standings *as of* that date |
 
 Standings are stored as dated snapshots, so `date` is a real query, not a filter over one
@@ -98,7 +98,7 @@ than quietly substituting a default.
 
 | Param | Default | Notes |
 | --- | --- | --- |
-| `season` | newest season held for the team's league | Label form, e.g. `2025-26` |
+| `season` | newest season *this team has games in* | Label form, e.g. `2025-26`. A season is seeded ahead of its own schedule, so the newest row can be empty — this skips it. An explicit `season` is returned as asked, empty or not |
 | `from` / `to` | the whole season | No cap; a season is ~88 games |
 
 With no range the season alone bounds the results, which deliberately includes preseason

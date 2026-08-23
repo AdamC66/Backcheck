@@ -36,6 +36,15 @@ RSpec.describe "GET /api/v1/teams/:team_id/games", type: :request do
                                                     "to" => playoff.game_date.to_s)
   end
 
+  it "skips a newer season that's been seeded but has no games yet" do
+    create(:game, season: season, home_team: team, away_team: opponent)
+    create(:season, league: league, label: "2026-27", starts_on: Date.new(2026, 10, 1), ends_on: Date.new(2027, 4, 1))
+
+    get "/api/v1/teams/#{team.id}/games", headers: auth_headers(super_admin)
+
+    expect(response.parsed_body.dig("meta", "season")).to eq("2025-26")
+  end
+
   it "hides a team the caller has no membership for" do
     team
 

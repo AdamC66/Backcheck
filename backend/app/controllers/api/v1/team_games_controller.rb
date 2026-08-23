@@ -18,11 +18,15 @@ module Api
 
       private
 
+      # Newest season *this team has games in*, not the current one — a season is seeded
+      # ahead of its own schedule (SyncSeasons runs before SyncTeamSchedule fills it in),
+      # so the newest row can be a real season with nothing scheduled yet. An explicit
+      # ?season= is taken as asked, empty or not.
       def find_season
         seasons = team.league.seasons
-        return seasons.chronological.last if params[:season].blank?
+        return seasons.find_by(label: params[:season]) if params[:season].present?
 
-        seasons.find_by(label: params[:season])
+        seasons.where(id: Game.for_team(team).select(:season_id)).chronological.last
       end
 
       # Unbounded by default: the season already bounds the games, and its start/end dates
