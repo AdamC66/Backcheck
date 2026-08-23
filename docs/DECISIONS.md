@@ -213,6 +213,21 @@ The shape it points at is orthogonal to `roster_spots` — `contracts` (player, 
 
 Two consequences already banked: `players` is a pure identity table (a player-per-team model would have been fatal, since a contract spans seasons and survives trades), and player ids are mapped through a table rather than a column, because a contract source arrives with its own id namespace and no `nhl_player_id`.
 
+**Research pass (2026-08-23, against the source 2013 NHL-NHLPA CBA in `data/`)**, prompted by scoping lineups (EPIC-9) and needing to know what they'd eventually have to respect. Confirms the schema needs a third layer, not just the two above:
+
+- **Article 16** (rosters): 23-man Active Roster max, min 18 skaters + 2 goaltenders. Injured Reserve and Non-Roster players don't count against the 23, but their salary still counts against the cap. So roster membership and cap-relevant status are two different facts about a player on a given day, neither of which `roster_spots` (season-grained) currently carries.
+- **Article 50.5** (Team Payroll Range): "Averaged Club Salary" is **calculated daily** — a per-day sum of whoever's rostered (plus IR/non-roster) that day, with a two-way player's NHL cap hit prorated by the fraction of the season actually spent on the NHL roster. This is the mechanism behind cap space "accumulating": a player who spends half the year in the minors only charges half a season's hit. Not a static season total — a running day-by-day computation.
+- **Article 50.10** (LTIR): a narrow exception to the Upper Limit for a bona-fide long-term injury — replacement salary capped at the injured player's own salary, and the club must be back under the cap before he returns.
+- **Article 13** (waivers): call-ups/send-downs aren't always a unilateral GM action. Young/inexperienced players are waiver-exempt and move NHL↔AHL freely; past a games/age threshold, sending a player down requires clearing Regular Waivers, where other clubs can claim him.
+
+None of this is buildable without contract data, and that's still correctly deferred. The actionable answer is **layering, sequenced**, so later work doesn't force a redesign of what ships now:
+
+1. **Team assignment** — exists today, `roster_spots.team_id` per season.
+2. **Active roster status** (active / injured reserve / non-roster, day-scoped) — not built. Needed to make lineup-eligibility and, later, cap accounting correct. Tracked as TASK-40.
+3. **Contract + cap compliance** (Averaged Club Salary, Team Payroll Range, LTIR, waiver-exemption tracking) — not built, explicitly parked. Tracked as its own epic, EPIC-10, so it stays visibly deferred rather than implied by TASK-39's simple "register a contract" action.
+
+v1 of lineups (TASK-35/36) and call-ups (TASK-37) gate on #1 alone — "eligible if you're the player's current team" — which is what already exists via `roster_spots`. That's a known simplification, not an oversight: #2 and #3 are real gaps in CBA-correctness, but the schema shape above doesn't box either out later.
+
 ### `/v1/roster/{team}/{season}` answers contracts, not participation
 **Status:** Settled
 It is a **contract list of unpredictable completeness**, and that makes it the wrong source for a historical roster even though nothing in it is inaccurate.

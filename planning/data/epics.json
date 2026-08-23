@@ -62,5 +62,21 @@
     "description": "Get real stat data into the system from the NHL's public web API (api-web.nhle.com). Throttled client called only from jobs; historical backfill by rake task, daily syncs via recurring.yml.",
     "status": "in_progress",
     "priority": "low"
+  },
+  {
+    "id": "EPIC-9",
+    "project_id": "backcheck",
+    "title": "Role-based team operations",
+    "description": "Write actions gated by Membership role, not read access — all views stay public. Coach: lineups (goalie, forward lines, defense pairings, scratches), hidden from other teams until they're historical. GM: call-ups/send-downs across a TeamAffiliation edge (parent team's GM only, not the affiliate's), trade proposals between teams, contract registration. Depends on TASK-3 for the underlying authorization check.",
+    "status": "backlog",
+    "priority": "medium"
+  },
+  {
+    "id": "EPIC-10",
+    "project_id": "backcheck",
+    "title": "CBA salary cap compliance",
+    "description": "Deferred, parked layer on top of EPIC-9's contract/trade actions: Averaged Club Salary and the Team Payroll Range (Article 50.5), the Bona-Fide Long-Term Injury/Illness Exception (50.10), and waiver-exemption tracking for send-downs (Article 13). Kept as its own epic rather than folded into TASK-39 so 'a GM can register a contract' shipping does not imply cap-legality is enforced. Researched against the source 2013 CBA on 2026-08-23 — see docs/DECISIONS.md.",
+    "status": "backlog",
+    "priority": "low"
   }
 ]

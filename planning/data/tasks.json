@@ -22,11 +22,11 @@
     "type": "feature",
     "status": "in_progress",
     "priority": "high",
-    "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. Controller-level 403 enforcement still pending — no protected resource controller exists yet to wire it into.",
+    "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. Controller-level 403 enforcement still pending — no protected resource controller exists yet to wire it into. This gates write actions, not reads: every view stays public, so the first real controllers to use this are the EPIC-9 role actions (lineups, call-ups, trades, contracts), not the existing read-only endpoints.",
     "acceptance_criteria": [
-      "A request from a user with no qualifying membership and no super-admin flag is rejected with 403",
+      "A write action from a user with no qualifying membership and no super-admin flag is rejected with 403",
       "A league_admin can act on any team within their league without a team-level membership row",
-      "A team-scoped user (e.g. gm) is authorized for that team's affiliates (TASK-17) as read-only, downward only"
+      "A super_admin bypasses every check below without a matching Membership row"
     ]
   },
   {
@@ -301,5 +301,97 @@
     "status": "done",
     "priority": "medium",
     "description": "TeamPage becomes a shell (header, theme, side nav) rendering nested routes via Outlet: /teams/:id (Overview), /teams/:id/schedule, /teams/:id/roster. Overview shows last-3/next-3 games, computed client-side from the existing full-season fetch (no new endpoint). Roster consumes GET /teams/:id/roster, grouped Forwards/Defensemen/Goalies, showing jersey number, position, and an assignment badge when a player is currently on an AHL/ECHL affiliate. GameRow extracted from ScheduleList so Overview's summary cards reuse it rather than duplicating the outcome-badge logic. 'Leading players' deferred with Overview's layout, pending SkaterStatLine/GoalieStatLine (TASK-26) — not stubbed, not referenced. Verified live in a headless browser: real Toronto data, 49-player roster correctly grouped, no console errors."
+  },
+  {
+    "id": "TASK-35",
+    "epic_id": "EPIC-9",
+    "title": "Design Lineup schema and its active/historical visibility rule",
+    "type": "spike",
+    "status": "backlog",
+    "priority": "medium",
+    "description": "Lineup belongs to Team + Game, not roster_spots: starting goalie, forward lines, defense pairings, scratches. Needs an explicit active/historical distinction, history-preserving like roster_spots rather than a single mutable 'current' row. Once a game starts (or ends — TBD which), the lineup stops being a hidden, team-private draft and becomes a normal visible game record; before that, only members of the owning team can see it. v1 eligibility is gated on roster_spots.team_id alone (current team assignment) — not a real 23-man Active Roster / Injured Reserve / Non-Roster distinction (Article 16), which is TASK-40. Known simplification, not an oversight — see docs/DECISIONS.md."
+  },
+  {
+    "id": "TASK-36",
+    "epic_id": "EPIC-9",
+    "title": "Coach: set a team's lineup for a game",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "description": "A coach-role Membership on a team can create/update that team's own Lineup for a game. Depends on TASK-35 (schema) and TASK-3 (authorization foundation). v1 doesn't check whether a named player is actually within the 23-man Active Roster or on Injured Reserve (TASK-40) — only that he's on the team.",
+    "acceptance_criteria": [
+      "A coach can set/edit their own team's lineup for a game",
+      "A coach on one team cannot edit another team's lineup, including a same-league opponent",
+      "Any member of the owning team can view its active (not-yet-played) lineup",
+      "A user outside the owning team cannot view an active lineup, but can once it's historical"
+    ]
+  },
+  {
+    "id": "TASK-37",
+    "epic_id": "EPIC-9",
+    "title": "GM: call up / send down players across a TeamAffiliation",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "description": "Reassigns a roster_spots row between a parent team and its affiliate (existing TeamAffiliation, TASK-28). Authorization is hierarchical, not peer-to-peer: the acting GM's team must be the parent_team in a TeamAffiliation row for the current season where the affiliate_team is the target player's team. The affiliate's own GM cannot initiate the same move. Depends on TASK-3. v1 doesn't check Regular Waiver exemption (Article 13) — a veteran being sent down in real life would often need to clear waivers first, where other clubs can claim him. That's TASK-43.",
+    "acceptance_criteria": [
+      "The parent team's GM can move a player to or from its affiliate for the current season",
+      "The affiliate team's GM cannot move a player to or from its parent",
+      "A move attempted outside an existing TeamAffiliation edge is rejected"
+    ]
+  },
+  {
+    "id": "TASK-38",
+    "epic_id": "EPIC-9",
+    "title": "GM: propose and respond to trades with other teams",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "description": "New Trade entity: proposing team, receiving team, the players/assets on each side, and a pending/accepted/rejected/withdrawn lifecycle. Unlike call-ups, this is peer-to-peer — either side's GM can propose, regardless of any TeamAffiliation relationship between the two teams. Depends on TASK-3. Biggest unknown of the EPIC-9 tickets: the schema and state machine aren't sketched yet."
+  },
+  {
+    "id": "TASK-39",
+    "epic_id": "EPIC-9",
+    "title": "GM: register a player contract",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "description": "New Contract entity (term, value, level) tied to Player + Team + Season. A GM can register a contract for a player rostered on their own team. Depends on Player/roster_spots (EPIC-3) and TASK-3. Registering a contract here does not enforce cap legality — Team Payroll Range compliance (Article 50.5) is EPIC-10, deliberately layered on top rather than bundled in."
+  },
+  {
+    "id": "TASK-40",
+    "epic_id": "EPIC-3",
+    "title": "Active roster status: active / injured reserve / non-roster, day-scoped",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "description": "Extends roster_spots (or a sibling table) with a day-scoped status distinct from team assignment, per Article 16: a 23-man Active Roster max (18 skaters + 2 goaltenders min), with Injured Reserve (16.11) and Non-Roster (16.12) players excluded from the 23-count but still counted toward the cap once EPIC-10 exists. What makes TASK-36's lineup eligibility and EPIC-10's cap accounting both CBA-honest instead of just 'on this team this season'."
+  },
+  {
+    "id": "TASK-41",
+    "epic_id": "EPIC-10",
+    "title": "Team Payroll Range enforcement: Averaged Club Salary, Upper/Lower Limit",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "description": "Article 50.5. Averaged Club Salary is calculated daily — the sum, for each day of the season, of every rostered/IR/non-roster player's Averaged Amount, with a two-way player's NHL portion prorated by the fraction of the season actually spent on the NHL roster. Not a static season-long sum of cap hits. Depends on TASK-39 (Contract must exist) and TASK-40 (day-scoped roster status)."
+  },
+  {
+    "id": "TASK-42",
+    "epic_id": "EPIC-10",
+    "title": "Bona-Fide Long-Term Injury/Illness Exception (LTIR)",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "description": "Article 50.10(d). Lets a Club exceed the Upper Limit when a Player is unfit to play for 24+ calendar days and 10+ NHL games: replacement salary is capped at the injured Player's own salary, and the Club must return to Upper Limit compliance before he's activated again. Depends on TASK-41."
+  },
+  {
+    "id": "TASK-43",
+    "epic_id": "EPIC-10",
+    "title": "Waiver-exemption tracking for send-downs",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "description": "Article 13. Waiver exemption is age-at-draft and games-played based (e.g. an 18-year-old drafted skater is exempt for 3 seasons or until his 160th NHL game, whichever comes first). Past exemption, sending a player to the minors requires clearing Regular Waivers, where any other Club can claim him — TASK-37's call-up/send-down currently assumes this never happens."
   }
 ]
