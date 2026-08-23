@@ -100,6 +100,15 @@
     "description": "Logos were files committed to frontend/public, so changing one meant a frontend redeploy. Now has_one_attached :logo on League and Team, Disk service (S3-compatible later), seeded from data/ via AttachLogo with a checksum guard so reruns don't orphan blobs. Serializers emit absolute proxy URLs; the logo filename columns are dropped. SVG is served inline via a documented exception to Active Storage's binary-serving default \u2014 revisit if an upload endpoint is added."
   },
   {
+    "id": "TASK-27",
+    "epic_id": "EPIC-7",
+    "title": "Super Admin logo upload",
+    "type": "feature",
+    "status": "todo",
+    "priority": "medium",
+    "description": "There is no way to fix a bad logo without editing data/ and re-seeding \u2014 Seattle's had to be replaced by hand on 2026-08-22. Needs PATCH /api/v1/teams/:id/logo and /leagues/:slug/logo restricted to Super Admin, content-type and size validation, plus a frontend control. Note the Active Storage caveat in docs/DECISIONS.md: uploads make the SVG-served-inline exception unsafe, so sanitize SVG on the way in or rasterize."
+  },
+  {
     "id": "TASK-22",
     "epic_id": "EPIC-8",
     "title": "NhlClient: throttled, retrying HTTP client for api-web.nhle.com",
