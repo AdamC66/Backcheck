@@ -13,7 +13,7 @@ export function TeamRail({ teams }: TeamRailProps) {
         <Link
           key={team.id}
           to={`/teams/${team.id}`}
-          className="w-56 shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 lg:w-auto lg:shrink"
+          className="w-56 shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 lg:w-auto lg:shrink"
         >
           <TeamCard team={team} />
         </Link>

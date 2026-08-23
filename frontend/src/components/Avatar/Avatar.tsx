@@ -21,7 +21,7 @@ export function Avatar({ name, size = "md" }: AvatarProps) {
     <span
       aria-hidden="true"
       className={[
-        "inline-flex shrink-0 items-center justify-center rounded-full",
+        "inline-flex shrink-0 items-center justify-center",
         "bg-slate-700 font-medium text-white select-none",
         SIZE_CLASS[size],
       ].join(" ")}

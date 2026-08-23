@@ -1,3 +1,4 @@
+import { toIsoDate } from "@/lib/format";
 import type { Game } from "@/models/games";
 
 export interface GameDay {
@@ -7,7 +8,7 @@ export interface GameDay {
 
 // The date a ticker should open on: the latest one that has already happened, so a live
 // season opens on today and an off-season one on the last games played.
-export function openingDate(days: GameDay[], today = new Date().toISOString().slice(0, 10)) {
+export function openingDate(days: GameDay[], today = toIsoDate(new Date())) {
   return days.findLast((day) => day.date <= today)?.date ?? days[0]?.date;
 }
 

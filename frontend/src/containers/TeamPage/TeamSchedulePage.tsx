@@ -33,9 +33,13 @@ export function TeamSchedulePage() {
   return (
     <Stack gap="sm">
       <Row justify="between" align="baseline">
-        <Text variant="subheading">Schedule</Text>
+        <Text variant="heading" className="font-display tracking-wide">
+          Schedule
+        </Text>
         {games.data === undefined ? null : (
-          <Text variant="caption">{games.data.meta?.count} games</Text>
+          <Text variant="caption" className="font-bold tracking-wide text-slate-400 uppercase">
+            {games.data.meta?.count} games
+          </Text>
         )}
       </Row>
 

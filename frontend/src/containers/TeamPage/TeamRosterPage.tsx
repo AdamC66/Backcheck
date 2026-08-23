@@ -26,8 +26,10 @@ export function TeamRosterPage() {
   return (
     <Stack gap="sm">
       <Row justify="between" align="baseline">
-        <Text variant="subheading">Roster</Text>
-        <Text variant="caption">
+        <Text variant="heading" className="font-display tracking-wide">
+          Roster
+        </Text>
+        <Text variant="caption" className="font-bold tracking-wide text-slate-400 uppercase">
           {roster.data.meta?.season} · {roster.data.data.length} players
         </Text>
       </Row>

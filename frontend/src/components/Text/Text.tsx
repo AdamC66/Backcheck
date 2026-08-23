@@ -4,6 +4,7 @@ const VARIANT_CLASS = {
   heading: "text-2xl font-semibold text-slate-900",
   subheading: "text-lg font-medium text-slate-800",
   body: "text-base text-slate-700",
+  title: "text-sm font-semibold text-slate-800",
   label: "text-sm font-medium text-slate-700",
   caption: "text-xs text-slate-500",
 } as const;
@@ -12,6 +13,7 @@ const VARIANT_ELEMENT = {
   heading: "h1",
   subheading: "h2",
   body: "p",
+  title: "span",
   label: "span",
   caption: "span",
 } as const;

@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Route, Routes } from "react-router";
 import { fetchCurrentUser } from "@/models/auth";
 import { fetchTeamGames } from "@/models/games";
+import { fetchStandings } from "@/models/standings";
 import { fetchTeam } from "@/models/teams";
 import { TOKEN_KEY } from "@/lib/tokenStorage";
-import { SUPER_ADMIN, TEAM_GAMES, TEAM_WITH_LEAGUE, TEAMS } from "@/test-mocks";
+import { SUPER_ADMIN, STANDINGS, TEAM_GAMES, TEAM_WITH_LEAGUE, TEAMS } from "@/test-mocks";
 import { renderWithProviders, screen } from "@/test-utils";
 import { TeamPage } from "../TeamPage";
 import { TeamOverviewPage } from "../TeamOverviewPage";
@@ -13,6 +14,7 @@ import { TeamRosterPage } from "../TeamRosterPage";
 
 vi.mock("@/models/auth");
 vi.mock("@/models/games");
+vi.mock("@/models/standings");
 vi.mock("@/models/teams");
 
 function renderTeam(route = `/teams/${TEAMS[0].id}`) {
@@ -36,12 +38,14 @@ describe("TeamPage", () => {
     vi.mocked(fetchCurrentUser).mockResolvedValue(SUPER_ADMIN);
     vi.mocked(fetchTeam).mockResolvedValue(TEAM_WITH_LEAGUE);
     vi.mocked(fetchTeamGames).mockResolvedValue(TEAM_GAMES);
+    vi.mocked(fetchStandings).mockResolvedValue(STANDINGS);
   });
 
-  it("shows the team's header and links to its section", async () => {
+  it("shows the team's identity in the sidebar and marks the active section", async () => {
     renderTeam(`/teams/${TEAMS[0].id}/schedule`);
 
-    expect(await screen.findByRole("heading", { name: "Anaheim Ducks" })).toBeInTheDocument();
+    expect(await screen.findByText("Anaheim Ducks")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Schedule" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Schedule" })).toHaveAttribute("aria-current", "page");
   });
 

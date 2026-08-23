@@ -32,7 +32,7 @@ export function Button({
   ...buttonProps
 }: ButtonProps) {
   const classes = [
-    "rounded-md font-medium transition-colors",
+    "font-medium transition-colors",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900",
     VARIANT_CLASS[variant],
     SIZE_CLASS[size],

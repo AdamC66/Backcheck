@@ -14,8 +14,10 @@ export function ScheduleList({ months }: ScheduleListProps) {
       {months.map((month) => (
         <Stack key={month.key} gap="xs">
           <span className="flex items-center gap-2">
-            <span className="h-4 w-1 rounded-full bg-team-accent" />
-            <Text variant="label">{month.label}</Text>
+            <span className="h-3.5 w-1 bg-team-accent" />
+            <Text variant="label" className="font-display uppercase tracking-wide">
+              {month.label}
+            </Text>
           </span>
 
           <Card padding="none">

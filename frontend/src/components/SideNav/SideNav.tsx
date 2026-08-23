@@ -12,13 +12,16 @@ export interface SideNavProps {
   label: string;
 }
 
-const BASE_LINK = "rounded-md px-3 py-2 text-sm font-medium transition-colors";
-const ACTIVE_LINK = "bg-team-primary text-team-contrast";
-const INACTIVE_LINK = "text-slate-600 hover:bg-slate-100 hover:text-slate-900";
+// Styled for the navy team-color sidebar it lives in, not a light page — this
+// component has no other context to stay generic for.
+const BASE_LINK = "border-l-[3px] px-3.5 py-2.5 text-sm font-bold transition-colors";
+const ACTIVE_LINK = "border-team-trim bg-white/10 text-team-contrast";
+const INACTIVE_LINK =
+  "border-transparent text-team-contrast/60 hover:bg-white/5 hover:text-team-contrast/90";
 
 export function SideNav({ items, label }: SideNavProps) {
   return (
-    <nav aria-label={label} className="flex w-40 shrink-0 flex-col gap-1">
+    <nav aria-label={label} className="flex flex-col gap-0.5">
       {items.map((item) => (
         <NavLink
           key={item.to}

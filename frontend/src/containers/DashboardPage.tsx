@@ -33,7 +33,7 @@ export function DashboardPage() {
               <Link
                 key={league.id}
                 to={`/leagues/${league.slug}`}
-                className="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
               >
                 <LeagueCard league={league} />
               </Link>

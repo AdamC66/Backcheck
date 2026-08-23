@@ -2,15 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Route, Routes } from "react-router";
 import { fetchCurrentUser } from "@/models/auth";
 import { fetchTeamGames } from "@/models/games";
+import { fetchStandings } from "@/models/standings";
 import { fetchTeam } from "@/models/teams";
 import { TOKEN_KEY } from "@/lib/tokenStorage";
-import { SUPER_ADMIN, TEAM_WITH_LEAGUE, TEAMS, gameFor } from "@/test-mocks";
+import { SUPER_ADMIN, STANDINGS, TEAM_WITH_LEAGUE, TEAMS, gameFor } from "@/test-mocks";
 import { renderWithProviders, screen } from "@/test-utils";
 import { TeamPage } from "../TeamPage";
 import { TeamOverviewPage } from "../TeamOverviewPage";
 
 vi.mock("@/models/auth");
 vi.mock("@/models/games");
+vi.mock("@/models/standings");
 vi.mock("@/models/teams");
 
 function renderOverview() {
@@ -41,6 +43,21 @@ describe("TeamOverviewPage", () => {
     localStorage.setItem(TOKEN_KEY, "test-token");
     vi.mocked(fetchCurrentUser).mockResolvedValue(SUPER_ADMIN);
     vi.mocked(fetchTeam).mockResolvedValue(TEAM_WITH_LEAGUE);
+    vi.mocked(fetchStandings).mockResolvedValue(STANDINGS);
+  });
+
+  it("shows KPI tiles built from the team's real standings row", async () => {
+    vi.mocked(fetchTeamGames).mockResolvedValue({
+      data: [],
+      meta: { season: "2025-26", count: 0 },
+    });
+
+    renderOverview();
+
+    expect(await screen.findByText("50-25-7")).toBeInTheDocument();
+    expect(screen.getByText("1st · Central Division")).toBeInTheDocument();
+    expect(screen.getByText("121")).toBeInTheDocument();
+    expect(screen.getByText("W3")).toBeInTheDocument();
   });
 
   it("splits games into the last 3 played and the next 3 scheduled", async () => {

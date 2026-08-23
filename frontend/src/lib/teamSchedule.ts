@@ -1,3 +1,4 @@
+import { formatMonthYear, toIsoDate } from "@/lib/format";
 import type { Game } from "@/models/games";
 import type { Team } from "@/models/teams";
 
@@ -48,10 +49,6 @@ function outcomeFor(game: Game, teamScore: number | null, opponentScore: number 
   return EXTRA_TIME.includes(game.last_period_type ?? "") ? "ot_loss" : "loss";
 }
 
-function isoDate(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
-
 // Most-recent-first: the game right before today reads first, like a box score ticker.
 export function recentTeamGames(
   games: Game[],
@@ -59,7 +56,7 @@ export function recentTeamGames(
   count = 3,
   today = new Date(),
 ): TeamGame[] {
-  const cutoff = isoDate(today);
+  const cutoff = toIsoDate(today);
 
   return games
     .filter((game) => FINISHED_STATES.includes(game.state) && game.game_date <= cutoff)
@@ -75,7 +72,7 @@ export function upcomingTeamGames(
   count = 3,
   today = new Date(),
 ): TeamGame[] {
-  const cutoff = isoDate(today);
+  const cutoff = toIsoDate(today);
 
   return games
     .filter((game) => !FINISHED_STATES.includes(game.state) && game.game_date >= cutoff)
@@ -93,16 +90,9 @@ export function groupByMonth(games: Game[], teamId: number): GameMonth[] {
     if (existing?.key === key) {
       existing.games.push(entry);
     } else {
-      months.push({ key, label: monthLabel(game.game_date), games: [entry] });
+      months.push({ key, label: formatMonthYear(game.game_date), games: [entry] });
     }
 
     return months;
   }, []);
-}
-
-function monthLabel(date: string) {
-  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
-    month: "long",
-    year: "numeric",
-  });
 }

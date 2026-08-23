@@ -13,7 +13,9 @@ export interface GameSummaryCardProps {
 export function GameSummaryCard({ title, games, emptyLabel }: GameSummaryCardProps) {
   return (
     <Stack gap="xs" className="min-w-0 flex-1">
-      <Text variant="label">{title}</Text>
+      <Text variant="label" className="font-display uppercase tracking-wide">
+        {title}
+      </Text>
 
       <Card padding="none">
         {games.length === 0 ? (

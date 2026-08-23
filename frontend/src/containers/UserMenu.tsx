@@ -47,7 +47,7 @@ export function UserMenu() {
         onClick={() => setIsOpen((open) => !open)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        className="flex cursor-pointer items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+        className="flex cursor-pointer items-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
       >
         <Avatar name={user.email} size="sm" />
         <span className="sr-only">Account menu for {user.email}</span>
@@ -56,7 +56,7 @@ export function UserMenu() {
       {isOpen ? (
         <div
           role="menu"
-          className="absolute right-0 z-10 mt-2 w-56 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg"
+          className="absolute right-0 z-10 mt-2 w-56 overflow-hidden border border-slate-200 bg-white shadow-lg"
         >
           <div className="border-b border-slate-100 px-3 py-2">
             <Text variant="caption">{user.email}</Text>

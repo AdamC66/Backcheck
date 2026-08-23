@@ -9,22 +9,17 @@ import { TeamRail } from "@/components/TeamRail/TeamRail";
 import { Text } from "@/components/Text/Text";
 import { UserMenu } from "@/containers/UserMenu";
 import { ApiError } from "@/lib/apiClient";
+import { formatFullDate } from "@/lib/format";
 import { isStandingsView, type StandingsView } from "@/lib/standingsViews";
 import { useLeague } from "@/models/useLeague";
 import { useLeagueGames } from "@/models/useLeagueGames";
 import { groupByDate } from "@/lib/gameDays";
 import { useStandings } from "@/models/useStandings";
 
+// The standings endpoint's as_of_date is nullable — a league with no snapshot yet —
+// which formatFullDate itself doesn't need to know about.
 function formatAsOf(date: string | null | undefined) {
-  if (date === null || date === undefined) {
-    return null;
-  }
-
-  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return date === null || date === undefined ? null : formatFullDate(date);
 }
 
 export function LeaguePage() {

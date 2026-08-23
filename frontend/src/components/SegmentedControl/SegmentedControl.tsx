@@ -14,7 +14,7 @@ export interface SegmentedControlProps<T extends string> {
 }
 
 const BASE_SEGMENT =
-  "cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900";
+  "cursor-pointer px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900";
 
 const SELECTED_SEGMENT = "bg-white text-slate-900 shadow-sm";
 const THEMED_SEGMENT = "bg-team-primary text-team-contrast shadow-sm";
@@ -36,7 +36,7 @@ export function SegmentedControl<T extends string>({
   themed = false,
 }: SegmentedControlProps<T>) {
   return (
-    <div role="group" aria-label={label} className="inline-flex gap-1 rounded-lg bg-slate-100 p-1">
+    <div role="group" aria-label={label} className="inline-flex gap-1 bg-slate-100 p-1">
       {options.map((option) => (
         <button
           key={option.value}

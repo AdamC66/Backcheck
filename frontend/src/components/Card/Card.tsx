@@ -25,12 +25,7 @@ export interface CardProps {
 // Always a plain div: the one caller that needed a <form> surface wraps its form
 // instead, which keeps this from growing a polymorphic `as` prop and losing element typing.
 export function Card({ children, variant = "bordered", padding = "md", className }: CardProps) {
-  const classes = [
-    "rounded-lg bg-white",
-    VARIANT_CLASS[variant],
-    PADDING_CLASS[padding],
-    className ?? "",
-  ]
+  const classes = ["bg-white", VARIANT_CLASS[variant], PADDING_CLASS[padding], className ?? ""]
     .filter(Boolean)
     .join(" ");
 

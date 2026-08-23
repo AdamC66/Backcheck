@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import { formatMonthDay, formatTime, formatWeekday } from "@/lib/format";
 import { openingDate, type GameDay } from "@/lib/gameDays";
 import type { Game, GameSide, GameType } from "@/models/games";
 
@@ -24,10 +25,7 @@ const TYPE_LABEL: Partial<Record<GameType, string>> = {
 
 function statusOf(game: Game) {
   if (!FINISHED.includes(game.state)) {
-    return new Date(game.starts_at).toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    return formatTime(game.starts_at);
   }
 
   return EXTRA_TIME.includes(game.last_period_type ?? "")
@@ -54,16 +52,10 @@ function Side({ side, won }: { side: GameSide; won: boolean }) {
 }
 
 function DateChip({ date }: { date: string }) {
-  const parsed = new Date(`${date}T00:00:00`);
-
   return (
     <div className="flex w-20 shrink-0 flex-col items-center justify-center bg-slate-800 text-white">
-      <span className="text-xs font-semibold tracking-wide uppercase">
-        {parsed.toLocaleDateString(undefined, { weekday: "short" })}
-      </span>
-      <span className="text-xs text-slate-300">
-        {parsed.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-      </span>
+      <span className="text-xs font-semibold tracking-wide uppercase">{formatWeekday(date)}</span>
+      <span className="text-xs text-slate-300">{formatMonthDay(date)}</span>
     </div>
   );
 }
@@ -97,9 +89,9 @@ function SkeletonDay() {
           key={index}
           className="flex w-44 shrink-0 animate-pulse flex-col justify-center gap-1.5 border-r border-slate-100 px-3"
         >
-          <span className="h-2 w-10 rounded bg-slate-100" />
-          <span className="h-3 w-24 rounded bg-slate-100" />
-          <span className="h-3 w-20 rounded bg-slate-100" />
+          <span className="h-2 w-10 bg-slate-100" />
+          <span className="h-3 w-24 bg-slate-100" />
+          <span className="h-3 w-20 bg-slate-100" />
         </div>
       ))}
     </>
@@ -219,7 +211,7 @@ export function GameTicker({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <div className="overflow-hidden border border-slate-200 bg-white">
       <div className="flex items-stretch">
         <StepButton
           label="Scroll to earlier games"
