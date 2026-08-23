@@ -24,14 +24,37 @@ export interface Game {
 
 export interface GamesMeta {
   season?: string;
-  from: string | null;
-  to: string | null;
+  from?: string | null;
+  to?: string | null;
   count: number;
+  /** Whole dates this page covers, ascending. */
+  dates?: string[];
+  /** Anchors for the adjacent pages; null at the ends of the schedule. */
+  prev_cursor?: string | null;
+  next_cursor?: string | null;
+}
+
+export interface LeagueGamesPage {
+  date?: string;
+  direction?: "forward" | "backward";
 }
 
 export interface TeamGamesParams {
   season?: string;
   gameType?: GameType;
+}
+
+export function fetchLeagueGames(
+  slug: string,
+  { date, direction }: LeagueGamesPage = {},
+): Promise<Envelope<Game[], GamesMeta>> {
+  const query = new URLSearchParams();
+  if (date !== undefined) query.set("date", date);
+  if (direction !== undefined) query.set("direction", direction);
+
+  const suffix = query.size === 0 ? "" : `?${query.toString()}`;
+
+  return requestWithMeta<Game[], GamesMeta>(`/leagues/${encodeURIComponent(slug)}/games${suffix}`);
 }
 
 export function fetchTeamGames(

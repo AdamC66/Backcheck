@@ -148,6 +148,28 @@ export function gameFor(overrides: Partial<Game> = {}): Game {
   };
 }
 
+export const LEAGUE_GAMES: Envelope<Game[], GamesMeta> = {
+  data: [
+    gameFor({ id: 10, game_date: "2026-04-15", state: "OFF", last_period_type: "SO" }),
+    gameFor({
+      id: 11,
+      game_date: "2026-04-15",
+      state: "FUT",
+      last_period_type: null,
+      home: { team: TEAMS[1], score: null },
+      away: { team: TEAMS[0], score: null },
+    }),
+  ],
+  meta: {
+    from: "2026-04-15",
+    to: "2026-04-15",
+    count: 2,
+    dates: ["2026-04-15"],
+    prev_cursor: "2026-04-14",
+    next_cursor: "2026-04-16",
+  },
+};
+
 export const TEAM_GAMES: Envelope<Game[], GamesMeta> = {
   data: [
     gameFor({ id: 1, game_date: "2025-10-08" }),

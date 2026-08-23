@@ -3,6 +3,15 @@
 /* Team colours are data, so they arrive as custom properties rather than fixed tokens.
    TeamTheme overrides these on a subtree; the defaults keep the utilities usable
    anywhere a team isn't in scope. */
+/* Scrolled by its own controls, so the bar is noise. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @theme {
   --color-team-primary: #1e293b;
   --color-team-accent: #64748b;

@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router";
+import { GameTicker } from "@/components/GameTicker/GameTicker";
 import { PageShell } from "@/components/PageShell/PageShell";
 import { Row } from "@/components/Row/Row";
 import { Stack } from "@/components/Stack/Stack";
@@ -9,6 +11,8 @@ import { UserMenu } from "@/containers/UserMenu";
 import { ApiError } from "@/lib/apiClient";
 import { isStandingsView, type StandingsView } from "@/lib/standingsViews";
 import { useLeague } from "@/models/useLeague";
+import { useLeagueGames } from "@/models/useLeagueGames";
+import { groupByDate } from "@/lib/gameDays";
 import { useStandings } from "@/models/useStandings";
 
 function formatAsOf(date: string | null | undefined) {
@@ -28,6 +32,11 @@ export function LeaguePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const league = useLeague(slug ?? "");
   const standings = useStandings(slug ?? "");
+  const games = useLeagueGames(slug ?? "");
+
+  // Stable identity: the ticker keys a layout effect off this array.
+  const pages = games.data?.pages;
+  const days = useMemo(() => groupByDate(pages?.flatMap((page) => page.data) ?? []), [pages]);
 
   if (slug === undefined) {
     return <Navigate to="/" replace />;
@@ -36,17 +45,46 @@ export function LeaguePage() {
   const viewParam = searchParams.get("view");
   const view: StandingsView = isStandingsView(viewParam) ? viewParam : "league";
 
-  function selectView(next: StandingsView) {
-    setSearchParams(next === "league" ? {} : { view: next }, { replace: true });
+  // Merges rather than replaces, so stepping the ticker doesn't reset the standings view.
+  function updateParams(changes: Record<string, string | null>) {
+    const next = new URLSearchParams(searchParams);
+
+    Object.entries(changes).forEach(([key, value]) => {
+      if (value === null) {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+    });
+
+    setSearchParams(next, { replace: true });
   }
 
   const standingsMissing = standings.error instanceof ApiError && standings.error.status === 404;
+  const gamesMissing = games.error instanceof ApiError && games.error.status === 404;
   const asOf = formatAsOf(standings.data?.meta?.as_of_date);
   const teams = league.data?.teams ?? [];
 
   return (
     <PageShell actions={<UserMenu />} width="wide">
       <Stack gap="lg">
+        {/* Rendered even while loading: the strip holds its height, so the page below
+            doesn't jump once games arrive. */}
+        {gamesMissing ? null : (
+          <GameTicker
+            days={days}
+            isLoading={games.isPending}
+            hasEarlier={games.hasPreviousPage}
+            hasLater={games.hasNextPage}
+            onReachStart={() => {
+              if (!games.isFetching) games.fetchPreviousPage();
+            }}
+            onReachEnd={() => {
+              if (!games.isFetching) games.fetchNextPage();
+            }}
+          />
+        )}
+
         <Stack gap="sm">
           <Link to="/" className="w-fit text-sm text-slate-500 hover:text-slate-900">
             ← All leagues
@@ -107,7 +145,7 @@ export function LeaguePage() {
                 <StandingsPanel
                   standings={standings.data.data}
                   view={view}
-                  onViewChange={selectView}
+                  onViewChange={(next) => updateParams({ view: next === "league" ? null : next })}
                 />
               )}
             </Stack>
