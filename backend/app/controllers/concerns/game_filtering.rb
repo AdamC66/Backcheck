@@ -10,10 +10,10 @@ module GameFiltering
     to = date_param(:to) { to_fallback || from }
 
     return if performed?
-    return render_invalid_range("to must not be earlier than from") if to < from
+    return render_invalid_parameter("to must not be earlier than from") if to < from
 
     if max_days && (to - from).to_i >= max_days
-      return render_invalid_range("range must be #{max_days} days or fewer")
+      return render_invalid_parameter("range must be #{max_days} days or fewer")
     end
 
     from..to
@@ -26,11 +26,11 @@ module GameFiltering
 
     Date.iso8601(value)
   rescue Date::Error
-    render_invalid_range("#{name} must be a YYYY-MM-DD date")
+    render_invalid_parameter("#{name} must be a YYYY-MM-DD date")
   end
 
-  def render_invalid_range(message)
-    render_error(code: "invalid_range", message: message, status: :unprocessable_content)
+  def render_invalid_parameter(message)
+    render_error(code: "invalid_parameter", message: message, status: :unprocessable_content)
 
     nil
   end

@@ -47,7 +47,7 @@ Sessions are stateless *except* for revocation: logout records the token's `jti`
 | `GET /api/v1/leagues/:slug/standings` | bearer | Dated standings snapshots for a season (`season`, `date` params) |
 | `GET /api/v1/teams/:id` | bearer | One team |
 | `GET /api/v1/teams/:id/games` | bearer | A team's games for a season (`season`, `from`/`to`, `game_type`) |
-| `GET /api/v1/leagues/:slug/games` | bearer | League-wide games over a date range, capped at 31 days |
+| `GET /api/v1/leagues/:slug/games` | bearer | League-wide games, paged by whole dates from a cursor |
 | `GET /rails/active_storage/blobs/proxy/...` | signed URL | Logo bytes, streamed by Active Storage. Public by design — an `<img>` tag can't send a bearer token |
 
 Full request/response shapes live in `API.md`.

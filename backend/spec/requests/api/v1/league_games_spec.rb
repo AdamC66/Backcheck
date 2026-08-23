@@ -7,79 +7,54 @@ RSpec.describe "GET /api/v1/leagues/:league_slug/games", type: :request do
   let(:away) { create(:team, league: league, abbreviation: "MTL") }
   let(:super_admin) { create(:user, is_super_admin: true) }
 
-  def game_on(date, attributes = {})
-    create(:game, { season: season, home_team: home, away_team: away, game_date: date,
-                    starts_at: date.to_time(:utc) }.merge(attributes))
+  def games_on(date, count, attributes = {})
+    Array.new(count) do
+      create(:game, { season: season, home_team: home, away_team: away, game_date: date,
+                      starts_at: date.to_time(:utc) }.merge(attributes))
+    end
   end
 
-  it "returns the games in the requested range" do
-    game_on(Date.new(2026, 4, 14))
-    wanted = game_on(Date.new(2026, 4, 15))
-    game_on(Date.new(2026, 4, 20))
-
-    get "/api/v1/leagues/nhl/games", params: { from: "2026-04-15", to: "2026-04-16" },
-        headers: auth_headers(super_admin)
-
-    expect(response).to have_http_status(:ok)
-    expect(response.parsed_body["data"].map { |game| game["id"] }).to eq([ wanted.id ])
-    expect(response.parsed_body["meta"]).to include("from" => "2026-04-15", "to" => "2026-04-16",
-                                                    "count" => 1)
+  def get_games(params = {})
+    get "/api/v1/leagues/nhl/games", params: params, headers: auth_headers(super_admin)
+    response.parsed_body
   end
 
-  it "defaults to the last date with games, since today is empty all summer" do
-    game_on(Date.new(2026, 4, 14))
-    latest = game_on(Date.new(2026, 4, 17))
+  it "takes whole dates until it has the requested number of games" do
+    games_on(Date.new(2026, 1, 5), 4)
+    games_on(Date.new(2026, 1, 6), 4)
+    games_on(Date.new(2026, 1, 7), 4)
+    games_on(Date.new(2026, 1, 8), 4)
 
-    get "/api/v1/leagues/nhl/games", headers: auth_headers(super_admin)
+    body = get_games(date: "2026-01-05", limit: 10)
 
-    expect(response.parsed_body["data"].map { |game| game["id"] }).to eq([ latest.id ])
-    expect(response.parsed_body.dig("meta", "from")).to eq("2026-04-17")
+    expect(body.dig("meta", "dates")).to eq(%w[2026-01-05 2026-01-06 2026-01-07])
+    expect(body.dig("meta", "count")).to eq(12)
   end
 
-  it "refuses a range wider than the cap rather than loading a season" do
+  it "never splits a date, even when one alone exceeds the limit" do
+    games_on(Date.new(2026, 1, 5), 16)
+    games_on(Date.new(2026, 1, 6), 4)
+
+    body = get_games(date: "2026-01-05", limit: 5)
+
+    expect(body.dig("meta", "dates")).to eq([ "2026-01-05" ])
+    expect(body.dig("meta", "count")).to eq(16)
+  end
+
+  it "defaults to today, and falls back to the most recent games out of season" do
+    games_on(Date.current - 100, 3)
+
+    body = get_games
+
+    expect(body.dig("meta", "dates")).to eq([ (Date.current - 100).to_s ])
+  end
+
+  it "rejects a malformed date and an unknown direction" do
     season
 
-    get "/api/v1/leagues/nhl/games", params: { from: "2025-10-01", to: "2026-04-17" },
-        headers: auth_headers(super_admin)
-
+    expect(get_games(date: "last tuesday").dig("error", "code")).to eq("invalid_parameter")
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.parsed_body.dig("error", "code")).to eq("invalid_range")
-  end
 
-  it "rejects a malformed date instead of silently defaulting" do
-    season
-
-    get "/api/v1/leagues/nhl/games", params: { from: "last tuesday" },
-        headers: auth_headers(super_admin)
-
-    expect(response).to have_http_status(:unprocessable_content)
-    expect(response.parsed_body.dig("error", "message")).to match(/YYYY-MM-DD/)
-  end
-
-  it "rejects a backwards range" do
-    season
-
-    get "/api/v1/leagues/nhl/games", params: { from: "2026-04-17", to: "2026-04-01" },
-        headers: auth_headers(super_admin)
-
-    expect(response).to have_http_status(:unprocessable_content)
-  end
-
-  it "filters to the regular season on request" do
-    game_on(Date.new(2026, 4, 15), game_type: Game::GAME_TYPES[:playoffs])
-    regular = game_on(Date.new(2026, 4, 15))
-
-    get "/api/v1/leagues/nhl/games", params: { from: "2026-04-15", game_type: "regular_season" },
-        headers: auth_headers(super_admin)
-
-    expect(response.parsed_body["data"].map { |game| game["id"] }).to eq([ regular.id ])
-  end
-
-  it "hides a league the caller can't see" do
-    season
-
-    get "/api/v1/leagues/nhl/games", headers: auth_headers(create(:user))
-
-    expect(response).to have_http_status(:not_found)
+    expect(get_games(direction: "sideways").dig("error", "message")).to match(/direction/)
   end
 end

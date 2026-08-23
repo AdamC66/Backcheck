@@ -88,9 +88,11 @@ current row. Rows come back in `league_sequence` order.
 | GET | `/leagues/:league_slug/games` |
 
 Both game endpoints return the same chronological list of the shape below, and both take
-`game_type` (`regular_season` excludes preseason and playoffs) and a `from`/`to` date
-range in `YYYY-MM-DD`. A malformed date, a `to` before `from`, or a range over the cap
-answers **422 `invalid_range`** rather than quietly returning something else.
+`game_type` (`regular_season` excludes preseason and playoffs). They page differently: a
+team's games are bounded by its season, so those take a `from`/`to` window, while the
+league's are bounded by date-at-a-time cursors. Every date is `YYYY-MM-DD`, and a
+malformed one — or any other bad parameter — answers **422 `invalid_parameter`** rather
+than quietly substituting a default.
 
 **`/teams/:id/games`** — one team's home and away fixtures.
 
@@ -103,13 +105,40 @@ With no range the season alone bounds the results, which deliberately includes p
 and playoff dates. Bounding by the season's `starts_on`/`ends_on` would not: those are the
 *standings* window, and September and playoff games fall outside it.
 
-**`/leagues/:league_slug/games`** — every game in the league over a range, for a scoreboard.
+**`/leagues/:league_slug/games`** — pages by whole dates, for a scoreboard ticker.
 
 | Param | Default | Notes |
 | --- | --- | --- |
-| `from` | the last date with games | Not today — today is empty all summer |
-| `to` | same as `from` | One day unless widened |
-| range width | — | **Capped at 31 days.** A season is 1,312 games |
+| `date` | today | The anchor, inclusive |
+| `direction` | `forward` | `forward` takes dates from the anchor onward, `backward` takes them going back. Either way the response is in date order |
+| `limit` | 25 | *Minimum* games, not maximum. Capped at 100 |
+
+It walks dates outward from the anchor, taking each one **entirely**, until it has at
+least `limit` games — so a date is never split across pages and a client can group by
+date safely. That means the count overshoots: with a median of 5 games a date and a
+maximum of 16, `limit=25` typically returns 3–5 dates and 25–40 games. One date is always
+returned in full even when it alone exceeds the limit.
+
+Dates with no games are skipped rather than paged through, so crossing the summer costs
+one request. `prev_cursor` and `next_cursor` are the adjacent dates that *have* games —
+pass one back as `date` (with the matching `direction`) to page. They're `null` at the
+ends of the schedule.
+
+With no `date`, it anchors on today and looks forward; if nothing is scheduled from today
+on — true from April to October — it falls back to the most recent games instead of
+returning an empty strip.
+
+A single day is still expressible: `?date=2026-04-15&limit=1` returns all of that date's
+games and nothing more.
+
+```jsonc
+// GET /api/v1/leagues/nhl/games?date=2026-01-05&limit=25
+{ "data": [ /* games, chronological */ ],
+  "meta": { "dates": ["2026-01-05","2026-01-06","2026-01-07","2026-01-08"],
+            "count": 32,
+            "prev_cursor": "2026-01-04",
+            "next_cursor": "2026-01-09" } }
+```
 
 ```jsonc
 // GET /api/v1/teams/28/games?game_type=regular_season
