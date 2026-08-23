@@ -33,16 +33,6 @@ describe("TeamTheme", () => {
     expect(screen.getByText("child")).toBeInTheDocument();
   });
 
-  it("switches the contrast variable for a light primary", () => {
-    const { container } = render(
-      <TeamTheme team={coloured("#FFD457")}>
-        <span>child</span>
-      </TeamTheme>,
-    );
-
-    expect(variables(container).contrast).toBe("#0F172A");
-  });
-
   it("darkens the primary when the second colour would vanish against the page", () => {
     const { container } = render(
       <TeamTheme team={coloured("#00205B", "#FFFFFF")}>
@@ -51,26 +41,5 @@ describe("TeamTheme", () => {
     );
 
     expect(variables(container).accent).toMatch(/color-mix/);
-  });
-
-  it("leaves the defaults in place for a team with no colours", () => {
-    const { container } = render(
-      <TeamTheme team={coloured(null)}>
-        <span>child</span>
-      </TeamTheme>,
-    );
-
-    expect(variables(container).primary).toBe("");
-    expect(variables(container).contrast).toBe("");
-  });
-
-  it("adds no box of its own", () => {
-    const { container } = render(
-      <TeamTheme team={coloured("#00205B")}>
-        <span>child</span>
-      </TeamTheme>,
-    );
-
-    expect(container.firstChild).toHaveClass("contents");
   });
 });

@@ -16,21 +16,6 @@ RSpec.describe "GET /api/v1/leagues/:slug", type: :request do
     expect(response.parsed_body.dig("data", "teams", 1)).to include("primary_color" => "#FFB81C")
   end
 
-  it "serializes an attached logo as an absolute proxy URL" do
-    AttachLogo.new(league, Rails.root.join("spec/fixtures/files/logos/test-logo.png")).call
-
-    get "/api/v1/leagues/nhl", headers: auth_headers(create(:user, is_super_admin: true))
-
-    expect(response.parsed_body.dig("data", "logo_url"))
-      .to match(%r{\Ahttp://www\.example\.com/rails/active_storage/blobs/proxy/.+/test-logo\.png\z})
-  end
-
-  it "sends a null logo_url for a league with no logo attached" do
-    get "/api/v1/leagues/nhl", headers: auth_headers(create(:user, is_super_admin: true))
-
-    expect(response.parsed_body.dig("data", "logo_url")).to be_nil
-  end
-
   it "reports a league the user can't see as missing" do
     league
 

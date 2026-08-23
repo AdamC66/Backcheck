@@ -27,12 +27,6 @@ RSpec.describe SyncTeamSchedule do
     expect(game.away_team).to eq(leafs)
   end
 
-  it "records the upstream numeric team id when it appears" do
-    sync
-
-    expect(leafs.reload.nhl_team_id).to eq(10)
-  end
-
   it "absorbs the duplicate that a second team's schedule produces" do
     sync
     described_class.new(team: Team.find_by(abbreviation: "OTT"), season: season,

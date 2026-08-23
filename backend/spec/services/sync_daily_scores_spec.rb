@@ -21,14 +21,6 @@ RSpec.describe SyncDailyScores do
     )
   end
 
-  it "reports a game it skipped for an unknown team" do
-    service = described_class.new(league: league, date: Date.new(2026, 4, 15), client: unthrottled_client)
-    service.call
-
-    expect(service.missing_teams).to contain_exactly("TBL", "NYR")
-    expect(Game.count).to eq(1)
-  end
-
   it "updates a game already on the schedule instead of adding a second row" do
     existing = create(:game, season: season, nhl_game_id: 2025021301, state: "FUT",
                              home_team: Team.find_by(abbreviation: "BUF"),

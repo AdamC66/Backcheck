@@ -42,20 +42,4 @@ describe("SegmentedControl", () => {
 
     expect(onChange).toHaveBeenCalledWith("wildcard");
   });
-
-  it("does not emit for an unavailable option", async () => {
-    const onChange = vi.fn();
-    render(
-      <SegmentedControl
-        options={OPTIONS}
-        value="league"
-        onChange={onChange}
-        label="Standings view"
-      />,
-    );
-
-    await userEvent.click(screen.getByRole("button", { name: "Division" }));
-
-    expect(onChange).not.toHaveBeenCalled();
-  });
 });

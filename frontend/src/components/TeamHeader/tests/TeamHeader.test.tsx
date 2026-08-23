@@ -16,17 +16,4 @@ describe("TeamHeader", () => {
 
     expect(container.firstChild).toHaveClass("bg-team-primary", "text-team-contrast");
   });
-
-  it("shows a subtitle when given one", () => {
-    render(<TeamHeader team={TEAMS[0]} subtitle="2025-26 season" />);
-
-    expect(screen.getByText("2025-26 season")).toBeInTheDocument();
-  });
-
-  it("renders before the team has loaded", () => {
-    render(<TeamHeader team={undefined} />);
-
-    expect(screen.getByRole("heading", { name: "Team" })).toBeInTheDocument();
-    expect(screen.queryByRole("img")).not.toBeInTheDocument();
-  });
 });

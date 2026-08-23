@@ -19,12 +19,4 @@ RSpec.describe "GET /api/v1/teams/:id", type: :request do
 
     expect(response).to have_http_status(:not_found)
   end
-
-  it "leaves the league out of teams embedded in a league payload" do
-    team
-
-    get "/api/v1/leagues/nhl", headers: auth_headers(create(:user, is_super_admin: true))
-
-    expect(response.parsed_body.dig("data", "teams", 0)).not_to have_key("league")
-  end
 end

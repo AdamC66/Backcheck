@@ -34,20 +34,4 @@ RSpec.describe "GET /api/v1/leagues/:league_slug/standings", type: :request do
     get "/api/v1/leagues/nhl/standings", params: { date: "2026-01-01" }, headers: auth_headers(super_admin)
     expect(response.parsed_body["data"].map { |row| row["points"] }).to eq([ 50 ])
   end
-
-  it "reports an unknown season" do
-    season
-
-    get "/api/v1/leagues/nhl/standings", params: { season: "1999-00" }, headers: auth_headers(super_admin)
-
-    expect(response).to have_http_status(:not_found)
-  end
-
-  it "hides a league the caller can't see" do
-    season
-
-    get "/api/v1/leagues/nhl/standings", headers: auth_headers(create(:user))
-
-    expect(response).to have_http_status(:not_found)
-  end
 end

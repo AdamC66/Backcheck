@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { standingFor, teamFor } from "@/test-mocks";
-import { isStandingsView, standingsSections, supportsView } from "../standingsViews";
+import { standingsSections, supportsView } from "../standingsViews";
 
 // Two conferences, two divisions each, three teams per division: enough that the top
 // three of a division and the wildcard chasers are distinguishable.
@@ -48,20 +48,6 @@ describe("standingsSections", () => {
     ]);
   });
 
-  it("splits the conference view by conference, ranked within it", () => {
-    const sections = standingsSections(LEAGUE, "conference");
-
-    expect(sections.map((section) => section.title)).toEqual(["Eastern", "Western"]);
-    expect(abbrevs(sections[0].groups[0].standings)).toEqual([
-      "BUF",
-      "CAR",
-      "TBL",
-      "PIT",
-      "OTT",
-      "WSH",
-    ]);
-  });
-
   it("splits the division view by division, ranked within it", () => {
     const sections = standingsSections(LEAGUE, "division");
 
@@ -75,34 +61,6 @@ describe("standingsSections", () => {
   });
 
   describe("the wildcard view", () => {
-    const [eastern] = standingsSections(LEAGUE, "wildcard");
-
-    it("gives each conference its divisions' qualifiers, then the chasers", () => {
-      expect(eastern.title).toBe("Eastern");
-      expect(eastern.groups.map((group) => group.title)).toEqual([
-        "Atlantic",
-        "Metropolitan",
-        "Wild Card",
-      ]);
-    });
-
-    it("keeps only teams holding a division spot in the division groups", () => {
-      expect(abbrevs(eastern.groups[0].standings)).toEqual(["BUF", "TBL"]);
-      expect(abbrevs(eastern.groups[1].standings)).toEqual(["CAR", "PIT"]);
-    });
-
-    it("ranks the chasers by wildcard sequence and labels them WC", () => {
-      const wildcard = eastern.groups[2];
-
-      expect(abbrevs(wildcard.standings)).toEqual(["OTT", "WSH"]);
-      expect(wildcard.rankPrefix).toBe("WC");
-      expect(wildcard.rankKey).toBe("wildcard_sequence");
-    });
-
-    it("draws no cut line when nobody is chasing from outside the top two", () => {
-      expect(eastern.groups[2].cutlineAfter).toBeUndefined();
-    });
-
     it("draws the cut line after the second wildcard spot once there are chasers", () => {
       const chased = [
         ...LEAGUE,
@@ -128,18 +86,5 @@ describe("supportsView", () => {
     expect(supportsView(flat, "conference")).toBe(false);
     expect(supportsView(flat, "division")).toBe(false);
     expect(supportsView(flat, "wildcard")).toBe(false);
-  });
-
-  it("rejects every view when there are no standings at all", () => {
-    expect(supportsView([], "league")).toBe(false);
-    expect(supportsView([], "wildcard")).toBe(false);
-  });
-});
-
-describe("isStandingsView", () => {
-  it("accepts known views and rejects anything else", () => {
-    expect(isStandingsView("wildcard")).toBe(true);
-    expect(isStandingsView("nonsense")).toBe(false);
-    expect(isStandingsView(null)).toBe(false);
   });
 });

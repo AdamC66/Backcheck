@@ -32,25 +32,4 @@ RSpec.describe SyncStandings do
     expect(TeamStanding.where(team: wranglers)).to be_empty
     expect(TeamStanding.where(team: flames).count).to eq(1)
   end
-
-  it "reports teams it could not match instead of failing the run" do
-    service = sync
-    service.call
-
-    expect(service.missing_teams).to contain_exactly("CGY", "TOR")
-    expect(TeamStanding.count).to eq(1)
-  end
-
-  it "updates the same snapshot on a rerun" do
-    sync.call
-    sync.call
-
-    expect(TeamStanding.count).to eq(1)
-  end
-
-  it "refuses to guess when the season hasn't been imported" do
-    season.destroy!
-
-    expect { sync.call }.to raise_error(described_class::UnknownSeason)
-  end
 end

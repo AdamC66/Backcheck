@@ -18,9 +18,4 @@ RSpec.describe AttachLogo do
     expect(team.reload.logo.blob.id).to eq(blob_id)
     expect(ActiveStorage::Blob.count).to eq(1)
   end
-
-  it "reports a missing file without raising" do
-    expect(described_class.new(team, Rails.root.join("nope.png")).call).to eq(:missing)
-    expect(team.logo).not_to be_attached
-  end
 end

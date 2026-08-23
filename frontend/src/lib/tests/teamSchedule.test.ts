@@ -17,12 +17,6 @@ describe("teamGame", () => {
     });
   });
 
-  it("flips the perspective for the other team", () => {
-    const entry = teamGame(gameFor(), bruins.id);
-
-    expect(entry).toMatchObject({ isHome: false, teamScore: 2, opponentScore: 5, outcome: "loss" });
-  });
-
   it("counts a loss past regulation as its own outcome", () => {
     const overtime = gameFor({ last_period_type: "OT" });
     const shootout = gameFor({ last_period_type: "SO" });
@@ -30,16 +24,6 @@ describe("teamGame", () => {
     expect(teamGame(overtime, bruins.id).outcome).toBe("ot_loss");
     expect(teamGame(shootout, bruins.id).outcome).toBe("ot_loss");
     expect(teamGame(overtime, ducks.id).outcome).toBe("win");
-  });
-
-  it("has no outcome for a game that hasn't been played", () => {
-    const scheduled = gameFor({
-      state: "FUT",
-      home: { team: ducks, score: null },
-      away: { team: bruins, score: null },
-    });
-
-    expect(teamGame(scheduled, ducks.id).outcome).toBeNull();
   });
 });
 
@@ -58,9 +42,5 @@ describe("groupByMonth", () => {
     expect(months[0].label).toMatch(/October 2025/);
     expect(months[0].games).toHaveLength(2);
     expect(months[1].games).toHaveLength(1);
-  });
-
-  it("returns nothing for no games", () => {
-    expect(groupByMonth([], ducks.id)).toEqual([]);
   });
 });

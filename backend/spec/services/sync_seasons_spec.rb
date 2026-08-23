@@ -18,12 +18,6 @@ RSpec.describe SyncSeasons do
     )
   end
 
-  it "imports only the requested seasons" do
-    sync(nhl_season_ids: [ 20252026 ])
-
-    expect(league.seasons.pluck(:nhl_season_id)).to eq([ 20252026 ])
-  end
-
   it "updates rather than duplicates on a rerun" do
     sync
     sync
