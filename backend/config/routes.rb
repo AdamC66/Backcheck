@@ -15,6 +15,7 @@ Rails.application.routes.draw do
 
       resources :teams, only: [ :show ] do
         resources :games, only: [ :index ], controller: "team_games"
+        resource :roster, only: [ :show ], controller: "team_roster"
       end
     end
   end

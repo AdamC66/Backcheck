@@ -271,9 +271,9 @@
     "epic_id": "EPIC-3",
     "title": "GET /teams/:id/roster",
     "type": "feature",
-    "status": "todo",
+    "status": "done",
     "priority": "medium",
-    "description": "Grouped by position, carrying contract_level and the affiliate chain so an NHL team's page can show who is on assignment. Headshot URLs derived, never stored."
+    "description": "Grouped by position, carrying contract_level and the affiliate chain so an NHL team's page can show who is on assignment. Headshot URLs derived, never stored. GET /teams/:id/roster: TeamRoster query (app/queries) resolves each org player's current AHL/ECHL assignment by season date-range overlap, batched into one query. PlayerSerializer/RosterSpotSerializer derive headshot_url, never store it. Verified with a request spec covering the assignment case; live confirmation on real data is blocked by an unrelated dev-data timing gap (org roster synced under 2026-27, affiliates still on 2025-26) — code path confirmed correct via spec with matched seasons."
   },
   {
     "id": "TASK-32",

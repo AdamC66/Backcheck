@@ -85,6 +85,7 @@ current row. Rows come back in `league_sequence` order.
 | --- | --- |
 | GET | `/teams/:id` |
 | GET | `/teams/:id/games` |
+| GET | `/teams/:id/roster` |
 | GET | `/leagues/:league_slug/games` |
 
 Both game endpoints return the same chronological list of the shape below, and both take
@@ -158,6 +159,51 @@ games and nothing more.
 
 The league endpoint's `meta` carries `from`, `to`, and `count` but no `season`, since a
 range can cross one.
+
+## Roster
+
+| Method | Path |
+| --- | --- |
+| GET | `/teams/:id/roster` |
+
+| Param | Default | Notes |
+| --- | --- | --- |
+| `season` | newest season *this team has roster spots in* | Label form, e.g. `2025-26`. Same seeded-ahead-of-its-data shape as games/standings; an explicit `season` is returned as asked, empty or not |
+
+One entry per player on the team's own roster for that season — for an NHL team, its
+whole contracted organization, not just who's active. `contract_level` is what the row
+itself represents (`nhl` for every entry on an NHL team's own roster, since that's what
+the row *is* — org membership, not location). `assignment` is where that player is
+currently found among the team's AHL/ECHL affiliates, resolved separately by matching
+overlapping season date ranges — `null` when there's no such spot, which for most of an
+NHL roster means "with the NHL club." `headshot_url` is derived, never stored, the same
+reasoning as `logo_url` below.
+
+```jsonc
+// GET /api/v1/teams/28/roster
+{ "data": [ {
+    "player": {
+      "id": 91, "first_name": "Easton", "last_name": "Cowan",
+      "position": "left_wing", "shoots_catches": "L",
+      "height_in_inches": 71, "weight_in_pounds": 179,
+      "birth_date": "2005-04-30", "birth_city": "London", "birth_country": "CAN",
+      "headshot_url": "https://assets.nhle.com/mugs/nhl/latest/8484144.png",
+      "draft": { "year": 2023, "round": 1, "overall": 28, "team_name": "Toronto Maple Leafs" }
+    },
+    "jersey_number": 53,
+    "contract_level": "nhl",
+    "assignment": {
+      "team": { /* team object, with league */ },
+      "contract_level": "ahl",
+      "contract_level_inferred": false
+    }
+  } ],
+  "meta": { "season": "2025-26", "count": 49 } }
+```
+
+`draft` is `null` for a player with no draft record. `contract_level_inferred` is `true`
+when the assignment's level came from cross-referencing the AHL roster rather than being
+reported directly — the ECHL feed never states it (see `DECISIONS.md`).
 
 ## Logo files
 
