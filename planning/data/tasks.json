@@ -244,9 +244,9 @@
     "epic_id": "EPIC-2",
     "title": "Migration and seed data for team_affiliations",
     "type": "feature",
-    "status": "todo",
+    "status": "done",
     "priority": "medium",
-    "description": "parent_team_id / affiliate_team_id / season_id, named to avoid colliding with teams.nhl_team_id (an external id). Season-keyed so a moved affiliation doesn't rewrite history. Toronto needs both tiers: Marlies (AHL) and Cincinnati Cyclones (ECHL). Hand-maintained in data/."
+    "description": "parent_team_id / affiliate_team_id / season_id, named to avoid colliding with teams.nhl_team_id (an external id). Season-keyed so a moved affiliation doesn't rewrite history. Toronto needs both tiers: Marlies (AHL) and Cincinnati Cyclones (ECHL). Hand-maintained in data/. Data was already present in every manifest (nhl_affiliate) and just needed reading — no hand-authored seed data required."
   },
   {
     "id": "TASK-29",

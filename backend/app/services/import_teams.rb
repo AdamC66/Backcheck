@@ -1,5 +1,6 @@
 # Keyed on abbreviation so a corrected manifest can just be re-seeded. The manifests'
-# `nhl_affiliate` field is ignored until TeamAffiliation exists.
+# `nhl_affiliate` field is read separately by ImportTeamAffiliations, since it needs an
+# NHL season to key to and this class runs before any Season exists.
 class ImportTeams
   MANIFEST_ROOT = Rails.root.join("..", "data")
 

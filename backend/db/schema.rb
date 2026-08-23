@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_090004) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_093001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -174,6 +174,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_090004) do
     t.index ["nhl_season_id"], name: "index_seasons_on_nhl_season_id", unique: true
   end
 
+  create_table "team_affiliations", force: :cascade do |t|
+    t.bigint "affiliate_team_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "parent_team_id", null: false
+    t.bigint "season_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["affiliate_team_id", "season_id"], name: "index_team_affiliations_on_affiliate_team_id_and_season_id", unique: true
+    t.index ["affiliate_team_id"], name: "index_team_affiliations_on_affiliate_team_id"
+    t.index ["parent_team_id", "season_id"], name: "index_team_affiliations_on_parent_team_id_and_season_id"
+    t.index ["parent_team_id"], name: "index_team_affiliations_on_parent_team_id"
+    t.index ["season_id"], name: "index_team_affiliations_on_season_id"
+  end
+
   create_table "team_standings", force: :cascade do |t|
     t.date "as_of_date", null: false
     t.string "conference_name"
@@ -253,6 +266,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_090004) do
   add_foreign_key "roster_spots", "seasons"
   add_foreign_key "roster_spots", "teams"
   add_foreign_key "seasons", "leagues"
+  add_foreign_key "team_affiliations", "seasons"
+  add_foreign_key "team_affiliations", "teams", column: "affiliate_team_id"
+  add_foreign_key "team_affiliations", "teams", column: "parent_team_id"
   add_foreign_key "team_standings", "seasons"
   add_foreign_key "team_standings", "teams"
   add_foreign_key "teams", "leagues"

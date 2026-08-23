@@ -29,6 +29,21 @@ League.ranked.each do |league|
   puts "  WARNING: no logo file for #{import.missing_logos.join(', ')}" if import.missing_logos.any?
 end
 
+# Affiliations describe a minor-league team's NHL parent, so there's nothing to import
+# for the NHL league's own manifest.
+League.ranked.reject { |league| league.slug == "nhl" }.each do |league|
+  import = ImportTeamAffiliations.new(league)
+  affiliations = import.call
+
+  if import.season.blank?
+    puts "  Skipped #{league.abbreviation} affiliations: no NHL season yet — run rake nhl:backfill, then re-seed."
+    next
+  end
+
+  puts "Seeded #{affiliations.size} #{league.abbreviation} affiliations (#{import.season.label})."
+  puts "  WARNING: no team match for #{import.missing_teams.join(', ')}" if import.missing_teams.any?
+end
+
 # There is no account-creation endpoint yet, so the one Super Admin is seeded.
 if Rails.env.production? && !ENV.key?("SUPER_ADMIN_PASSWORD")
   raise "Refusing to seed a default-password Super Admin in production — set SUPER_ADMIN_PASSWORD."

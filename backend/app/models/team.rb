@@ -9,6 +9,10 @@ class Team < ApplicationRecord
            inverse_of: :home_team
   has_many :away_games, class_name: "Game", foreign_key: :away_team_id, dependent: :restrict_with_error,
            inverse_of: :away_team
+  has_many :affiliations_as_parent, class_name: "TeamAffiliation", foreign_key: :parent_team_id,
+           dependent: :destroy, inverse_of: :parent_team
+  has_many :affiliations_as_affiliate, class_name: "TeamAffiliation", foreign_key: :affiliate_team_id,
+           dependent: :destroy, inverse_of: :affiliate_team
 
   scope :alphabetical, -> { order(:name) }
   scope :with_logo, -> { includes(logo_attachment: :blob) }
