@@ -1,0 +1,10 @@
+{
+  "SiteKit": {
+    "Parameters": { "feed": "modulekit", "view": "seasons", "client_code": "echl", "fmt": "json" },
+    "Seasons": [
+      { "season_id": "78", "season_name": "2026-27 Reg", "shortname": "26-27 Reg", "career": "1", "playoff": "0", "start_date": "2026-10-15", "end_date": "2027-04-05" },
+      { "season_id": "73", "season_name": "2025-26 Reg", "shortname": "25-26 Reg", "career": "1", "playoff": "0", "start_date": "2025-10-15", "end_date": "2026-04-15" }
+    ],
+    "Copyright": { "required_copyright": "Official statistics provided by ECHL" }
+  }
+}

@@ -17,4 +17,22 @@ RSpec.describe NhlClient do
     expect(a_request(:get, "https://api-web.nhle.com/v1/standings-season"))
       .to have_been_made.times(described_class::MAX_ATTEMPTS)
   end
+
+  it "follows the 307 current roster redirects to and reads the season it resolved to" do
+    stub_request(:get, "https://api-web.nhle.com/v1/roster/TOR/current")
+      .to_return(status: 307, headers: { "Location" => "https://api-web.nhle.com/v1/roster/TOR/20262027" })
+    stub_nhl("/v1/roster/TOR/20262027", fixture: "roster")
+
+    result = unthrottled_client.roster("TOR")
+
+    expect(result["season_id"]).to eq(20262027)
+    expect(result["forwards"].first.dig("lastName", "default")).to eq("Matthews")
+  end
+
+  it "gives up rather than loop forever on a redirect cycle" do
+    stub_request(:get, "https://api-web.nhle.com/v1/roster/TOR/current")
+      .to_return(status: 307, headers: { "Location" => "https://api-web.nhle.com/v1/roster/TOR/current" })
+
+    expect { unthrottled_client.roster("TOR") }.to raise_error(described_class::TooManyRedirects)
+  end
 end

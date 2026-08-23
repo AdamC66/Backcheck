@@ -1,0 +1,9 @@
+{
+  "SiteKit": {
+    "Parameters": { "feed": "modulekit", "view": "teamsbyseason", "client_code": "ahl", "season_id": "94", "fmt": "json" },
+    "Teamsbyseason": [
+      { "id": "335", "name": "Toronto Marlies", "code": "MRL" }
+    ],
+    "Copyright": { "required_copyright": "Official statistics provided by American Hockey League" }
+  }
+}

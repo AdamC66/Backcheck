@@ -1,0 +1,13 @@
+{
+  "SiteKit": {
+    "Parameters": { "feed": "modulekit", "view": "roster", "client_code": "ahl", "team_id": "335", "season_id": 90, "fmt": "json" },
+    "Roster": [
+      { "id": "9994", "first_name": "Henry", "last_name": "Thrun", "name": "Henry Thrun", "status": "NHL", "position": "D", "tp_jersey_number": "3", "birthdate": "2001-03-12", "player_id": "9994" },
+      { "id": "10947", "first_name": "Hunter", "last_name": "Strand", "name": "Hunter Strand", "status": "PTO", "position": "C", "tp_jersey_number": "94", "birthdate": "2002-11-13", "player_id": "10947" },
+      [
+        { "id": "82252", "first_name": "Ryan", "last_name": "Hardy", "name": "Ryan Hardy", "role": "General Manager", "role_id": "5" }
+      ]
+    ],
+    "Copyright": { "required_copyright": "Official statistics provided by American Hockey League" }
+  }
+}

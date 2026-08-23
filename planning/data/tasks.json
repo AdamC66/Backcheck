@@ -253,18 +253,18 @@
     "epic_id": "EPIC-8",
     "title": "HockeyTechClient for the AHL and ECHL roster feeds",
     "type": "feature",
-    "status": "todo",
+    "status": "done",
     "priority": "medium",
-    "description": "Same construction as NhlClient — process-wide throttle, capped backoff, typed errors, jobs only. Public statview keys: ahl/ccb91f29d6744675, echl/2c2b89ea7345cae8."
+    "description": "Same construction as NhlClient — process-wide throttle, capped backoff, typed errors, jobs only. Public statview keys: ahl/ccb91f29d6744675, echl/2c2b89ea7345cae8. Verified live: roster's trailing element is always a nested array of coaching staff, not an error case, so the client hands the raw array back and callers filter to Hash entries. A blank team_id silently returns every team's roster concatenated upstream, so the client raises instead. A 200 with a plain-text \"Invalid key.\" body (or a malformed-prefix error body seen on other views) is caught and re-raised as InvalidResponse rather than an uncaught JSON::ParserError."
   },
   {
     "id": "TASK-30",
     "epic_id": "EPIC-8",
     "title": "SyncTeamRoster and SyncAffiliateRoster",
     "type": "feature",
-    "status": "todo",
+    "status": "done",
     "priority": "medium",
-    "description": "NHL org roster from /v1/roster/{team}/current (follows a 307). Affiliate rosters from HockeyTech, AHL before ECHL — the ECHL feed sends status empty, so contract_level is inherited from the AHL row and flagged inferred. Match on normalized name + birth_date, report missing_players. Falls back to the newest season that actually has a roster, since the current one is empty until camp."
+    "description": "NHL org roster from /v1/roster/{team}/current (follows a 307). Affiliate rosters from HockeyTech, AHL before ECHL — the ECHL feed sends status empty, so contract_level is inherited from the AHL row and flagged inferred. Match on normalized name + birth_date, report missing_players. Falls back to the newest season that actually has a roster, since the current one is empty until camp. Verified live against real data: NHL org roster (49 players), Marlies (50, 26 NHL/15 AHL/6 PTO/3 ATO — exact match to discovery), Cincinnati Cyclones (51, Kressler's NHL contract correctly inherited). Live run also surfaced a real cross-feed data disagreement (HockeyTech's AHL and ECHL rosters disagree on one player's birthdate), caught by the new possible_duplicates report rather than silently forking his identity — see docs/DECISIONS.md."
   },
   {
     "id": "TASK-31",
@@ -283,5 +283,14 @@
     "status": "backlog",
     "priority": "low",
     "description": "Wants its own player_rights table, not a roster_spots row — a rights-held player is not on a roster in a season, and forcing him into one would model a lie. Needs name matching against players who may have no nhl_player_id yet. Unbuilt because no complete source exists: /v1/prospects/{team} returns only drafted-and-unsigned-abroad (4 players for Toronto, all KHL), and /v1/draft/picks/{year}/all carries no playerId, only name and amateur club."
+  },
+  {
+    "id": "TASK-33",
+    "epic_id": "EPIC-3",
+    "title": "Persist possible-duplicate player pairs from roster syncs",
+    "type": "feature",
+    "status": "done",
+    "priority": "low",
+    "description": "possible_duplicate_players (player_a, player_b, detail, resolved_at), player_a always the lower id so a rerun can't double-write the same pair. SyncAffiliateRoster writes a row when a same-normalized-name entry disagrees with an existing player's birthdate, alongside the existing possible_duplicates log line. Prompted by a real live find: HockeyTech's own AHL and ECHL feeds disagree on Rhett Parsons's birth month."
   }
 ]

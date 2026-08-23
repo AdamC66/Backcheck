@@ -1,0 +1,7 @@
+{
+  "SiteKit": {
+    "Parameters": { "feed": "modulekit", "view": "roster", "client_code": "ahl", "team_id": "335", "season_id": 94, "fmt": "json" },
+    "Roster": [ [] ],
+    "Copyright": { "required_copyright": "Official statistics provided by American Hockey League" }
+  }
+}

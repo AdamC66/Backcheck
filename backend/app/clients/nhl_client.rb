@@ -8,6 +8,7 @@ class NhlClient
 
   DEFAULT_MIN_INTERVAL = 1.0
   MAX_ATTEMPTS = 3
+  MAX_REDIRECTS = 3
   OPEN_TIMEOUT = 5
   READ_TIMEOUT = 15
 
@@ -16,6 +17,7 @@ class NhlClient
   RateLimited = Class.new(Error)
   ServerError = Class.new(Error)
   TransportError = Class.new(Error)
+  TooManyRedirects = Class.new(Error)
 
   class << self
     # Shared process-wide, or each service keeps its own interval and they burst together.
@@ -46,6 +48,16 @@ class NhlClient
     get("/v1/score/#{date.to_fs(:iso8601)}")
   end
 
+  # The only endpoint here that redirects: "current" is an alias for whichever season is
+  # presently in effect, and its 307 has no body — the resolved season is the one thing
+  # worth keeping from the hop, since it's otherwise thrown away.
+  def roster(team_abbreviation)
+    response, resolved_path = get_following_redirects("/v1/roster/#{team_abbreviation}/current")
+    season_id = resolved_path[%r{/roster/[^/]+/(\d+)\z}, 1]&.to_i
+
+    parse(response, resolved_path).merge("season_id" => season_id)
+  end
+
   private
 
   attr_reader :min_interval
@@ -63,6 +75,25 @@ class NhlClient
       sleep(2**attempt * min_interval)
       retry
     end
+  end
+
+  def get_following_redirects(path, attempt: 0, hop: 0)
+    attempt += 1
+    throttle
+    response = perform(path)
+
+    if response.is_a?(Net::HTTPRedirection)
+      raise TooManyRedirects, "redirect loop for #{path}" if hop >= MAX_REDIRECTS
+
+      return get_following_redirects(URI(response["location"]).request_uri, hop: hop + 1)
+    end
+
+    [ response, path ]
+  rescue RateLimited, ServerError, TransportError => e
+    raise e if attempt >= MAX_ATTEMPTS
+
+    sleep(2**attempt * min_interval)
+    retry
   end
 
   def perform(path)

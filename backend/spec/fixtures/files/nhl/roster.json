@@ -1,0 +1,20 @@
+{
+  "forwards": [
+    { "id": 8479318, "headshot": "https://assets.nhle.com/mugs/nhl/20262027/TOR/8479318.png",
+      "firstName": { "default": "Auston" }, "lastName": { "default": "Matthews" },
+      "positionCode": "C", "shootsCatches": "L", "heightInInches": 75, "weightInPounds": 220,
+      "birthDate": "1997-09-17", "birthCity": { "default": "San Ramon" }, "birthCountry": "USA" }
+  ],
+  "defensemen": [
+    { "id": 8479406, "headshot": "https://assets.nhle.com/mugs/nhl/20262027/TOR/8479406.png",
+      "firstName": { "default": "Morgan" }, "lastName": { "default": "Rielly" },
+      "positionCode": "D", "shootsCatches": "L", "heightInInches": 74, "weightInPounds": 220,
+      "birthDate": "1994-03-09", "birthCity": { "default": "West Vancouver" }, "birthCountry": "CAN" }
+  ],
+  "goalies": [
+    { "id": 8482068, "headshot": "https://assets.nhle.com/mugs/nhl/20262027/TOR/8482068.png",
+      "firstName": { "default": "Joseph" }, "lastName": { "default": "Woll" },
+      "positionCode": "G", "shootsCatches": "L", "heightInInches": 74, "weightInPounds": 201,
+      "birthDate": "1998-07-12", "birthCity": { "default": "Dardenne Prairie" }, "birthCountry": "USA" }
+  ]
+}

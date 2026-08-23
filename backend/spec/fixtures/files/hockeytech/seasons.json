@@ -1,0 +1,11 @@
+{
+  "SiteKit": {
+    "Parameters": { "feed": "modulekit", "view": "seasons", "client_code": "ahl", "fmt": "json" },
+    "Seasons": [
+      { "season_id": "94", "season_name": "2026-27 Regular Season", "shortname": "2026-27", "career": "1", "playoff": "0", "start_date": "2026-10-02", "end_date": "2027-04-11" },
+      { "season_id": "92", "season_name": "2026 Calder Cup Playoffs", "shortname": "26 Playoffs", "career": "1", "playoff": "1", "start_date": "2026-04-20", "end_date": "2026-06-20" },
+      { "season_id": "90", "season_name": "2025-26 Regular Season", "shortname": "2025-26", "career": "1", "playoff": "0", "start_date": "2025-10-03", "end_date": "2026-04-19" }
+    ],
+    "Copyright": { "required_copyright": "Official statistics provided by American Hockey League" }
+  }
+}

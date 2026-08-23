@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_093001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_130001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -122,6 +122,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_093001) do
     t.index ["draft_team_id"], name: "index_players_on_draft_team_id"
     t.index ["nhl_player_id"], name: "index_players_on_nhl_player_id", unique: true
     t.index ["normalized_name", "birth_date"], name: "index_players_on_normalized_name_and_birth_date"
+  end
+
+  create_table "possible_duplicate_players", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "detail", null: false
+    t.bigint "player_a_id", null: false
+    t.bigint "player_b_id", null: false
+    t.datetime "resolved_at"
+    t.datetime "updated_at", null: false
+    t.index ["player_a_id", "player_b_id"], name: "idx_on_player_a_id_player_b_id_d3481f830b", unique: true
+    t.index ["player_a_id"], name: "index_possible_duplicate_players_on_player_a_id"
+    t.index ["player_b_id"], name: "index_possible_duplicate_players_on_player_b_id"
   end
 
   create_table "revoked_tokens", force: :cascade do |t|
@@ -262,6 +274,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_093001) do
   add_foreign_key "memberships", "users"
   add_foreign_key "player_external_ids", "players"
   add_foreign_key "players", "teams", column: "draft_team_id"
+  add_foreign_key "possible_duplicate_players", "players", column: "player_a_id"
+  add_foreign_key "possible_duplicate_players", "players", column: "player_b_id"
   add_foreign_key "roster_spots", "players"
   add_foreign_key "roster_spots", "seasons"
   add_foreign_key "roster_spots", "teams"
