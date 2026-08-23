@@ -2,6 +2,7 @@ import type { Envelope } from "@/lib/apiClient";
 import type { User } from "@/models/auth";
 import type { Game, GamesMeta } from "@/models/games";
 import type { League, LeagueWithTeams } from "@/models/leagues";
+import type { RosterEntry, RosterMeta, RosterPlayer } from "@/models/roster";
 import type { Standing, StandingsMeta } from "@/models/standings";
 import type { Team } from "@/models/teams";
 
@@ -182,4 +183,55 @@ export const TEAM_GAMES: Envelope<Game[], GamesMeta> = {
     }),
   ],
   meta: { season: "2025-26", from: "2025-10-08", to: "2025-11-02", count: 2 },
+};
+
+export function playerFor(id: number, overrides: Partial<RosterPlayer> = {}): RosterPlayer {
+  return {
+    id,
+    first_name: "Test",
+    last_name: `Player${id}`,
+    position: "center",
+    shoots_catches: "L",
+    height_in_inches: 72,
+    weight_in_pounds: 190,
+    birth_date: "2000-01-01",
+    birth_city: "Toronto",
+    birth_country: "CAN",
+    headshot_url: null,
+    draft: null,
+    ...overrides,
+  };
+}
+
+export function rosterEntryFor(overrides: Partial<RosterEntry> = {}): RosterEntry {
+  return {
+    player: playerFor(1),
+    jersey_number: 34,
+    contract_level: "nhl",
+    assignment: null,
+    ...overrides,
+  };
+}
+
+export const TEAM_ROSTER: Envelope<RosterEntry[], RosterMeta> = {
+  data: [
+    rosterEntryFor({
+      player: playerFor(1, { first_name: "Auston", last_name: "Matthews", position: "center" }),
+      jersey_number: 34,
+    }),
+    rosterEntryFor({
+      player: playerFor(2, { first_name: "Morgan", last_name: "Rielly", position: "defense" }),
+      jersey_number: 44,
+    }),
+    rosterEntryFor({
+      player: playerFor(3, { first_name: "Easton", last_name: "Cowan", position: "left_wing" }),
+      jersey_number: 53,
+      assignment: {
+        team: teamFor(3, "MRL"),
+        contract_level: "ahl",
+        contract_level_inferred: false,
+      },
+    }),
+  ],
+  meta: { season: "2025-26", count: 3 },
 };

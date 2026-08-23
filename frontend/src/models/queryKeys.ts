@@ -14,3 +14,5 @@ export const teamKey = (teamId: number) => ["team", teamId] as const;
 
 export const teamGamesKey = (teamId: number, season?: string, gameType?: string) =>
   ["team-games", teamId, season ?? "current", gameType ?? "all"] as const;
+
+export const teamRosterKey = (teamId: number) => ["team-roster", teamId] as const;

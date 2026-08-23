@@ -5,6 +5,9 @@ import { RequireAuth } from "@/auth/RequireAuth";
 import { DashboardPage } from "@/containers/DashboardPage";
 import { LeaguePage } from "@/containers/LeaguePage";
 import { TeamPage } from "@/containers/TeamPage";
+import { TeamOverviewPage } from "@/containers/TeamOverviewPage";
+import { TeamSchedulePage } from "@/containers/TeamSchedulePage";
+import { TeamRosterPage } from "@/containers/TeamRosterPage";
 
 export function App() {
   return (
@@ -40,7 +43,11 @@ export function App() {
             <TeamPage />
           </RequireAuth>
         }
-      />
+      >
+        <Route index element={<TeamOverviewPage />} />
+        <Route path="schedule" element={<TeamSchedulePage />} />
+        <Route path="roster" element={<TeamRosterPage />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

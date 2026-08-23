@@ -48,6 +48,42 @@ function outcomeFor(game: Game, teamScore: number | null, opponentScore: number 
   return EXTRA_TIME.includes(game.last_period_type ?? "") ? "ot_loss" : "loss";
 }
 
+function isoDate(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+// Most-recent-first: the game right before today reads first, like a box score ticker.
+export function recentTeamGames(
+  games: Game[],
+  teamId: number,
+  count = 3,
+  today = new Date(),
+): TeamGame[] {
+  const cutoff = isoDate(today);
+
+  return games
+    .filter((game) => FINISHED_STATES.includes(game.state) && game.game_date <= cutoff)
+    .sort((a, b) => b.game_date.localeCompare(a.game_date))
+    .slice(0, count)
+    .map((game) => teamGame(game, teamId));
+}
+
+// Soonest-first, the way an actual schedule reads.
+export function upcomingTeamGames(
+  games: Game[],
+  teamId: number,
+  count = 3,
+  today = new Date(),
+): TeamGame[] {
+  const cutoff = isoDate(today);
+
+  return games
+    .filter((game) => !FINISHED_STATES.includes(game.state) && game.game_date >= cutoff)
+    .sort((a, b) => a.game_date.localeCompare(b.game_date))
+    .slice(0, count)
+    .map((game) => teamGame(game, teamId));
+}
+
 export function groupByMonth(games: Game[], teamId: number): GameMonth[] {
   return games.reduce<GameMonth[]>((months, game) => {
     const key = game.game_date.slice(0, 7);

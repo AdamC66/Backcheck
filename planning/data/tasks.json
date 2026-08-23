@@ -292,5 +292,14 @@
     "status": "done",
     "priority": "low",
     "description": "possible_duplicate_players (player_a, player_b, detail, resolved_at), player_a always the lower id so a rerun can't double-write the same pair. SyncAffiliateRoster writes a row when a same-normalized-name entry disagrees with an existing player's birthdate, alongside the existing possible_duplicates log line. Prompted by a real live find: HockeyTech's own AHL and ECHL feeds disagree on Rhett Parsons's birth month."
+  },
+  {
+    "id": "TASK-34",
+    "epic_id": "EPIC-3",
+    "title": "Team page: side-nav dashboard (Overview/Schedule/Roster)",
+    "type": "feature",
+    "status": "done",
+    "priority": "medium",
+    "description": "TeamPage becomes a shell (header, theme, side nav) rendering nested routes via Outlet: /teams/:id (Overview), /teams/:id/schedule, /teams/:id/roster. Overview shows last-3/next-3 games, computed client-side from the existing full-season fetch (no new endpoint). Roster consumes GET /teams/:id/roster, grouped Forwards/Defensemen/Goalies, showing jersey number, position, and an assignment badge when a player is currently on an AHL/ECHL affiliate. GameRow extracted from ScheduleList so Overview's summary cards reuse it rather than duplicating the outcome-badge logic. 'Leading players' deferred with Overview's layout, pending SkaterStatLine/GoalieStatLine (TASK-26) — not stubbed, not referenced. Verified live in a headless browser: real Toronto data, 49-player roster correctly grouped, no console errors."
   }
 ]
