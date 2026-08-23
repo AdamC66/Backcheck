@@ -1,5 +1,6 @@
 import type { Envelope } from "@/lib/apiClient";
 import type { User } from "@/models/auth";
+import type { Game, GamesMeta } from "@/models/games";
 import type { League, LeagueWithTeams } from "@/models/leagues";
 import type { Standing, StandingsMeta } from "@/models/standings";
 import type { Team } from "@/models/teams";
@@ -83,6 +84,8 @@ export const TEAMS: Team[] = [
 
 export const LEAGUE_WITH_TEAMS: LeagueWithTeams = { ...LEAGUES[0], teams: TEAMS };
 
+export const TEAM_WITH_LEAGUE: Team = { ...TEAMS[0], league: LEAGUES[0] };
+
 // Exported so grouping tests can build a whole league without redefining the shape.
 export function standingFor(team: Team, overrides: Partial<Standing> = {}): Standing {
   return {
@@ -126,4 +129,35 @@ export const STANDINGS: Envelope<Standing[], StandingsMeta> = {
     }),
   ],
   meta: { season: "2025-26", as_of_date: "2026-04-17" },
+};
+
+export function gameFor(overrides: Partial<Game> = {}): Game {
+  return {
+    id: 1,
+    nhl_game_id: 2025020004,
+    game_type: "regular_season",
+    game_date: "2025-10-08",
+    starts_at: "2025-10-08T23:00:00Z",
+    venue: "Scotiabank Arena",
+    neutral_site: false,
+    state: "OFF",
+    last_period_type: "REG",
+    home: { team: TEAMS[0], score: 5 },
+    away: { team: TEAMS[1], score: 2 },
+    ...overrides,
+  };
+}
+
+export const TEAM_GAMES: Envelope<Game[], GamesMeta> = {
+  data: [
+    gameFor({ id: 1, game_date: "2025-10-08" }),
+    gameFor({
+      id: 2,
+      game_date: "2025-11-02",
+      last_period_type: "OT",
+      home: { team: TEAMS[1], score: 4 },
+      away: { team: TEAMS[0], score: 3 },
+    }),
+  ],
+  meta: { season: "2025-26", from: "2025-10-08", to: "2025-11-02", count: 2 },
 };

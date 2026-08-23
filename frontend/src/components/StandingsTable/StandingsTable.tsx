@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { Link } from "react-router";
 import type { RankKey } from "@/lib/standingsViews";
 import type { Standing, StandingRecord } from "@/models/standings";
 
@@ -96,12 +97,15 @@ export function StandingsTable({
                 </td>
 
                 <th scope="row" className="px-3 py-2 text-left font-medium text-slate-800">
-                  <span className="flex items-center gap-2">
+                  <Link
+                    to={`/teams/${standing.team.id}`}
+                    className="flex items-center gap-2 rounded hover:text-slate-950 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+                  >
                     {standing.team.logo_url === null ? null : (
                       <img src={standing.team.logo_url} alt="" className="h-5 w-5 object-contain" />
                     )}
                     <span className="whitespace-nowrap">{standing.team.name}</span>
-                  </span>
+                  </Link>
                 </th>
 
                 {NUMERIC_COLUMNS.map((column) => (

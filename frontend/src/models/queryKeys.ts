@@ -7,3 +7,8 @@ export const LEAGUES_KEY = ["leagues"] as const;
 export const leagueKey = (slug: string) => ["league", slug] as const;
 
 export const standingsKey = (slug: string) => ["standings", slug] as const;
+
+export const teamKey = (teamId: number) => ["team", teamId] as const;
+
+export const teamGamesKey = (teamId: number, season?: string, gameType?: string) =>
+  ["team-games", teamId, season ?? "current", gameType ?? "all"] as const;

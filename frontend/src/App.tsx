@@ -4,6 +4,7 @@ import { RedirectIfAuthenticated } from "@/auth/RedirectIfAuthenticated";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { DashboardPage } from "@/containers/DashboardPage";
 import { LeaguePage } from "@/containers/LeaguePage";
+import { TeamPage } from "@/containers/TeamPage";
 
 export function App() {
   return (
@@ -29,6 +30,14 @@ export function App() {
         element={
           <RequireAuth>
             <LeaguePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/teams/:id"
+        element={
+          <RequireAuth>
+            <TeamPage />
           </RequireAuth>
         }
       />
