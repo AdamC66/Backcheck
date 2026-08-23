@@ -20,9 +20,9 @@
     "epic_id": "EPIC-1",
     "title": "Implement Membership-based authorization checks",
     "type": "feature",
-    "status": "in_progress",
+    "status": "done",
     "priority": "high",
-    "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. Controller-level 403 enforcement still pending — no protected resource controller exists yet to wire it into. This gates write actions, not reads: every view stays public, so the first real controllers to use this are the EPIC-9 role actions (lineups, call-ups, trades, contracts), not the existing read-only endpoints.",
+    "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. BaseController#authorize_team! wraps it for controller-level 403 enforcement. This gates write actions, not reads: every view stays public, so the first real controllers to call it are the EPIC-9 role actions (lineups, call-ups, trades, contracts), not the existing read-only endpoints — it has no request-spec coverage of its own yet, the same way authenticate_user! never did; both get proven through their first real caller.",
     "acceptance_criteria": [
       "A write action from a user with no qualifying membership and no super-admin flag is rejected with 403",
       "A league_admin can act on any team within their league without a team-level membership row",
