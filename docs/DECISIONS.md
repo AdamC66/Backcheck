@@ -168,5 +168,70 @@ We store ~30 of the 82 fields per team. The omitted ones are percentages and per
 **Status:** Settled
 Real HTTP is disabled in every spec (`WebMock.disable_net_connect!(allow_localhost: true)`), so an NHL sync spec can't quietly depend on the live API or hammer it in a loop. Fixtures in `spec/fixtures/files/nhl/` are trimmed recordings of real payloads — kept small by dropping teams and games, never by editing fields, so the shapes stay honest. VCR was the alternative and is more machine than this needs when four endpoints are involved.
 
+### Rosters need a second upstream: HockeyTech for the AHL and ECHL
+**Status:** Settled
+The NHL API alone can't answer the question rosters exist to answer. `/v1/roster/{abbrev}/current` returns the whole organization on NHL contracts — 49 players for Toronto, 27F/18D/4G — with no indication of who is in the NHL and who is in Utica. It carries no assignment, no contract, no transaction history. (It also 307s, so the client must follow redirects; `current` resolved to `20262027`.)
+
+The AHL and ECHL both run on HockeyTech/LeagueStat, and their feed keys are public in the statview bundle each league's own site loads (`lscluster.hockeytech.com/statview-1.4.1/js/client/{ahl,echl}/base.r3.js`): `ahl` / `ccb91f29d6744675` and `echl` / `2c2b89ea7345cae8`. `feed=modulekit&view=roster&team_id=&season_id=` returns a full roster with birthdate, jersey, position and structured `draftinfo`.
+
+What makes it worth the second client is the AHL feed's **`status` field — `NHL` / `AHL` / `PTO` / `ATO`**. That is the distinction the whole feature rests on: the 2025-26 Marlies were 26 players on Leafs contracts, 15 on AHL-only deals, 6 pro tryouts and 3 amateur tryouts. Without it, a Leafs prospect on assignment and a career AHLer are the same row.
+
+Three asymmetries between the two tiers, all of which the ingestion has to expect:
+- **The ECHL feed leaves `status` empty** — all 51 Cyclones, and only 6 of them have `draft_status` at all. Contract level at the ECHL tier is inherited by cross-referencing the AHL roster, not read. Ten players appear on both the 2025-26 Marlies and Cyclones rosters, one of them (Kressler) `status=NHL` — an NHL contract playing two tiers down, which is exactly the case worth modelling.
+- **The current season's roster is empty until camp.** AHL `season_id=94` (2026-27) returns nothing while `90` (2025-26) returns 50. Syncs fall back to the newest season that actually has a roster, in the same spirit as `as_of_date` coming from the standings payload.
+- **HockeyTech carries no NHL player id.** Matching is normalised name plus birthdate, with unmatched players *reported* the way `SyncStandings` reports `missing_teams` rather than dropped. Birthdate makes it tractable; names alone would not — the NHL says `Bo Groulx`, the AHL says `Benoit-Olivier Groulx`. Fuzzy surname matching was rejected as confidently wrong more often than it is usefully right.
+
+  Normalising to ASCII is not optional, and not only for the second source: the NHL API is inconsistent with its *own* diacritics. One 2024-25 roster payload contains `David Kampf` and `Jani Hakanpää` a few lines apart, while the AHL feed spells the former `David Kämpf`.
+
+`/v1/player/{id}/landing` stays useful as a third read: `seasonTotals` is cross-league (AHL, ECHL, KHL, NCAA, OHL) with team names, and `currentTeamAbbrev` holds the NHL club even for a player with no contract — Chebykin reads `TOR` while playing for Severstal. That is the retained-rights signal.
+
+### Players are global; rosters are a join
+**Status:** Settled
+One `players` row per human, never per player-per-team. A player who splits a season between the Maple Leafs and the Marlies is one person, and a trade must not fork him into two. `players` holds identity and biography only — no team foreign key, no salary.
+
+Where he played is `roster_spots`: `(player, team, season, status, jersey_number)`, one row per player-team-season, which is what lets the same human appear on all three tiers in one year.
+
+`roster_spots.status` is **source-reported, not authoritative** — it is what the AHL feed said, and nothing should compute off it. It is a proxy for a contract fact (a two-way deal, and an assignment under it) that we do not yet hold. When real contract data lands, the authority moves and `status` stays as provenance.
+
+`nhl_player_id` sits denormalised on `players` as the canonical spine — it is the tier-1 source, and it appears in serializers. Every *other* source's id goes in `player_external_ids` (`source`, `external_id`, `matched_by`), unique on `(source, external_id)`. This is deliberately different from the per-source columns chosen for teams and seasons, and the reason is contracts (below): a third and fourth source are coming, and unlike 32 teams, player identity is reconciled by fuzzy match — so the mapping needs somewhere to record *how* a match was made and whether a human confirmed it. A column can hold the answer but not its provenance, so every re-sync would re-guess. The join cost is not real for ingestion, which loads one source's whole map in a single query.
+
+`teams` and `seasons` get plain `hockeytech_team_id` / `hockeytech_season_id` columns alongside the `nhl_*` ones. Those sets are small, stable and hand-verifiable (Marlies are `335`, AHL 2025-26 is `90`), and folding the working `nhl_*` ingestion into a generic table buys nothing.
+
+Both are indexed **unique per league**, not globally the way `nhl_team_id` is: nothing upstream promises the AHL and ECHL number their teams and seasons in different ranges, and they visibly overlap in size (Cincinnati is ECHL team `5`, Abbotsford is AHL team `440`). Postgres treats nulls as distinct, so the constraint costs nothing on the NHL rows that will never carry one.
+
+Draft details ride along on `players` — `draft_year`, `draft_round`, `draft_overall`, plus `draft_team_name` **and** a nullable `draft_team` reference. Both upstreams send this structured and free, so collecting it now is cheaper than backfilling later. The name is the stored truth because a drafting franchise may predate a relocation and have no `teams` row at all; a hard reference alone would either drop those picks or demand every defunct franchise be seeded.
+
+Affiliations are a `team_affiliations` table (NHL team, minor team, season), not a self-referencing column on `teams`. A single parent column can't express Toronto, which has a Marlies affiliation *and* a Cyclones one at a different tier — and affiliations genuinely move between clubs, so the season key keeps history correct rather than rewriting it.
+
+### Contract data: deferred, but the schema is shaped for it
+**Status:** Open
+Year-by-year salary, contract type, signing bonuses and cap hits are wanted eventually. Nothing is built now, and the reason is supply, not appetite: **no free or official source exists.** The NHL API has zero contract data; PuckPedia, CapWages and Spotrac are scrape-or-license. Recording it here so the roster work doesn't have to be unwound when a source is chosen.
+
+The shape it points at is orthogonal to `roster_spots` — `contracts` (player, team, signed_on, expires_after_season, contract_type, two_way, total_value, clauses) and `contract_years` (contract, season, base_salary, signing_bonus, performance_bonus, cap_hit, minors_salary). One says who paid him, the other says where he played, and neither needs the other to be correct. `contract_years.minors_salary` is the field that will properly state what the AHL feed's `status=NHL` currently only implies.
+
+Two consequences already banked: `players` is a pure identity table (a player-per-team model would have been fatal, since a contract spans seasons and survives trades), and player ids are mapped through a table rather than a column, because a contract source arrives with its own id namespace and no `nhl_player_id`.
+
+### `/v1/roster/{team}/{season}` answers contracts, not participation
+**Status:** Settled
+It is a **contract list of unpredictable completeness**, and that makes it the wrong source for a historical roster even though nothing in it is inaccurate.
+
+| Season | endpoint returns | actually played | played but absent | still under contract |
+| --- | --- | --- | --- | --- |
+| 2023-24 | 26 | 33 | 13 | 8 |
+| 2024-25 | 42 | 36 | 5 | 18 |
+| 2025-26 | 18 | 38 | 22 | 18 (all of them) |
+
+The season key is a **contract year, July 1 to June 30** — not a schedule. So Emil Andrae and Darren Raddysh correctly appear on the 2025-26 roster having played zero games for Toronto: they were acquired by trade after the season ended and signed before contracts expired on July 1. Reading the endpoint as "who played that season" is the mistake, not the data.
+
+The problem is the other direction, and it is not a rule we can reason around. Everyone absent from 2023-24 left via UFA, trade or retirement — Bertuzzi (80 GP), Brodie (78), Gregor (63), Giordano (46, retired), Samsonov (40), Klingberg, Edmundson, Minten — which looks like retroactive removal until you check 2024-25, which **keeps** 24 departed players including Marner (81 GP), who left as a UFA exactly the way Bertuzzi did a year earlier. Its own five absentees (Timmins, Dewar, Minten, Grebenkin, Liljegren) were all traded mid-season. Meanwhile 2025-26 holds only currently-signed players and is an exact subset of `roster/current`. Three seasons, three different completeness rules, none of them documented.
+
+So: `/v1/roster/{team}/current` for the live organization, and **`club-stats/{team}/{season}/{gameType}` for historical membership** — participation is a fact that doesn't erode when a contract ends. Game types 2 and 3 are separate calls; a playoff-only call-up is invisible if you fetch only the regular season.
+
+The corollary matters for `roster_spots`: a past season's rows must be *written once from participation data and then left alone*. Re-syncing a past season off the roster endpoint would silently delete players from history as their contracts lapse.
+
+### Retained rights are not cleanly available
+**Status:** Open
+"NHL teams hold rights to players not under contract" has no single endpoint. `/v1/prospects/{team}` returns 4 players for Toronto, all of them in the KHL — it is effectively drafted-and-unsigned-abroad, not a rights list, and misses the 2025 picks in the NCAA and CHL. `/v1/draft/picks/{year}/all` has those (224 picks, 6 for Toronto) but carries **no `playerId`** — only name, position and amateur club, so it needs the same name matching as HockeyTech and against players who may have no NHL id at all yet.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

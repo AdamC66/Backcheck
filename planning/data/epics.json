@@ -19,8 +19,8 @@
     "id": "EPIC-3",
     "project_id": "backcheck",
     "title": "Player & roster history",
-    "description": "Player plus RosterEntry (player+team+season with joined_on/left_on) so trades and Super Admin moves preserve history instead of overwriting a current-team FK.",
-    "status": "backlog",
+    "description": "Players as global identities (never a current-team FK), roster_spots for player+team+season so one player can hold rows on all three tiers in a year, and player_external_ids to reconcile sources that carry no NHL player id.",
+    "status": "in_progress",
     "priority": "medium"
   },
   {
@@ -61,7 +61,6 @@
     "title": "External stats ingestion",
     "description": "Get real stat data into the system from the NHL's public web API (api-web.nhle.com). Throttled client called only from jobs; historical backfill by rake task, daily syncs via recurring.yml.",
     "status": "in_progress",
-    "priority": "low",
-    "blocked_reason": "External stats data source not yet decided (docs/DECISIONS.md)."
+    "priority": "low"
   }
 ]

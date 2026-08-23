@@ -22,7 +22,7 @@
     "type": "feature",
     "status": "in_progress",
     "priority": "high",
-    "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. Controller-level 403 enforcement still pending \u2014 no protected resource controller exists yet to wire it into.",
+    "description": "User#member_of?/#authorized_for_team? implemented and covered by model specs. Controller-level 403 enforcement still pending — no protected resource controller exists yet to wire it into.",
     "acceptance_criteria": [
       "A request from a user with no qualifying membership and no super-admin flag is rejected with 403",
       "A league_admin can act on any team within their league without a team-level membership row",
@@ -61,7 +61,7 @@
     "type": "feature",
     "status": "todo",
     "priority": "high",
-    "description": "Self-join on Team: parent_team_id, affiliate_team_id, started_on/ended_on. Models the NHL/AHL/ECHL affiliate chain (e.g. Ottawa Senators -> Belleville Senators), history-preserving like RosterEntry. Includes backfilling rows from each AHL/ECHL manifest's nhl_affiliate abbreviation (TASK-18 seeded the Team rows but ignores that field). Coordinate with TASK-3 \u2014 its downward-visibility check depends on this table existing."
+    "description": "Self-join on Team: parent_team_id, affiliate_team_id, started_on/ended_on. Models the NHL/AHL/ECHL affiliate chain (e.g. Ottawa Senators -> Belleville Senators), history-preserving like RosterEntry. Includes backfilling rows from each AHL/ECHL manifest's nhl_affiliate abbreviation (TASK-18 seeded the Team rows but ignores that field). Coordinate with TASK-3 — its downward-visibility check depends on this table existing."
   },
   {
     "id": "TASK-18",
@@ -97,7 +97,7 @@
     "type": "chore",
     "status": "done",
     "priority": "medium",
-    "description": "Logos were files committed to frontend/public, so changing one meant a frontend redeploy. Now has_one_attached :logo on League and Team, Disk service (S3-compatible later), seeded from data/ via AttachLogo with a checksum guard so reruns don't orphan blobs. Serializers emit absolute proxy URLs; the logo filename columns are dropped. SVG is served inline via a documented exception to Active Storage's binary-serving default \u2014 revisit if an upload endpoint is added."
+    "description": "Logos were files committed to frontend/public, so changing one meant a frontend redeploy. Now has_one_attached :logo on League and Team, Disk service (S3-compatible later), seeded from data/ via AttachLogo with a checksum guard so reruns don't orphan blobs. Serializers emit absolute proxy URLs; the logo filename columns are dropped. SVG is served inline via a documented exception to Active Storage's binary-serving default — revisit if an upload endpoint is added."
   },
   {
     "id": "TASK-27",
@@ -106,7 +106,7 @@
     "type": "feature",
     "status": "todo",
     "priority": "medium",
-    "description": "There is no way to fix a bad logo without editing data/ and re-seeding \u2014 Seattle's had to be replaced by hand on 2026-08-22. Needs PATCH /api/v1/teams/:id/logo and /leagues/:slug/logo restricted to Super Admin, content-type and size validation, plus a frontend control. Note the Active Storage caveat in docs/DECISIONS.md: uploads make the SVG-served-inline exception unsafe, so sanitize SVG on the way in or rasterize."
+    "description": "There is no way to fix a bad logo without editing data/ and re-seeding — Seattle's had to be replaced by hand on 2026-08-22. Needs PATCH /api/v1/teams/:id/logo and /leagues/:slug/logo restricted to Super Admin, content-type and size validation, plus a frontend control. Note the Active Storage caveat in docs/DECISIONS.md: uploads make the SVG-served-inline exception unsafe, so sanitize SVG on the way in or rasterize."
   },
   {
     "id": "TASK-22",
@@ -159,15 +159,17 @@
     "title": "Design Player/RosterEntry schema",
     "type": "spike",
     "status": "done",
-    "priority": "medium"
+    "priority": "medium",
+    "description": "Settled. Global players keyed on nhl_player_id, player_external_ids for every other source (with matched_by provenance), roster_spots (player+team+season+contract_level) rather than a current-team FK, and team_affiliations for the NHL/AHL/ECHL chain. Contracts deliberately left orthogonal. See docs/DECISIONS.md."
   },
   {
     "id": "TASK-8",
     "epic_id": "EPIC-3",
-    "title": "Migrations for Player, RosterEntry",
+    "title": "Migrations for players, player_external_ids, roster_spots",
     "type": "feature",
-    "status": "todo",
-    "priority": "medium"
+    "status": "done",
+    "priority": "medium",
+    "description": "Plus hockeytech_team_id / hockeytech_season_id on teams and seasons, both uniquely indexed per league rather than globally — AHL and ECHL ids may share a namespace. Draft columns (year/round/overall/team) ride along on players since both upstreams send them structured."
   },
   {
     "id": "TASK-9",
@@ -184,7 +186,7 @@
     "type": "feature",
     "status": "done",
     "priority": "medium",
-    "description": "Game table shipped with NHL ingestion (nhl_game_id, season, home/away teams, type, venue-local date, scores, state, last period type). SkaterStatLine/GoalieStatLine remain outstanding \u2014 tracked as TASK-26."
+    "description": "Game table shipped with NHL ingestion (nhl_game_id, season, home/away teams, type, venue-local date, scores, state, last period type). SkaterStatLine/GoalieStatLine remain outstanding — tracked as TASK-26."
   },
   {
     "id": "TASK-11",
@@ -209,7 +211,7 @@
     "type": "chore",
     "status": "done",
     "priority": "high",
-    "description": "Vite + React + TS + Tailwind v4 scaffolded, @ alias wired in tsconfig.app.json and vite.config.ts. Folder structure settled as containers/components/models/auth/lib (see docs/DECISIONS.md) \u2014 the earlier features/api layout was replaced."
+    "description": "Vite + React + TS + Tailwind v4 scaffolded, @ alias wired in tsconfig.app.json and vite.config.ts. Folder structure settled as containers/components/models/auth/lib (see docs/DECISIONS.md) — the earlier features/api layout was replaced."
   },
   {
     "id": "TASK-14",
@@ -236,5 +238,50 @@
     "status": "done",
     "priority": "low",
     "description": "Settled: the NHL's public web API (api-web.nhle.com), catalogued at github.com/Zmalski/NHL-API-Reference. Replaces the dead statsapi.web.nhl.com the prior attempt used. See docs/DECISIONS.md."
+  },
+  {
+    "id": "TASK-28",
+    "epic_id": "EPIC-2",
+    "title": "Migration and seed data for team_affiliations",
+    "type": "feature",
+    "status": "todo",
+    "priority": "medium",
+    "description": "parent_team_id / affiliate_team_id / season_id, named to avoid colliding with teams.nhl_team_id (an external id). Season-keyed so a moved affiliation doesn't rewrite history. Toronto needs both tiers: Marlies (AHL) and Cincinnati Cyclones (ECHL). Hand-maintained in data/."
+  },
+  {
+    "id": "TASK-29",
+    "epic_id": "EPIC-8",
+    "title": "HockeyTechClient for the AHL and ECHL roster feeds",
+    "type": "feature",
+    "status": "todo",
+    "priority": "medium",
+    "description": "Same construction as NhlClient — process-wide throttle, capped backoff, typed errors, jobs only. Public statview keys: ahl/ccb91f29d6744675, echl/2c2b89ea7345cae8."
+  },
+  {
+    "id": "TASK-30",
+    "epic_id": "EPIC-8",
+    "title": "SyncTeamRoster and SyncAffiliateRoster",
+    "type": "feature",
+    "status": "todo",
+    "priority": "medium",
+    "description": "NHL org roster from /v1/roster/{team}/current (follows a 307). Affiliate rosters from HockeyTech, AHL before ECHL — the ECHL feed sends status empty, so contract_level is inherited from the AHL row and flagged inferred. Match on normalized name + birth_date, report missing_players. Falls back to the newest season that actually has a roster, since the current one is empty until camp."
+  },
+  {
+    "id": "TASK-31",
+    "epic_id": "EPIC-3",
+    "title": "GET /teams/:id/roster",
+    "type": "feature",
+    "status": "todo",
+    "priority": "medium",
+    "description": "Grouped by position, carrying contract_level and the affiliate chain so an NHL team's page can show who is on assignment. Headshot URLs derived, never stored."
+  },
+  {
+    "id": "TASK-32",
+    "epic_id": "EPIC-3",
+    "title": "Model retained rights (drafted-but-unsigned players)",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "description": "Wants its own player_rights table, not a roster_spots row — a rights-held player is not on a roster in a season, and forcing him into one would model a lie. Needs name matching against players who may have no nhl_player_id yet. Unbuilt because no complete source exists: /v1/prospects/{team} returns only drafted-and-unsigned-abroad (4 players for Toronto, all KHL), and /v1/draft/picks/{year}/all carries no playerId, only name and amateur club."
   }
 ]

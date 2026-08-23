@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_22_210004) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_090004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -89,6 +89,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_210004) do
     t.index ["user_id"], name: "index_memberships_on_user_id"
   end
 
+  create_table "player_external_ids", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "external_id", null: false
+    t.integer "matched_by", null: false
+    t.bigint "player_id", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_id"], name: "index_player_external_ids_on_player_id"
+    t.index ["source", "external_id"], name: "index_player_external_ids_on_source_and_external_id", unique: true
+  end
+
+  create_table "players", force: :cascade do |t|
+    t.string "birth_city"
+    t.string "birth_country"
+    t.date "birth_date"
+    t.datetime "created_at", null: false
+    t.integer "draft_overall"
+    t.integer "draft_round"
+    t.bigint "draft_team_id"
+    t.string "draft_team_name"
+    t.integer "draft_year"
+    t.string "first_name", null: false
+    t.integer "height_in_inches"
+    t.string "last_name", null: false
+    t.integer "nhl_player_id"
+    t.string "normalized_name", null: false
+    t.integer "position", null: false
+    t.string "shoots_catches"
+    t.datetime "updated_at", null: false
+    t.integer "weight_in_pounds"
+    t.index ["draft_team_id"], name: "index_players_on_draft_team_id"
+    t.index ["nhl_player_id"], name: "index_players_on_nhl_player_id", unique: true
+    t.index ["normalized_name", "birth_date"], name: "index_players_on_normalized_name_and_birth_date"
+  end
+
   create_table "revoked_tokens", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "expires_at", null: false
@@ -107,14 +142,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_210004) do
     t.index ["key"], name: "index_roles_on_key", unique: true
   end
 
+  create_table "roster_spots", force: :cascade do |t|
+    t.integer "contract_level", default: 0, null: false
+    t.boolean "contract_level_inferred", default: false, null: false
+    t.datetime "created_at", null: false
+    t.integer "jersey_number"
+    t.bigint "player_id", null: false
+    t.bigint "season_id", null: false
+    t.integer "source", null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_id", "team_id", "season_id"], name: "index_roster_spots_on_player_id_and_team_id_and_season_id", unique: true
+    t.index ["player_id"], name: "index_roster_spots_on_player_id"
+    t.index ["season_id"], name: "index_roster_spots_on_season_id"
+    t.index ["team_id", "season_id"], name: "index_roster_spots_on_team_id_and_season_id"
+    t.index ["team_id"], name: "index_roster_spots_on_team_id"
+  end
+
   create_table "seasons", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "ends_on", null: false
+    t.integer "hockeytech_season_id"
     t.string "label", null: false
     t.bigint "league_id", null: false
     t.integer "nhl_season_id"
     t.date "starts_on", null: false
     t.datetime "updated_at", null: false
+    t.index ["league_id", "hockeytech_season_id"], name: "index_seasons_on_league_id_and_hockeytech_season_id", unique: true
     t.index ["league_id", "label"], name: "index_seasons_on_league_id_and_label", unique: true
     t.index ["league_id"], name: "index_seasons_on_league_id"
     t.index ["nhl_season_id"], name: "index_seasons_on_nhl_season_id", unique: true
@@ -163,6 +217,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_210004) do
   create_table "teams", force: :cascade do |t|
     t.string "abbreviation", null: false
     t.datetime "created_at", null: false
+    t.integer "hockeytech_team_id"
     t.bigint "league_id", null: false
     t.string "name", null: false
     t.integer "nhl_team_id"
@@ -171,6 +226,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_210004) do
     t.string "tertiary_color"
     t.datetime "updated_at", null: false
     t.index ["league_id", "abbreviation"], name: "index_teams_on_league_id_and_abbreviation", unique: true
+    t.index ["league_id", "hockeytech_team_id"], name: "index_teams_on_league_id_and_hockeytech_team_id", unique: true
     t.index ["league_id"], name: "index_teams_on_league_id"
     t.index ["nhl_team_id"], name: "index_teams_on_nhl_team_id", unique: true
   end
@@ -191,6 +247,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_22_210004) do
   add_foreign_key "games", "teams", column: "home_team_id"
   add_foreign_key "memberships", "roles"
   add_foreign_key "memberships", "users"
+  add_foreign_key "player_external_ids", "players"
+  add_foreign_key "players", "teams", column: "draft_team_id"
+  add_foreign_key "roster_spots", "players"
+  add_foreign_key "roster_spots", "seasons"
+  add_foreign_key "roster_spots", "teams"
   add_foreign_key "seasons", "leagues"
   add_foreign_key "team_standings", "seasons"
   add_foreign_key "team_standings", "teams"
