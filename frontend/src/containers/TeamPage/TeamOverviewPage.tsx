@@ -80,21 +80,21 @@ export function TeamOverviewPage() {
         )}
       </Row>
 
-      <div className="grid grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard tile={recordTile(standing)} hero />
         <KpiCard tile={pointsTile(standing)} />
         <KpiCard tile={streakTile(standing)} />
         <KpiCard tile={nextGameTile} />
       </div>
 
-      <Row gap="lg" align="start" wrap>
+      <div className="flex flex-col items-stretch gap-5 sm:flex-row sm:items-start">
         <GameSummaryCard
           title="Last 3 games"
           games={recentTeamGames(allGames, teamId)}
           emptyLabel="No recent games."
         />
         <GameSummaryCard title="Next 3 games" games={upcoming} emptyLabel="No games scheduled." />
-      </Row>
+      </div>
     </Stack>
   );
 }
