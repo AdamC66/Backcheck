@@ -1,12 +1,15 @@
 class TeamSerializer
   include LogoUrl
 
-  def initialize(team)
+  # Opt-in, because the collections that embed teams (standings rows, a league's roster
+  # of teams) already know the league and would repeat it 32 times.
+  def initialize(team, include_league: false)
     @team = team
+    @include_league = include_league
   end
 
   def as_json(*)
-    {
+    payload = {
       id: team.id,
       name: team.name,
       abbreviation: team.abbreviation,
@@ -16,9 +19,13 @@ class TeamSerializer
       secondary_color: team.secondary_color,
       tertiary_color: team.tertiary_color
     }
+
+    return payload unless include_league
+
+    payload.merge(league: LeagueSerializer.new(team.league).as_json)
   end
 
   private
 
-  attr_reader :team
+  attr_reader :team, :include_league
 end

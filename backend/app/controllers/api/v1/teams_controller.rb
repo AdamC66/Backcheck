@@ -4,7 +4,7 @@ module Api
       before_action :set_team
 
       def show
-        render_data(TeamSerializer.new(team).as_json)
+        render_data(TeamSerializer.new(team, include_league: true).as_json)
       end
 
       private
