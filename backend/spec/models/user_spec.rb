@@ -22,5 +22,12 @@ RSpec.describe User, type: :model do
 
       expect(user.authorized_for_team?(team)).to be false
     end
+
+    it "grants a super admin access without any matching Membership row" do
+      team = create(:team)
+      user = create(:user, is_super_admin: true)
+
+      expect(user.authorized_for_team?(team)).to be true
+    end
   end
 end

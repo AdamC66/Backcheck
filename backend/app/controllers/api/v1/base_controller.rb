@@ -27,6 +27,14 @@ module Api
       def bearer_token
         request.headers["Authorization"]&.delete_prefix("Bearer ")
       end
+
+      # Reads as one question, per docs/DECISIONS.md: does this user have a qualifying
+      # Membership for this team (directly, or via league_admin), or are they super admin?
+      def authorize_team!(team, role_key: nil)
+        return if current_user.authorized_for_team?(team, role_key: role_key)
+
+        render_error(code: "forbidden", message: "Not authorized for this team", status: :forbidden)
+      end
     end
   end
 end
