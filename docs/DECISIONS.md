@@ -230,6 +230,8 @@ None of this is buildable without contract data, and that's still correctly defe
 
 v1 of lineups (TASK-35/36) and call-ups (TASK-37) gate on #1 alone — "eligible if you're the player's current team" — which is what already exists via `roster_spots`. That's a known simplification, not an oversight: #2 and #3 are real gaps in CBA-correctness, but the schema shape above doesn't box either out later.
 
+`ReassignPlayer` (TASK-37) also overwrites `roster_spots.team_id`/`season_id` in place rather than preserving a trail of the move — considered adding a minimal move-log table alongside it (2026-08-24) so daily cap-hit accounting (Article 50.5) would have raw history to consume once it exists, decided against for now: it's the same "no CBA-correctness work until contract data exists" deferral as #3 above, just recorded earlier. Moves made before EPIC-11 (unified transaction log) ships are unrecoverable history — an accepted gap, not an oversight.
+
 ### `/v1/roster/{team}/{season}` answers contracts, not participation
 **Status:** Settled
 It is a **contract list of unpredictable completeness**, and that makes it the wrong source for a historical roster even though nothing in it is inaccurate.

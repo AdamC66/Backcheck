@@ -2,7 +2,7 @@ class RosterSpot < ApplicationRecord
   # Contract level, not roster status: it says whose paper a player is on, not whether
   # he is active or injured. Reported by the AHL feed, inherited for the ECHL.
   CONTRACT_LEVELS = { unknown: 0, nhl: 1, ahl: 2, echl: 3, pto: 4, ato: 5 }.freeze
-  SOURCES = { nhl_api: 1, hockeytech: 2 }.freeze
+  SOURCES = { nhl_api: 1, hockeytech: 2, manual: 3 }.freeze
 
   belongs_to :player
   belongs_to :team
