@@ -59,9 +59,9 @@
     "epic_id": "EPIC-2",
     "title": "Migration + model for TeamAffiliation (hierarchical team relationships)",
     "type": "feature",
-    "status": "todo",
+    "status": "done",
     "priority": "high",
-    "description": "Self-join on Team: parent_team_id, affiliate_team_id, started_on/ended_on. Models the NHL/AHL/ECHL affiliate chain (e.g. Ottawa Senators -> Belleville Senators), history-preserving like RosterEntry. Includes backfilling rows from each AHL/ECHL manifest's nhl_affiliate abbreviation (TASK-18 seeded the Team rows but ignores that field). Coordinate with TASK-3 — its downward-visibility check depends on this table existing."
+    "description": "Self-join on Team: parent_team_id, affiliate_team_id, season_id (season-scoped rather than started_on/ended_on, matching how Season already anchors history elsewhere). Models the NHL/AHL/ECHL affiliate chain (e.g. Ottawa Senators -> Belleville Senators). Backfilled via ImportTeamAffiliations, which reads each AHL/ECHL manifest's nhl_affiliate abbreviation and anchors to the newest NHL season on hand."
   },
   {
     "id": "TASK-18",
