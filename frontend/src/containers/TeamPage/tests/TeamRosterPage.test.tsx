@@ -1,10 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Route, Routes } from "react-router";
+import userEvent from "@testing-library/user-event";
 import { fetchCurrentUser } from "@/models/auth";
 import { fetchTeamRoster } from "@/models/roster";
 import { fetchTeam } from "@/models/teams";
 import { TOKEN_KEY } from "@/lib/tokenStorage";
-import { SUPER_ADMIN, TEAM_ROSTER, TEAM_WITH_LEAGUE, TEAMS } from "@/test-mocks";
+import {
+  SUPER_ADMIN,
+  TEAM_ROSTER,
+  TEAM_WITH_LEAGUE,
+  TEAMS,
+  playerFor,
+  rosterEntryFor,
+} from "@/test-mocks";
 import { renderWithProviders, screen } from "@/test-utils";
 import { TeamPage } from "../TeamPage";
 import { TeamRosterPage } from "../TeamRosterPage";
@@ -49,6 +57,30 @@ describe("TeamRosterPage", () => {
     await screen.findByText("Easton Cowan");
 
     expect(screen.getByTitle("Assigned to MRL Club")).toHaveTextContent("MRL");
+  });
+
+  it("keeps an injured player inline but moves a non-roster player to its own tab", async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchTeamRoster).mockResolvedValue({
+      data: [
+        ...TEAM_ROSTER.data,
+        rosterEntryFor({
+          player: playerFor(99, { first_name: "Off", last_name: "Roster" }),
+          roster_status: { status: "non_roster", started_on: "2026-08-01" },
+        }),
+      ],
+      meta: TEAM_ROSTER.meta,
+    });
+
+    renderRoster();
+
+    await screen.findByText("Auston Matthews");
+    expect(screen.queryByText("Off Roster")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Non-Roster" }));
+
+    expect(await screen.findByText("Off Roster")).toBeInTheDocument();
+    expect(screen.queryByText("Auston Matthews")).not.toBeInTheDocument();
   });
 
   it("shows an empty state for a season with no roster on file", async () => {

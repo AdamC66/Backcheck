@@ -1,0 +1,93 @@
+import { describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { RosterList } from "../RosterList";
+import { rosterEntryFor, playerFor } from "@/test-mocks";
+
+describe("RosterList", () => {
+  it("renders each section under its label, keeping an injured player inline", () => {
+    render(
+      <RosterList
+        sections={[
+          {
+            key: "forwards",
+            label: "Forwards",
+            entries: [
+              rosterEntryFor({ player: playerFor(1, { last_name: "Active" }) }),
+              rosterEntryFor({
+                player: playerFor(2, { last_name: "Hurt" }),
+                roster_status: { status: "injured_reserve", started_on: "2026-08-20" },
+              }),
+            ],
+          },
+        ]}
+        canManageRoster={false}
+        onSetStatus={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Forwards")).toBeInTheDocument();
+    expect(screen.getByText("Test Hurt").closest("li")).toHaveTextContent("IR");
+  });
+
+  it("omits an empty section entirely rather than rendering it with nothing in it", () => {
+    render(
+      <RosterList
+        sections={[{ key: "forwards", label: "Forwards", entries: [] }]}
+        canManageRoster={false}
+        onSetStatus={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("Forwards")).not.toBeInTheDocument();
+  });
+
+  it("lets the team's GM open the status dialog, choose a status, and confirm a retroactive date", async () => {
+    const user = userEvent.setup();
+    const onSetStatus = vi.fn();
+
+    render(
+      <RosterList
+        sections={[
+          {
+            key: "forwards",
+            label: "Forwards",
+            entries: [rosterEntryFor({ player: playerFor(1, { last_name: "Matthews" }) })],
+          },
+        ]}
+        canManageRoster
+        onSetStatus={onSetStatus}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Manage" }));
+    await user.click(screen.getByRole("button", { name: "Injured Reserve" }));
+
+    const dateInput = screen.getByLabelText("In effect as of");
+    await user.clear(dateInput);
+    await user.type(dateInput, "2026-08-20");
+
+    await user.click(screen.getByRole("button", { name: "Confirm" }));
+
+    expect(onSetStatus).toHaveBeenCalledWith(1, "injured_reserve", "2026-08-20");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("doesn't show a manage action to a user who isn't the team's GM", () => {
+    render(
+      <RosterList
+        sections={[
+          {
+            key: "forwards",
+            label: "Forwards",
+            entries: [rosterEntryFor({ player: playerFor(1) })],
+          },
+        ]}
+        canManageRoster={false}
+        onSetStatus={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Manage" })).not.toBeInTheDocument();
+  });
+});

@@ -32,13 +32,18 @@ export interface TextProps {
   variant?: TextVariant;
   tone?: TextTone;
   className?: string;
+  id?: string;
 }
 
-export function Text({ children, variant = "body", tone = "default", className }: TextProps) {
+export function Text({ children, variant = "body", tone = "default", className, id }: TextProps) {
   const Element = VARIANT_ELEMENT[variant];
   const classes = [VARIANT_CLASS[variant], TONE_CLASS[tone], className ?? ""]
     .filter(Boolean)
     .join(" ");
 
-  return <Element className={classes}>{children}</Element>;
+  return (
+    <Element id={id} className={classes}>
+      {children}
+    </Element>
+  );
 }

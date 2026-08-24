@@ -12,12 +12,17 @@ export const SUPER_ADMIN: User = {
   id: 1,
   email: "admin@example.com",
   is_super_admin: true,
+  memberships: [],
 };
 
+// A gm Membership on TEAMS[0] — useful anywhere a test needs a real, non-admin GM.
 export const TEAM_USER: User = {
   id: 2,
   email: "gm@example.com",
   is_super_admin: false,
+  memberships: [
+    { role: "gm", scope_type: "team", scopeable_id: 1, scopeable_name: "Anaheim Ducks" },
+  ],
 };
 
 export function teamFor(id: number, abbreviation: string): Team {
@@ -209,6 +214,7 @@ export function rosterEntryFor(overrides: Partial<RosterEntry> = {}): RosterEntr
     jersey_number: 34,
     contract_level: "nhl",
     assignment: null,
+    roster_status: { status: "active", started_on: null },
     ...overrides,
   };
 }

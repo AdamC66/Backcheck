@@ -54,3 +54,22 @@ export function groupRosterByPosition(entries: RosterEntry[]): RosterGroup[] {
 export function positionAbbreviation(position: Position): string {
   return POSITION_ABBREVIATION[position];
 }
+
+export interface RosterTabSplit {
+  roster: RosterEntry[];
+  nonRoster: RosterEntry[];
+}
+
+// Injured Reserve stays inline in its position group — it's still who's on the team,
+// just unavailable to play. Non-Roster is a materially different fact (not on the
+// team's active count at all) and gets pulled into its own tab instead.
+export function splitRosterForTabs(entries: RosterEntry[]): RosterTabSplit {
+  const roster: RosterEntry[] = [];
+  const nonRoster: RosterEntry[] = [];
+
+  for (const entry of entries) {
+    (entry.roster_status.status === "non_roster" ? nonRoster : roster).push(entry);
+  }
+
+  return { roster, nonRoster };
+}

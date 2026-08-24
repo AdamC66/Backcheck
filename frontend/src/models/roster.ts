@@ -31,11 +31,19 @@ export interface RosterAssignment {
   contract_level_inferred: boolean;
 }
 
+export type RosterStatusValue = "active" | "injured_reserve" | "non_roster";
+
+export interface RosterStatus {
+  status: RosterStatusValue;
+  started_on: string | null;
+}
+
 export interface RosterEntry {
   player: RosterPlayer;
   jersey_number: number | null;
   contract_level: string;
   assignment: RosterAssignment | null;
+  roster_status: RosterStatus;
 }
 
 export interface RosterMeta {
