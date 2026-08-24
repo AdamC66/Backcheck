@@ -360,12 +360,12 @@
   },
   {
     "id": "TASK-40",
-    "epic_id": "EPIC-3",
-    "title": "Active roster status: active / injured reserve / non-roster, day-scoped",
+    "epic_id": "EPIC-9",
+    "title": "GM: place a player on injured reserve or non-roster",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
-    "description": "Extends roster_spots (or a sibling table) with a day-scoped status distinct from team assignment, per Article 16: a 23-man Active Roster max (18 skaters + 2 goaltenders min), with Injured Reserve (16.11) and Non-Roster (16.12) players excluded from the 23-count but still counted toward the cap once EPIC-10 exists. What makes TASK-36's lineup eligibility and EPIC-10's cap accounting both CBA-honest instead of just 'on this team this season'."
+    "description": "roster_statuses (player, team, season, status: injured_reserve/non_roster, started_on, ended_on) — day-scoped and history-preserving like the rest of the roster domain. 'active' is never stored; a player with no open period is active by default, so the common case needs no row at all. A GM sets it via PATCH /teams/:id/roster_statuses/:player_id (role_key: gm, TASK-3), for a player already on that team's roster (found via roster_spots, which also supplies the season). started_on/ended_on can be backdated to today or earlier — real IR placements are often reported after the fact — but never future-dated. Moved from EPIC-3 to EPIC-9 once scoped: no external feed reports this, so it's a role action, not ingestion. Does NOT yet enforce the 23-man Active Roster max (16.4) or wire into TASK-36's lineup eligibility or EPIC-10's cap accounting — the table exists, nothing consumes it yet."
   },
   {
     "id": "TASK-41",

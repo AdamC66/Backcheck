@@ -12,14 +12,16 @@ RSpec.describe "GET /api/v1/leagues", type: :request do
     expect(response.parsed_body["data"].map { |league| league["abbreviation"] }).to eq(%w[NHL AHL ECHL])
   end
 
-  it "returns only the leagues a scoped user belongs to" do
+  it "returns every league to any logged-in user, not just one with a membership" do
     user = create(:user)
     team = create(:team)
-    create(:league)
+    unrelated_league = create(:league)
     create(:membership, user: user, scopeable: team)
 
     get "/api/v1/leagues", headers: auth_headers(user)
 
-    expect(response.parsed_body["data"].map { |league| league["id"] }).to eq([ team.league_id ])
+    expect(response.parsed_body["data"].map { |league| league["id"] }).to include(
+      team.league_id, unrelated_league.id
+    )
   end
 end

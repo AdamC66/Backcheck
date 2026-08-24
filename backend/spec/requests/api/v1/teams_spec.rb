@@ -14,9 +14,9 @@ RSpec.describe "GET /api/v1/teams/:id", type: :request do
     )
   end
 
-  it "hides a team the caller has no membership for" do
+  it "is visible to any logged-in user, not just one with a membership on it" do
     get "/api/v1/teams/#{team.id}", headers: auth_headers(create(:user))
 
-    expect(response).to have_http_status(:not_found)
+    expect(response).to have_http_status(:ok)
   end
 end

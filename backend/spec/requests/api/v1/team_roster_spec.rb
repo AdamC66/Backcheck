@@ -53,11 +53,12 @@ RSpec.describe "GET /api/v1/teams/:team_id/roster", type: :request do
     expect(response.parsed_body.dig("meta", "season")).to eq("2025-26")
   end
 
-  it "hides a team the caller has no membership for" do
-    team
+  it "is visible to any logged-in user, not just one with a membership on it" do
+    player = create(:player, first_name: "Auston", last_name: "Matthews")
+    create(:roster_spot, player: player, team: team, season: season)
 
     get "/api/v1/teams/#{team.id}/roster", headers: auth_headers(create(:user))
 
-    expect(response).to have_http_status(:not_found)
+    expect(response).to have_http_status(:ok)
   end
 end

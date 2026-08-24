@@ -2,14 +2,13 @@ module Api
   module V1
     class LeaguesController < BaseController
       def index
-        leagues = League.visible_to(current_user).ranked.with_logo
+        leagues = League.ranked.with_logo
 
         render_data(leagues.map { |league| LeagueSerializer.new(league).as_json })
       end
 
-      # Missing, not forbidden: a 403 confirms the league exists.
       def show
-        league = League.visible_to(current_user).with_logo.find_by(slug: params[:slug])
+        league = League.with_logo.find_by(slug: params[:slug])
 
         return render_not_found if league.nil?
 

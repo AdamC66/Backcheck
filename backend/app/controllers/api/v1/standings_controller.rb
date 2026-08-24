@@ -2,7 +2,7 @@ module Api
   module V1
     class StandingsController < BaseController
       def index
-        league = League.visible_to(current_user).find_by(slug: params[:league_slug])
+        league = League.find_by(slug: params[:league_slug])
         return render_not_found("League not found") if league.nil?
 
         season = find_season(league)

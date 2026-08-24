@@ -11,11 +11,10 @@ module Api
 
       attr_reader :team
 
-      # Missing, not forbidden — same reasoning as the leagues controller.
       def set_team
         @team = Team.find_by(id: params[:id] || params[:team_id])
 
-        render_not_found if team.nil? || !current_user.authorized_for_team?(team)
+        render_not_found if team.nil?
       end
 
       def render_not_found

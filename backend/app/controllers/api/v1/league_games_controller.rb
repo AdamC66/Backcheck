@@ -4,7 +4,7 @@ module Api
       include GameFiltering
 
       def index
-        league = League.visible_to(current_user).find_by(slug: params[:league_slug])
+        league = League.find_by(slug: params[:league_slug])
         return render_not_found if league.nil?
 
         return unless valid_direction?
