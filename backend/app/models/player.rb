@@ -6,6 +6,7 @@ class Player < ApplicationRecord
 
   has_many :external_ids, class_name: "PlayerExternalId", dependent: :destroy, inverse_of: :player
   has_many :roster_spots, dependent: :destroy
+  has_many :roster_statuses, dependent: :destroy
 
   before_validation :assign_normalized_name
 

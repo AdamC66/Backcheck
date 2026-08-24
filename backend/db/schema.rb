@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_130001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_235815) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -171,6 +171,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_130001) do
     t.index ["team_id"], name: "index_roster_spots_on_team_id"
   end
 
+  create_table "roster_statuses", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "ended_on"
+    t.bigint "player_id", null: false
+    t.bigint "season_id", null: false
+    t.date "started_on", null: false
+    t.integer "status", null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_id", "team_id", "season_id"], name: "index_roster_statuses_on_open_period", unique: true, where: "(ended_on IS NULL)"
+    t.index ["player_id"], name: "index_roster_statuses_on_player_id"
+    t.index ["season_id"], name: "index_roster_statuses_on_season_id"
+    t.index ["team_id"], name: "index_roster_statuses_on_team_id"
+  end
+
   create_table "seasons", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "ends_on", null: false
@@ -279,6 +294,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_130001) do
   add_foreign_key "roster_spots", "players"
   add_foreign_key "roster_spots", "seasons"
   add_foreign_key "roster_spots", "teams"
+  add_foreign_key "roster_statuses", "players"
+  add_foreign_key "roster_statuses", "seasons"
+  add_foreign_key "roster_statuses", "teams"
   add_foreign_key "seasons", "leagues"
   add_foreign_key "team_affiliations", "seasons"
   add_foreign_key "team_affiliations", "teams", column: "affiliate_team_id"
