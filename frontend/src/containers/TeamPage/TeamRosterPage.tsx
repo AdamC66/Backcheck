@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { Row } from "@/components/Row/Row";
 import { RosterList, type RosterListSection } from "@/components/RosterList/RosterList";
+import { RosterTransactionsPanel } from "@/components/RosterTransactionsPanel/RosterTransactionsPanel";
 import { SegmentedControl } from "@/components/SegmentedControl/SegmentedControl";
 import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
@@ -8,6 +10,7 @@ import { useAuth } from "@/auth/useAuth";
 import { isTeamGm } from "@/lib/membership";
 import { groupRosterByPosition, splitRosterForTabs } from "@/lib/roster";
 import { useTeamRoster } from "@/models/useTeamRoster";
+import { useRosterTransactions } from "@/models/useRosterTransactions";
 import { useSetRosterStatus } from "@/models/useSetRosterStatus";
 
 const TAB_OPTIONS = [
@@ -22,9 +25,11 @@ export function TeamRosterPage() {
   const teamId = Number(id);
 
   const tab = searchParams.get("tab") === "non_roster" ? "non_roster" : "roster";
+  const [transactionsPage, setTransactionsPage] = useState(1);
   const { user } = useAuth();
   const roster = useTeamRoster(teamId);
   const setStatus = useSetRosterStatus(teamId);
+  const transactions = useRosterTransactions(teamId, roster.data?.meta?.season, transactionsPage);
 
   function selectTab(next: string) {
     setSearchParams(next === "roster" ? {} : { tab: next }, { replace: true });
@@ -67,19 +72,32 @@ export function TeamRosterPage() {
             themed
           />
 
-          {sections.every((section) => section.entries.length === 0) ? (
-            <Text tone="muted">
-              {tab === "non_roster" ? "No players currently non-roster." : "No players on file."}
-            </Text>
-          ) : (
-            <RosterList
-              sections={sections}
-              canManageRoster={isTeamGm(user, teamId)}
-              onSetStatus={(playerId, status, effectiveOn) =>
-                setStatus.mutate({ playerId, status, effectiveOn })
-              }
+          <div className="flex flex-col items-start gap-5 sm:flex-row">
+            <div className="w-full min-w-0 flex-1">
+              {sections.every((section) => section.entries.length === 0) ? (
+                <Text tone="muted">
+                  {tab === "non_roster"
+                    ? "No players currently non-roster."
+                    : "No players on file."}
+                </Text>
+              ) : (
+                <RosterList
+                  sections={sections}
+                  canManageRoster={isTeamGm(user, teamId)}
+                  onSetStatus={(playerId, status, effectiveOn) =>
+                    setStatus.mutate({ playerId, status, effectiveOn })
+                  }
+                />
+              )}
+            </div>
+
+            <RosterTransactionsPanel
+              transactions={transactions.data?.data ?? []}
+              meta={transactions.data?.meta}
+              isLoading={transactions.isPending}
+              onPageChange={setTransactionsPage}
             />
-          )}
+          </div>
         </Stack>
       )}
     </Stack>

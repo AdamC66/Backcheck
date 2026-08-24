@@ -16,3 +16,11 @@ export const teamGamesKey = (teamId: number, season?: string, gameType?: string)
   ["team-games", teamId, season ?? "current", gameType ?? "all"] as const;
 
 export const teamRosterKey = (teamId: number) => ["team-roster", teamId] as const;
+
+// Split so a status change can invalidate every season/page for a team at once,
+// without needing to know which page or season the panel is currently showing.
+export const rosterTransactionsTeamKey = (teamId: number) =>
+  ["roster-transactions", teamId] as const;
+
+export const rosterTransactionsKey = (teamId: number, season?: string, page?: number) =>
+  [...rosterTransactionsTeamKey(teamId), season ?? "all", page ?? 1] as const;

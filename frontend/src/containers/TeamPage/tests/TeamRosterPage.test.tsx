@@ -3,9 +3,11 @@ import { Route, Routes } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { fetchCurrentUser } from "@/models/auth";
 import { fetchTeamRoster } from "@/models/roster";
+import { fetchRosterTransactions } from "@/models/rosterTransactions";
 import { fetchTeam } from "@/models/teams";
 import { TOKEN_KEY } from "@/lib/tokenStorage";
 import {
+  ROSTER_TRANSACTIONS,
   SUPER_ADMIN,
   TEAM_ROSTER,
   TEAM_WITH_LEAGUE,
@@ -19,6 +21,7 @@ import { TeamRosterPage } from "../TeamRosterPage";
 
 vi.mock("@/models/auth");
 vi.mock("@/models/roster");
+vi.mock("@/models/rosterTransactions");
 vi.mock("@/models/teams");
 
 function renderRoster() {
@@ -40,6 +43,7 @@ describe("TeamRosterPage", () => {
     vi.mocked(fetchCurrentUser).mockResolvedValue(SUPER_ADMIN);
     vi.mocked(fetchTeam).mockResolvedValue(TEAM_WITH_LEAGUE);
     vi.mocked(fetchTeamRoster).mockResolvedValue(TEAM_ROSTER);
+    vi.mocked(fetchRosterTransactions).mockResolvedValue(ROSTER_TRANSACTIONS);
   });
 
   it("groups the roster by position", async () => {

@@ -3,6 +3,7 @@ import type { User } from "@/models/auth";
 import type { Game, GamesMeta } from "@/models/games";
 import type { League, LeagueWithTeams } from "@/models/leagues";
 import type { RosterEntry, RosterMeta, RosterPlayer } from "@/models/roster";
+import type { RosterTransaction, RosterTransactionsMeta } from "@/models/rosterTransactions";
 import type { Standing, StandingsMeta } from "@/models/standings";
 import type { Team } from "@/models/teams";
 
@@ -218,6 +219,27 @@ export function rosterEntryFor(overrides: Partial<RosterEntry> = {}): RosterEntr
     ...overrides,
   };
 }
+
+export function rosterTransactionFor(
+  overrides: Partial<RosterTransaction> = {},
+): RosterTransaction {
+  return {
+    player_id: 1,
+    player_name: "Test Player1",
+    team_id: 1,
+    team_name: "Test Team",
+    season: "2025-26",
+    status: "injured_reserve",
+    started_on: "2026-08-10",
+    ended_on: null,
+    ...overrides,
+  };
+}
+
+export const ROSTER_TRANSACTIONS: Envelope<RosterTransaction[], RosterTransactionsMeta> = {
+  data: [rosterTransactionFor()],
+  meta: { page: 1, per_page: 25, total_count: 1, total_pages: 1 },
+};
 
 export const TEAM_ROSTER: Envelope<RosterEntry[], RosterMeta> = {
   data: [

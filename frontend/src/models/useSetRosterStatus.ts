@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { setRosterStatus } from "@/models/rosterStatuses";
-import { teamRosterKey } from "@/models/queryKeys";
+import { rosterTransactionsTeamKey, teamRosterKey } from "@/models/queryKeys";
 import type { RosterStatusValue } from "@/models/roster";
 
 export function useSetRosterStatus(teamId: number) {
@@ -18,6 +18,7 @@ export function useSetRosterStatus(teamId: number) {
     }) => setRosterStatus(teamId, playerId, status, effectiveOn),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamRosterKey(teamId) });
+      queryClient.invalidateQueries({ queryKey: rosterTransactionsTeamKey(teamId) });
     },
   });
 }
