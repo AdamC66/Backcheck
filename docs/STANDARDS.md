@@ -34,6 +34,11 @@ A change is done when:
 3. No stray comments, dead code, or console/debug output left in.
 4. Docs updated if the change affects architecture, an established convention, or a decision already logged in `DECISIONS.md`.
 
+## Running tests
+
+- Don't run the full test suite after every small edit (a styling tweak, a one-line fix). Save a manual run for a real chunk of new/changed logic, and always run the full suite immediately before committing anything — not delegated to a git hook.
+- RuboCop/ESLint autofix on touched files is cheap and fine to run freely — this rule is about full suite runs specifically.
+
 ## Decisions
 
 Any architectural or dependency choice that isn't already settled in `DECISIONS.md` gets discussed before being implemented, then logged there once made. Don't let a real decision live only in chat history.
