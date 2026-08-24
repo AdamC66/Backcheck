@@ -11,13 +11,20 @@ class TeamRoster
   def call
     spots = RosterSpot.where(team: team, season: season).includes(player: :external_ids).to_a
     assignments = affiliate_assignments_by_player_id
+    statuses = open_roster_statuses_by_player_id
 
-    spots.map { |spot| { roster_spot: spot, assignment: assignments[spot.player_id] } }
+    spots.map do |spot|
+      { roster_spot: spot, assignment: assignments[spot.player_id], roster_status: statuses[spot.player_id] }
+    end
   end
 
   private
 
   attr_reader :team, :season
+
+  def open_roster_statuses_by_player_id
+    RosterStatus.open.where(team: team, season: season).index_by(&:player_id)
+  end
 
   def affiliate_team_ids
     @affiliate_team_ids ||= team.affiliations_as_parent.pluck(:affiliate_team_id)

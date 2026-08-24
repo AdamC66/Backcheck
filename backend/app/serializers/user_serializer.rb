@@ -4,7 +4,12 @@ class UserSerializer
   end
 
   def as_json(*)
-    { id: user.id, email: user.email, is_super_admin: user.is_super_admin }
+    {
+      id: user.id,
+      email: user.email,
+      is_super_admin: user.is_super_admin,
+      memberships: user.memberships.map { |membership| MembershipSerializer.new(membership).as_json }
+    }
   end
 
   private

@@ -3,7 +3,9 @@ module Api
     # Lets the frontend confirm a stored token is still good and rehydrate identity on boot.
     class CurrentUserController < BaseController
       def show
-        render_data(UserSerializer.new(current_user).as_json)
+        user = User.includes(memberships: [ :role, :scopeable ]).find(current_user.id)
+
+        render_data(UserSerializer.new(user).as_json)
       end
     end
   end

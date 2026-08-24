@@ -15,7 +15,7 @@ module Api
 
         return render_invalid(result.errors) unless result.success?
 
-        render_data(RosterStatusSerializer.new(player, result.result).as_json)
+        render_data({ player_id: player.id }.merge(RosterStatusSerializer.new(result.result).as_json))
       end
 
       private

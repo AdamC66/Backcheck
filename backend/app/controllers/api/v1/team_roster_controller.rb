@@ -7,7 +7,10 @@ module Api
 
         entries = TeamRoster.new(team: team, season: season).call
 
-        render_data(entries.map { |entry| RosterSpotSerializer.new(entry[:roster_spot], assignment: entry[:assignment]).as_json },
+        render_data(entries.map { |entry|
+                      RosterSpotSerializer.new(entry[:roster_spot], assignment: entry[:assignment],
+                                                                    roster_status: entry[:roster_status]).as_json
+                    },
                     meta: { season: season.label, count: entries.size })
       end
 

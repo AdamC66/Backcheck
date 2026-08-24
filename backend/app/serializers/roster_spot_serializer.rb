@@ -1,9 +1,10 @@
 class RosterSpotSerializer
   CONTRACT_LEVEL_NAMES = RosterSpot::CONTRACT_LEVELS.invert.freeze
 
-  def initialize(roster_spot, assignment: nil)
+  def initialize(roster_spot, assignment: nil, roster_status: nil)
     @roster_spot = roster_spot
     @assignment = assignment
+    @roster_status = roster_status
   end
 
   def as_json(*)
@@ -11,13 +12,14 @@ class RosterSpotSerializer
       player: PlayerSerializer.new(roster_spot.player).as_json,
       jersey_number: roster_spot.jersey_number,
       contract_level: CONTRACT_LEVEL_NAMES.fetch(roster_spot.contract_level).to_s,
-      assignment: assignment_json
+      assignment: assignment_json,
+      roster_status: RosterStatusSerializer.new(roster_status).as_json
     }
   end
 
   private
 
-  attr_reader :roster_spot, :assignment
+  attr_reader :roster_spot, :assignment, :roster_status
 
   def assignment_json
     return nil if assignment.nil?

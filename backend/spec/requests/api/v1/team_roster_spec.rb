@@ -22,7 +22,20 @@ RSpec.describe "GET /api/v1/teams/:team_id/roster", type: :request do
     expect(entry["jersey_number"]).to eq(34)
     expect(entry["contract_level"]).to eq("nhl")
     expect(entry["assignment"]).to be_nil
+    expect(entry["roster_status"]).to eq("status" => "active", "started_on" => nil)
     expect(response.parsed_body.dig("meta", "season")).to eq("2025-26")
+  end
+
+  it "surfaces a player's current injured reserve status" do
+    player = create(:player, first_name: "William", last_name: "Nylander")
+    create(:roster_spot, player: player, team: team, season: season)
+    create(:roster_status, player: player, team: team, season: season,
+                          status: RosterStatus::STATUSES[:injured_reserve], started_on: Date.new(2025, 10, 20))
+
+    get "/api/v1/teams/#{team.id}/roster", headers: auth_headers(super_admin)
+
+    entry = response.parsed_body["data"].find { |e| e.dig("player", "last_name") == "Nylander" }
+    expect(entry["roster_status"]).to eq("status" => "injured_reserve", "started_on" => "2025-10-20")
   end
 
   it "surfaces where a player is currently assigned among the team's affiliates" do
