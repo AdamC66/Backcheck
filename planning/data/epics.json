@@ -78,5 +78,13 @@
     "description": "Deferred, parked layer on top of EPIC-9's contract/trade actions: Averaged Club Salary and the Team Payroll Range (Article 50.5), the Bona-Fide Long-Term Injury/Illness Exception (50.10), and waiver-exemption tracking for send-downs (Article 13). Kept as its own epic rather than folded into TASK-39 so 'a GM can register a contract' shipping does not imply cap-legality is enforced. Researched against the source 2013 CBA on 2026-08-23 — see docs/DECISIONS.md.",
     "status": "backlog",
     "priority": "low"
+  },
+  {
+    "id": "EPIC-11",
+    "project_id": "backcheck",
+    "title": "Unified transaction log",
+    "description": "A team-wide feed of trades, signings, waivers, and roster moves as peer transaction types (see e.g. PuckPedia's team transactions page), not just the roster_statuses history built for EPIC-3/EPIC-9. roster_statuses (IR/non-roster) is one narrow transaction type; trades and signings carry shaped data (multi-team assets, contract terms) that don't fit that table. Likely an event-log model that type-specific tables (trades, contracts, roster_statuses) feed into for one unified timeline, rather than generalizing roster_statuses itself. Depends on EPIC-9's trade proposal and contract registration actions existing first. Raised 2026-08-23, not yet scoped into tasks.",
+    "status": "backlog",
+    "priority": "low"
   }
 ]
