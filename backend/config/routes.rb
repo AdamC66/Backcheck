@@ -18,6 +18,8 @@ Rails.application.routes.draw do
         resource :roster, only: [ :show ], controller: "team_roster"
         resources :roster_statuses, only: [ :update ], param: :player_id
       end
+
+      resources :roster_statuses, only: [ :index ]
     end
   end
 end
