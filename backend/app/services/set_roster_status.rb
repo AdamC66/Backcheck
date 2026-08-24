@@ -39,8 +39,13 @@ class SetRosterStatus
     @open_period ||= RosterStatus.open.find_by(player: player, team: team, season: season)
   end
 
+  # A period that starts and ends on the same date never spanned any real calendar
+  # time — same-day back-and-forth (testing cap scenarios, a changed mind) shouldn't
+  # leave a row behind, so it's destroyed instead of closed.
   def close_open_period!
     return if open_period.nil?
+
+    return open_period.destroy if open_period.started_on == effective_on
 
     return if open_period.update(ended_on: effective_on)
 

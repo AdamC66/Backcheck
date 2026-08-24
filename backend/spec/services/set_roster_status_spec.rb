@@ -38,6 +38,25 @@ RSpec.describe SetRosterStatus do
     expect(result.result.status).to eq(RosterStatus::STATUSES[:non_roster])
   end
 
+  it "destroys the period instead of closing it when it opened and closed the same day" do
+    set_status(status: "injured_reserve")
+
+    result = set_status(status: "active")
+
+    expect(result.success?).to be true
+    expect(RosterStatus.where(player: player, team: team, season: season)).to be_empty
+  end
+
+  it "destroys a same-day period when switching straight to another status" do
+    set_status(status: "injured_reserve")
+
+    result = set_status(status: "non_roster")
+
+    expect(result.success?).to be true
+    expect(RosterStatus.where(player: player, team: team, season: season).count).to eq(1)
+    expect(result.result.status).to eq(RosterStatus::STATUSES[:non_roster])
+  end
+
   it "fails without touching the open period when the new period is invalid" do
     open_period = create(:roster_status, player: player, team: team, season: season, started_on: Date.current - 5)
 
