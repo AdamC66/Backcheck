@@ -149,7 +149,7 @@
     "epic_id": "EPIC-4",
     "title": "Migrations for skater_game_stats and goalie_game_stats",
     "type": "feature",
-    "status": "in_progress",
+    "status": "done",
     "priority": "medium",
     "description": "Renamed from SkaterStatLine/GoalieStatLine. Two separate tables, not one wide nullable table. Grain is (player, game), with team_id on the row itself (not inferred) so a mid-season trade attributes each game to the right club. Field scope confirmed against a live /v1/gamecenter/{id}/boxscore response — see DECISIONS.md. Season/league/career totals are a SUM over these, not stored here; see TASK-44 for the read-side cache. Depends on TASK-8 (Player, RosterEntry)."
   },
@@ -399,8 +399,26 @@
     "epic_id": "EPIC-4",
     "title": "Migrations for skater_season_stats and goalie_season_stats (recomputed cache)",
     "type": "feature",
-    "status": "todo",
+    "status": "done",
     "priority": "medium",
     "description": "Read-side cache on top of TASK-26's game-grain tables, keyed (player, team, season, game_type) — same grain as roster_spots, so a traded player gets one rollup row per team stint. League and career totals are a further SUM over these rows rather than over every game. Recomputed from *_game_stats after each write in the same ingestion job, not incremented in place, so a corrected boxscore or out-of-order backfill can't drift it. Exists purely for read performance (leaderboards, career totals) — never hand-edited, never the source of truth. See docs/DECISIONS.md."
+  },
+  {
+    "id": "TASK-45",
+    "epic_id": "EPIC-8",
+    "title": "Boxscore ingestion: UpsertGameStats, RecomputeSeasonStats, SyncGameStats",
+    "type": "feature",
+    "status": "done",
+    "priority": "medium",
+    "description": "NhlClient#boxscore (/v1/gamecenter/{id}/boxscore). UpsertGameStats parses one boxscore into skater_game_stats/goalie_game_stats rows, attributing team_id from which side of the payload a player is listed under (not roster_spots), and reports missing_players (unmatched nhl_player_id) rather than raising, same shape as SyncAffiliateRoster's missing_players. RecomputeSeasonStats re-sums *_game_stats into the TASK-44 cache for every (player, team, season, game_type) touched. SyncGameStats + SyncGameStatsJob (queue_as :ingest) wire both together for one game at a time. Verified against a trimmed real boxscore fixture, including the goalie strength-split \"saves/shots\" string format and toi \"MM:SS\" to integer-seconds conversion."
+  },
+  {
+    "id": "TASK-46",
+    "epic_id": "EPIC-8",
+    "title": "Backfill and daily recurring sync for game stats",
+    "type": "chore",
+    "status": "backlog",
+    "priority": "medium",
+    "description": "TASK-45's SyncGameStatsJob syncs one game at a time, on demand — nothing yet calls it for every already-finished game (rake nhl:backfill doesn't touch it) or wires it into recurring.yml alongside SyncDailyScoresJob. One boxscore request per game means a full-season backfill is ~1,300 requests at the client's throttled 1 req/sec (~20+ min) — worth deciding batching/scope before wiring it in, not just looping every Game.find_each."
   }
 ]
