@@ -86,5 +86,13 @@
     "description": "A team-wide feed of trades, signings, waivers, and roster moves as peer transaction types (see e.g. PuckPedia's team transactions page), not just the roster_statuses history built for EPIC-3/EPIC-9. roster_statuses (IR/non-roster) is one narrow transaction type; trades and signings carry shaped data (multi-team assets, contract terms) that don't fit that table. Likely an event-log model that type-specific tables (trades, contracts, roster_statuses) feed into for one unified timeline, rather than generalizing roster_statuses itself. Depends on EPIC-9's trade proposal and contract registration actions existing first. Raised 2026-08-23, not yet scoped into tasks.",
     "status": "backlog",
     "priority": "low"
+  },
+  {
+    "id": "EPIC-12",
+    "project_id": "backcheck",
+    "title": "Admin data sync console",
+    "description": "Superuser-only panel to trigger roster/stats/schedule/standings syncs on demand, scoped to a league, season, or single team, with live progress (e.g. '12/21 teams — syncing San Jose'). Sits on top of EPIC-8's existing sync services/clients rather than replacing them — one new AdminSyncOrchestratorJob loops through the resolved scope calling SyncTeamRoster/SyncStandings/etc. directly, tracked via new SyncRun/SyncRunItem rows (see DECISIONS.md, 2026-08-25). Shares the Super Admin surface with EPIC-7 but is a distinct concern: EPIC-7 is manual data overrides, this is operating the ingestion pipeline that already runs automatically via recurring.yml.",
+    "status": "backlog",
+    "priority": "medium"
   }
 ]
