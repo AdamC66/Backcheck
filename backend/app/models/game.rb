@@ -6,6 +6,9 @@ class Game < ApplicationRecord
   belongs_to :home_team, class_name: "Team"
   belongs_to :away_team, class_name: "Team"
 
+  has_many :skater_game_stats, dependent: :destroy
+  has_many :goalie_game_stats, dependent: :destroy
+
   validates :nhl_game_id, presence: true, uniqueness: true
   validates :game_type, presence: true
   validates :starts_at, :game_date, :state, presence: true

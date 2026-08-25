@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_235815) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_25_014829) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -63,6 +63,61 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_235815) do
     t.index ["nhl_game_id"], name: "index_games_on_nhl_game_id", unique: true
     t.index ["season_id", "game_date"], name: "index_games_on_season_id_and_game_date"
     t.index ["season_id"], name: "index_games_on_season_id"
+  end
+
+  create_table "goalie_game_stats", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "decision"
+    t.integer "even_strength_goals_against", default: 0, null: false
+    t.integer "even_strength_shots_against", default: 0, null: false
+    t.bigint "game_id", null: false
+    t.integer "goals_against", default: 0, null: false
+    t.integer "pim", default: 0, null: false
+    t.bigint "player_id", null: false
+    t.integer "power_play_goals_against", default: 0, null: false
+    t.integer "power_play_shots_against", default: 0, null: false
+    t.integer "saves", default: 0, null: false
+    t.integer "shorthanded_goals_against", default: 0, null: false
+    t.integer "shorthanded_shots_against", default: 0, null: false
+    t.integer "shots_against", default: 0, null: false
+    t.boolean "starter", default: false, null: false
+    t.bigint "team_id", null: false
+    t.integer "time_on_ice_seconds", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_goalie_game_stats_on_game_id"
+    t.index ["player_id", "game_id"], name: "index_goalie_game_stats_on_player_id_and_game_id", unique: true
+    t.index ["player_id"], name: "index_goalie_game_stats_on_player_id"
+    t.index ["team_id"], name: "index_goalie_game_stats_on_team_id"
+  end
+
+  create_table "goalie_season_stats", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "even_strength_goals_against", default: 0, null: false
+    t.integer "even_strength_shots_against", default: 0, null: false
+    t.integer "game_type", null: false
+    t.integer "games_played", default: 0, null: false
+    t.integer "games_started", default: 0, null: false
+    t.integer "goals_against", default: 0, null: false
+    t.integer "losses", default: 0, null: false
+    t.integer "ot_losses", default: 0, null: false
+    t.integer "pim", default: 0, null: false
+    t.bigint "player_id", null: false
+    t.integer "power_play_goals_against", default: 0, null: false
+    t.integer "power_play_shots_against", default: 0, null: false
+    t.integer "saves", default: 0, null: false
+    t.bigint "season_id", null: false
+    t.integer "shorthanded_goals_against", default: 0, null: false
+    t.integer "shorthanded_shots_against", default: 0, null: false
+    t.integer "shots_against", default: 0, null: false
+    t.integer "shutouts", default: 0, null: false
+    t.bigint "team_id", null: false
+    t.integer "time_on_ice_seconds", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "wins", default: 0, null: false
+    t.index ["player_id", "team_id", "season_id", "game_type"], name: "index_goalie_season_stats_on_stint", unique: true
+    t.index ["player_id"], name: "index_goalie_season_stats_on_player_id"
+    t.index ["season_id"], name: "index_goalie_season_stats_on_season_id"
+    t.index ["team_id"], name: "index_goalie_season_stats_on_team_id"
   end
 
   create_table "leagues", force: :cascade do |t|
@@ -201,6 +256,60 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_235815) do
     t.index ["nhl_season_id"], name: "index_seasons_on_nhl_season_id", unique: true
   end
 
+  create_table "skater_game_stats", force: :cascade do |t|
+    t.integer "assists", default: 0, null: false
+    t.integer "blocked_shots", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.decimal "faceoff_winning_pctg", precision: 5, scale: 4
+    t.bigint "game_id", null: false
+    t.integer "giveaways", default: 0, null: false
+    t.integer "goals", default: 0, null: false
+    t.integer "hits", default: 0, null: false
+    t.integer "pim", default: 0, null: false
+    t.bigint "player_id", null: false
+    t.integer "plus_minus", default: 0, null: false
+    t.integer "points", default: 0, null: false
+    t.integer "power_play_goals", default: 0, null: false
+    t.integer "shifts", default: 0, null: false
+    t.integer "shots_on_goal", default: 0, null: false
+    t.integer "takeaways", default: 0, null: false
+    t.bigint "team_id", null: false
+    t.integer "time_on_ice_seconds", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_skater_game_stats_on_game_id"
+    t.index ["player_id", "game_id"], name: "index_skater_game_stats_on_player_id_and_game_id", unique: true
+    t.index ["player_id"], name: "index_skater_game_stats_on_player_id"
+    t.index ["team_id"], name: "index_skater_game_stats_on_team_id"
+  end
+
+  create_table "skater_season_stats", force: :cascade do |t|
+    t.integer "assists", default: 0, null: false
+    t.integer "blocked_shots", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.decimal "faceoff_winning_pctg", precision: 5, scale: 4
+    t.integer "game_type", null: false
+    t.integer "games_played", default: 0, null: false
+    t.integer "giveaways", default: 0, null: false
+    t.integer "goals", default: 0, null: false
+    t.integer "hits", default: 0, null: false
+    t.integer "pim", default: 0, null: false
+    t.bigint "player_id", null: false
+    t.integer "plus_minus", default: 0, null: false
+    t.integer "points", default: 0, null: false
+    t.integer "power_play_goals", default: 0, null: false
+    t.bigint "season_id", null: false
+    t.integer "shifts", default: 0, null: false
+    t.integer "shots_on_goal", default: 0, null: false
+    t.integer "takeaways", default: 0, null: false
+    t.bigint "team_id", null: false
+    t.integer "time_on_ice_seconds", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_id", "team_id", "season_id", "game_type"], name: "index_skater_season_stats_on_stint", unique: true
+    t.index ["player_id"], name: "index_skater_season_stats_on_player_id"
+    t.index ["season_id"], name: "index_skater_season_stats_on_season_id"
+    t.index ["team_id"], name: "index_skater_season_stats_on_team_id"
+  end
+
   create_table "team_affiliations", force: :cascade do |t|
     t.bigint "affiliate_team_id", null: false
     t.datetime "created_at", null: false
@@ -285,6 +394,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_235815) do
   add_foreign_key "games", "seasons"
   add_foreign_key "games", "teams", column: "away_team_id"
   add_foreign_key "games", "teams", column: "home_team_id"
+  add_foreign_key "goalie_game_stats", "games"
+  add_foreign_key "goalie_game_stats", "players"
+  add_foreign_key "goalie_game_stats", "teams"
+  add_foreign_key "goalie_season_stats", "players"
+  add_foreign_key "goalie_season_stats", "seasons"
+  add_foreign_key "goalie_season_stats", "teams"
   add_foreign_key "memberships", "roles"
   add_foreign_key "memberships", "users"
   add_foreign_key "player_external_ids", "players"
@@ -298,6 +413,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_235815) do
   add_foreign_key "roster_statuses", "seasons"
   add_foreign_key "roster_statuses", "teams"
   add_foreign_key "seasons", "leagues"
+  add_foreign_key "skater_game_stats", "games"
+  add_foreign_key "skater_game_stats", "players"
+  add_foreign_key "skater_game_stats", "teams"
+  add_foreign_key "skater_season_stats", "players"
+  add_foreign_key "skater_season_stats", "seasons"
+  add_foreign_key "skater_season_stats", "teams"
   add_foreign_key "team_affiliations", "seasons"
   add_foreign_key "team_affiliations", "teams", column: "affiliate_team_id"
   add_foreign_key "team_affiliations", "teams", column: "parent_team_id"

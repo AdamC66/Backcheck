@@ -147,11 +147,11 @@
   {
     "id": "TASK-26",
     "epic_id": "EPIC-4",
-    "title": "Migrations for SkaterStatLine and GoalieStatLine",
+    "title": "Migrations for skater_game_stats and goalie_game_stats",
     "type": "feature",
-    "status": "todo",
+    "status": "in_progress",
     "priority": "medium",
-    "description": "Two separate tables, not one wide nullable table. Source is /v1/club-stats/{team}/{season}/{game-type} plus player game logs. Depends on TASK-8 (Player, RosterEntry)."
+    "description": "Renamed from SkaterStatLine/GoalieStatLine. Two separate tables, not one wide nullable table. Grain is (player, game), with team_id on the row itself (not inferred) so a mid-season trade attributes each game to the right club. Field scope confirmed against a live /v1/gamecenter/{id}/boxscore response — see DECISIONS.md. Season/league/career totals are a SUM over these, not stored here; see TASK-44 for the read-side cache. Depends on TASK-8 (Player, RosterEntry)."
   },
   {
     "id": "TASK-7",
@@ -393,5 +393,14 @@
     "status": "backlog",
     "priority": "low",
     "description": "Article 13. Waiver exemption is age-at-draft and games-played based (e.g. an 18-year-old drafted skater is exempt for 3 seasons or until his 160th NHL game, whichever comes first). Past exemption, sending a player to the minors requires clearing Regular Waivers, where any other Club can claim him — TASK-37's call-up/send-down currently assumes this never happens."
+  },
+  {
+    "id": "TASK-44",
+    "epic_id": "EPIC-4",
+    "title": "Migrations for skater_season_stats and goalie_season_stats (recomputed cache)",
+    "type": "feature",
+    "status": "todo",
+    "priority": "medium",
+    "description": "Read-side cache on top of TASK-26's game-grain tables, keyed (player, team, season, game_type) — same grain as roster_spots, so a traded player gets one rollup row per team stint. League and career totals are a further SUM over these rows rather than over every game. Recomputed from *_game_stats after each write in the same ingestion job, not incremented in place, so a corrected boxscore or out-of-order backfill can't drift it. Exists purely for read performance (leaderboards, career totals) — never hand-edited, never the source of truth. See docs/DECISIONS.md."
   }
 ]

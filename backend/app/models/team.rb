@@ -13,6 +13,10 @@ class Team < ApplicationRecord
            dependent: :destroy, inverse_of: :parent_team
   has_many :affiliations_as_affiliate, class_name: "TeamAffiliation", foreign_key: :affiliate_team_id,
            dependent: :destroy, inverse_of: :affiliate_team
+  has_many :skater_game_stats, dependent: :restrict_with_error
+  has_many :goalie_game_stats, dependent: :restrict_with_error
+  has_many :skater_season_stats, dependent: :destroy
+  has_many :goalie_season_stats, dependent: :destroy
 
   scope :alphabetical, -> { order(:name) }
   scope :with_logo, -> { includes(logo_attachment: :blob) }
