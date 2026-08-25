@@ -8,7 +8,9 @@ class SkaterSeasonStat < ApplicationRecord
   validate :team_belongs_to_season_league
 
   scope :for_season, ->(season) { where(season: season) }
+  scope :preseason, -> { where(game_type: Game::GAME_TYPES[:preseason]) }
   scope :regular_season, -> { where(game_type: Game::GAME_TYPES[:regular_season]) }
+  scope :playoffs, -> { where(game_type: Game::GAME_TYPES[:playoffs]) }
 
   private
 

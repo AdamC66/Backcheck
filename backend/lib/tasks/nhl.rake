@@ -37,4 +37,36 @@ namespace :nhl do
 
     puts "Done. #{Game.count} games, #{TeamStanding.count} standings rows."
   end
+
+  desc "Backfill game stats for one team's season (one boxscore request per game). " \
+       "Usage: rake 'nhl:backfill_game_stats[TOR,20242025]'"
+  task :backfill_game_stats, [ :team_abbreviation, :nhl_season_id ] => :environment do |_task, args|
+    abbreviation = args[:team_abbreviation]
+    nhl_season_id = args[:nhl_season_id].to_i
+    abort("Usage: rake 'nhl:backfill_game_stats[TOR,20242025]'") if abbreviation.blank? || nhl_season_id.zero?
+
+    league = League.find_by!(slug: "nhl")
+    team = league.teams.find_by!(abbreviation: abbreviation)
+    season = league.seasons.find_by!(nhl_season_id: nhl_season_id)
+
+    games = Game.for_team(team).for_season(season).finished.chronological
+    abort("No finished games for #{team.abbreviation} in #{season.label} — run nhl:backfill first") if games.none?
+
+    puts "#{team.abbreviation} #{season.label}: #{games.size} finished games"
+
+    missing_players = []
+    games.each do |game|
+      sync = SyncGameStats.new(game: game)
+      sync.call
+      missing_players.concat(sync.missing_players)
+      print "."
+    rescue NhlClient::Error => e
+      warn "\n  #{game.nhl_game_id} (#{game.game_date}) failed: #{e.message}"
+    end
+    puts
+
+    warn("  no player for #{missing_players.uniq.sort.join(', ')}") if missing_players.any?
+    puts "Done. #{SkaterGameStat.joins(:game).merge(games).count} skater rows, " \
+         "#{GoalieGameStat.joins(:game).merge(games).count} goalie rows."
+  end
 end

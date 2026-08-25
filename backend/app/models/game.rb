@@ -18,6 +18,9 @@ class Game < ApplicationRecord
   scope :for_season, ->(season) { where(season: season) }
   scope :for_team, ->(team) { where(home_team: team).or(where(away_team: team)) }
   scope :regular_season, -> { where(game_type: GAME_TYPES[:regular_season]) }
+  # A boxscore is meaningless before a game is actually over; upstream uses both codes
+  # for that (OFF appears after final review, past plain FINAL).
+  scope :finished, -> { where(state: %w[FINAL OFF]) }
 
   private
 
