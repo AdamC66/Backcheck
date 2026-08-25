@@ -86,6 +86,7 @@ current row. Rows come back in `league_sequence` order.
 | GET | `/teams/:id` |
 | GET | `/teams/:id/games` |
 | GET | `/teams/:id/roster` |
+| GET | `/teams/:id/stats` |
 | GET | `/leagues/:league_slug/games` |
 
 Both game endpoints return the same chronological list of the shape below, and both take
@@ -204,6 +205,48 @@ reasoning as `logo_url` below.
 `draft` is `null` for a player with no draft record. `contract_level_inferred` is `true`
 when the assignment's level came from cross-referencing the AHL roster rather than being
 reported directly — the ECHL feed never states it (see `DECISIONS.md`).
+
+## Stats
+
+| Method | Path |
+| --- | --- |
+| GET | `/teams/:id/stats` |
+
+| Param | Default | Notes |
+| --- | --- | --- |
+| `season` | newest season *this team has stats in* | Label form, e.g. `2025-26`. Same seeded-ahead-of-its-data shape as games/roster; an explicit `season` is returned as asked, empty or not |
+| `game_type` | `regular_season` | `preseason` \| `regular_season` \| `playoffs` — an unrecognized value answers 422 `invalid_parameter`. Stats are stored one row per game type (see `DECISIONS.md`), so there's no "all game types combined" option — request each separately |
+
+Season totals, not per-game logs — one row per player who appeared for this team in the
+given season and game type, sorted alphabetically by last name. `save_pctg` and
+`goals_against_average` are computed here, not stored: unlike a single game's
+`faceoff_winning_pctg` (a ratio with no attempts count behind it), the season totals for
+shots/saves/TOI are real sums, so deriving a rate from them is safe.
+
+```jsonc
+// GET /api/v1/teams/28/stats?season=2025-26
+{ "data": {
+    "skaters": [ {
+      "player": { /* player object, same shape as the roster endpoint */ },
+      "games_played": 82, "goals": 31, "assists": 40, "points": 71, "plus_minus": 12,
+      "pim": 24, "hits": 88, "power_play_goals": 9, "shots_on_goal": 210,
+      "faceoff_winning_pctg": 0.512, "time_on_ice_seconds": 89540, "shifts": 1840,
+      "blocked_shots": 30, "giveaways": 45, "takeaways": 38
+    } ],
+    "goalies": [ {
+      "player": { /* player object */ },
+      "games_played": 23, "games_started": 22, "wins": 10, "losses": 10, "ot_losses": 3,
+      "shutouts": 1,
+      "even_strength_shots_against": 520, "even_strength_goals_against": 45,
+      "power_play_shots_against": 120, "power_play_goals_against": 15,
+      "shorthanded_shots_against": 20, "shorthanded_goals_against": 1,
+      "shots_against": 708, "saves": 632, "goals_against": 68,
+      "save_pctg": 0.8927, "goals_against_average": 2.83,
+      "pim": 2, "time_on_ice_seconds": 86400
+    } ]
+  },
+  "meta": { "season": "2025-26", "game_type": "regular_season", "skater_count": 24, "goalie_count": 3 } }
+```
 
 ## Logo files
 

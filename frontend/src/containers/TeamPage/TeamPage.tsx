@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { label: "Overview", to: "", end: true },
   { label: "Schedule", to: "schedule" },
   { label: "Roster", to: "roster" },
+  { label: "Stats", to: "stats" },
 ];
 
 const DESKTOP_BREAKPOINT = 1024;

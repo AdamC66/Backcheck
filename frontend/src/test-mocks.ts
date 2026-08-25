@@ -7,6 +7,12 @@ import type { RosterTransaction, RosterTransactionsMeta } from "@/models/rosterT
 import type { Standing, StandingsMeta } from "@/models/standings";
 import type { TeamAffiliation } from "@/models/teamAffiliations";
 import type { Team } from "@/models/teams";
+import type {
+  GoalieSeasonStat,
+  SkaterSeasonStat,
+  TeamStats,
+  TeamStatsMeta,
+} from "@/models/teamStats";
 
 // Shared fixtures so test files assert against one definition of "a user" rather
 // than each inventing its own shape.
@@ -269,4 +275,77 @@ export const TEAM_ROSTER: Envelope<RosterEntry[], RosterMeta> = {
     }),
   ],
   meta: { season: "2025-26", count: 3 },
+};
+
+export function skaterSeasonStatFor(overrides: Partial<SkaterSeasonStat> = {}): SkaterSeasonStat {
+  return {
+    player: playerFor(1),
+    games_played: 82,
+    goals: 20,
+    assists: 30,
+    points: 50,
+    plus_minus: 5,
+    pim: 24,
+    hits: 60,
+    power_play_goals: 8,
+    shots_on_goal: 180,
+    faceoff_winning_pctg: null,
+    time_on_ice_seconds: 89540,
+    shifts: 1840,
+    blocked_shots: 30,
+    giveaways: 40,
+    takeaways: 35,
+    ...overrides,
+  };
+}
+
+export function goalieSeasonStatFor(overrides: Partial<GoalieSeasonStat> = {}): GoalieSeasonStat {
+  return {
+    player: playerFor(1),
+    games_played: 40,
+    games_started: 38,
+    wins: 20,
+    losses: 15,
+    ot_losses: 3,
+    shutouts: 2,
+    even_strength_shots_against: 900,
+    even_strength_goals_against: 80,
+    power_play_shots_against: 150,
+    power_play_goals_against: 20,
+    shorthanded_shots_against: 20,
+    shorthanded_goals_against: 2,
+    shots_against: 1070,
+    saves: 968,
+    goals_against: 102,
+    save_pctg: 0.9047,
+    goals_against_average: 2.55,
+    pim: 2,
+    time_on_ice_seconds: 144000,
+    ...overrides,
+  };
+}
+
+export const TEAM_STATS: Envelope<TeamStats, TeamStatsMeta> = {
+  data: {
+    skaters: [
+      skaterSeasonStatFor({
+        player: playerFor(1, { first_name: "Auston", last_name: "Matthews" }),
+        goals: 40,
+        assists: 26,
+        points: 66,
+      }),
+      skaterSeasonStatFor({
+        player: playerFor(2, { first_name: "William", last_name: "Nylander" }),
+        goals: 30,
+        assists: 49,
+        points: 79,
+      }),
+    ],
+    goalies: [
+      goalieSeasonStatFor({
+        player: playerFor(3, { first_name: "Anthony", last_name: "Stolarz" }),
+      }),
+    ],
+  },
+  meta: { season: "2025-26", game_type: "regular_season", skater_count: 2, goalie_count: 1 },
 };

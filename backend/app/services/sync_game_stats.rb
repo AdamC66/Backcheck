@@ -1,5 +1,3 @@
-# Boxscore ingestion for one game: writes its skater/goalie stat lines, then recomputes
-# the season rollup for every player who appeared.
 class SyncGameStats
   attr_reader :missing_players
 

@@ -1,7 +1,5 @@
-# Parses one boxscore payload into skater_game_stats/goalie_game_stats rows. team_id
-# comes from which side of the boxscore a player is listed under (game.home_team /
-# game.away_team), not from roster_spots — a mid-season trade must never misattribute a
-# game already played.
+# team_id comes from which side of the boxscore a player is listed under, not from
+# roster_spots — a mid-season trade must never misattribute a game already played.
 class UpsertGameStats
   # Unmatched playerIds skip their row rather than raising; callers report these so a
   # partial sync can't pass for a clean one.

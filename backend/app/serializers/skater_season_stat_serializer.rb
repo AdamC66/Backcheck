@@ -1,0 +1,30 @@
+class SkaterSeasonStatSerializer
+  def initialize(stat)
+    @stat = stat
+  end
+
+  def as_json(*)
+    {
+      player: PlayerSerializer.new(stat.player).as_json,
+      games_played: stat.games_played,
+      goals: stat.goals,
+      assists: stat.assists,
+      points: stat.points,
+      plus_minus: stat.plus_minus,
+      pim: stat.pim,
+      hits: stat.hits,
+      power_play_goals: stat.power_play_goals,
+      shots_on_goal: stat.shots_on_goal,
+      faceoff_winning_pctg: stat.faceoff_winning_pctg&.to_f,
+      time_on_ice_seconds: stat.time_on_ice_seconds,
+      shifts: stat.shifts,
+      blocked_shots: stat.blocked_shots,
+      giveaways: stat.giveaways,
+      takeaways: stat.takeaways
+    }
+  end
+
+  private
+
+  attr_reader :stat
+end

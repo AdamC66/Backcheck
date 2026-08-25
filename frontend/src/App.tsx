@@ -8,6 +8,7 @@ import { TeamPage } from "@/containers/TeamPage/TeamPage";
 import { TeamOverviewPage } from "@/containers/TeamPage/TeamOverviewPage";
 import { TeamSchedulePage } from "@/containers/TeamPage/TeamSchedulePage";
 import { TeamRosterPage } from "@/containers/TeamPage/TeamRosterPage";
+import { TeamStatsPage } from "@/containers/TeamPage/TeamStatsPage";
 
 export function App() {
   return (
@@ -47,6 +48,7 @@ export function App() {
         <Route index element={<TeamOverviewPage />} />
         <Route path="schedule" element={<TeamSchedulePage />} />
         <Route path="roster" element={<TeamRosterPage />} />
+        <Route path="stats" element={<TeamStatsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

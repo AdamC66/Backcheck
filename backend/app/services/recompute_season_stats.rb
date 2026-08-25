@@ -1,7 +1,5 @@
-# Rebuilds one (player, team, season, game_type) rollup row from scratch by re-summing
-# *_game_stats, rather than incrementing in place — cheap, since it's bounded by one
-# team-stint's games, and immune to drift from a corrected boxscore or an out-of-order
-# backfill. See docs/DECISIONS.md.
+# Re-sums *_game_stats from scratch rather than incrementing in place — cheap (bounded
+# by one team-stint's games) and immune to drift from a corrected boxscore. See docs/DECISIONS.md.
 class RecomputeSeasonStats
   def initialize(player:, team:, season:, game_type:)
     @player = player

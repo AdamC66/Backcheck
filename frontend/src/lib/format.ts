@@ -57,6 +57,17 @@ export function formatFullDate(date: string): string {
   });
 }
 
+// "18:24" — per-game average, computed from a season total already stored in seconds.
+export function formatToi(totalSeconds: number, gamesPlayed: number): string {
+  if (gamesPlayed === 0) return "—";
+
+  const perGame = Math.round(totalSeconds / gamesPlayed);
+  const minutes = Math.floor(perGame / 60);
+  const seconds = perGame % 60;
+
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 // A full timestamp, unlike the date-only formatters above — it already carries a time
 // of day, so there's no local-midnight ambiguity to guard against.
 export function formatGameDateTime(startsAt: string): string {

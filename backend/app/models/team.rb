@@ -32,4 +32,12 @@ class Team < ApplicationRecord
   def current_roster_season
     league.seasons.where(id: RosterSpot.where(team: self).select(:season_id)).order(:starts_on).last
   end
+
+  # Same reasoning as current_roster_season. A team can have goalie stats with no
+  # matching skater stats yet mid-backfill, so both are checked.
+  def current_stats_season
+    league.seasons.where(id: SkaterSeasonStat.where(team: self).select(:season_id))
+          .or(league.seasons.where(id: GoalieSeasonStat.where(team: self).select(:season_id)))
+          .order(:starts_on).last
+  end
 end

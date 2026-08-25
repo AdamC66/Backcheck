@@ -17,6 +17,9 @@ export const teamGamesKey = (teamId: number, season?: string, gameType?: string)
 
 export const teamRosterKey = (teamId: number) => ["team-roster", teamId] as const;
 
+export const teamStatsKey = (teamId: number, gameType?: string) =>
+  ["team-stats", teamId, gameType ?? "regular_season"] as const;
+
 export const teamAffiliationsKey = (teamId: number) => ["team-affiliations", teamId] as const;
 
 // Split so a status change can invalidate every season/page for a team at once,
