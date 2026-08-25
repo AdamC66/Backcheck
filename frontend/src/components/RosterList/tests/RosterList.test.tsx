@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RosterList } from "../RosterList";
-import { rosterEntryFor, playerFor } from "@/test-mocks";
+import { rosterEntryFor, playerFor, teamFor } from "@/test-mocks";
 
 describe("RosterList", () => {
   it("renders each section under its label, keeping an injured player inline", () => {
@@ -22,7 +22,10 @@ describe("RosterList", () => {
           },
         ]}
         canManageRoster={false}
+        affiliateTeams={[]}
         onSetStatus={vi.fn()}
+        onSendDown={vi.fn()}
+        onCallUp={vi.fn()}
       />,
     );
 
@@ -35,7 +38,10 @@ describe("RosterList", () => {
       <RosterList
         sections={[{ key: "forwards", label: "Forwards", entries: [] }]}
         canManageRoster={false}
+        affiliateTeams={[]}
         onSetStatus={vi.fn()}
+        onSendDown={vi.fn()}
+        onCallUp={vi.fn()}
       />,
     );
 
@@ -56,7 +62,10 @@ describe("RosterList", () => {
           },
         ]}
         canManageRoster
+        affiliateTeams={[]}
         onSetStatus={onSetStatus}
+        onSendDown={vi.fn()}
+        onCallUp={vi.fn()}
       />,
     );
 
@@ -84,10 +93,110 @@ describe("RosterList", () => {
           },
         ]}
         canManageRoster={false}
+        affiliateTeams={[]}
         onSetStatus={vi.fn()}
+        onSendDown={vi.fn()}
+        onCallUp={vi.fn()}
       />,
     );
 
     expect(screen.queryByRole("button", { name: "Manage" })).not.toBeInTheDocument();
+  });
+
+  it("lets the team's GM send a player down to an affiliate", async () => {
+    const user = userEvent.setup();
+    const onSendDown = vi.fn();
+
+    render(
+      <RosterList
+        sections={[
+          {
+            key: "forwards",
+            label: "Forwards",
+            entries: [rosterEntryFor({ player: playerFor(1, { last_name: "Matthews" }) })],
+          },
+        ]}
+        canManageRoster
+        affiliateTeams={[teamFor(3, "MRL")]}
+        onSetStatus={vi.fn()}
+        onSendDown={onSendDown}
+        onCallUp={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Send down" }));
+    await user.click(screen.getByRole("button", { name: "Confirm" }));
+
+    expect(onSendDown).toHaveBeenCalledWith(1, 3);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("doesn't offer to send down a player already on loan at an affiliate", () => {
+    render(
+      <RosterList
+        sections={[
+          {
+            key: "forwards",
+            label: "Forwards",
+            entries: [
+              rosterEntryFor({
+                player: playerFor(1, { last_name: "Cowan" }),
+                assignment: {
+                  team: teamFor(3, "MRL"),
+                  contract_level: "ahl",
+                  contract_level_inferred: false,
+                },
+              }),
+            ],
+          },
+        ]}
+        canManageRoster
+        affiliateTeams={[teamFor(3, "MRL")]}
+        onSetStatus={vi.fn()}
+        onSendDown={vi.fn()}
+        onCallUp={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Send down" })).not.toBeInTheDocument();
+  });
+
+  it("lets the team's GM call a player back up from an affiliate", async () => {
+    const user = userEvent.setup();
+    const onCallUp = vi.fn();
+
+    render(
+      <RosterList
+        sections={[
+          {
+            key: "forwards",
+            label: "Forwards",
+            entries: [
+              rosterEntryFor({
+                player: playerFor(1, { last_name: "Cowan" }),
+                assignment: {
+                  team: teamFor(3, "MRL"),
+                  contract_level: "ahl",
+                  contract_level_inferred: false,
+                },
+              }),
+            ],
+          },
+        ]}
+        canManageRoster
+        affiliateTeams={[teamFor(3, "MRL")]}
+        onSetStatus={vi.fn()}
+        onSendDown={vi.fn()}
+        onCallUp={onCallUp}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Call up" }));
+    expect(onCallUp).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Confirm" }));
+
+    expect(onCallUp).toHaveBeenCalledWith(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

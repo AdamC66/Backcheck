@@ -1,4 +1,5 @@
 import type { Position, RosterEntry } from "@/models/roster";
+import type { Team } from "@/models/teams";
 
 export type PositionGroupKey = "forwards" | "defensemen" | "goalies";
 
@@ -55,21 +56,39 @@ export function positionAbbreviation(position: Position): string {
   return POSITION_ABBREVIATION[position];
 }
 
+export interface AffiliateRosterGroup {
+  team: Team;
+  entries: RosterEntry[];
+}
+
 export interface RosterTabSplit {
   roster: RosterEntry[];
   nonRoster: RosterEntry[];
+  byAffiliate: AffiliateRosterGroup[];
 }
 
-// Injured Reserve stays inline in its position group — it's still who's on the team,
-// just unavailable to play. Non-Roster is a materially different fact (not on the
-// team's active count at all) and gets pulled into its own tab instead.
-export function splitRosterForTabs(entries: RosterEntry[]): RosterTabSplit {
+export const AFFILIATE_TAB_PREFIX = "affiliate:";
+
+export function affiliateTabValue(teamId: number): string {
+  return `${AFFILIATE_TAB_PREFIX}${teamId}`;
+}
+
+// Non-Roster wins if a player is somehow both non-roster and on loan. A stale
+// assignment (an affiliate that's no longer current) falls back to the main roster.
+export function splitRosterForTabs(entries: RosterEntry[], affiliateTeams: Team[]): RosterTabSplit {
   const roster: RosterEntry[] = [];
   const nonRoster: RosterEntry[] = [];
+  const byAffiliate: AffiliateRosterGroup[] = affiliateTeams.map((team) => ({ team, entries: [] }));
 
   for (const entry of entries) {
-    (entry.roster_status.status === "non_roster" ? nonRoster : roster).push(entry);
+    if (entry.roster_status.status === "non_roster") {
+      nonRoster.push(entry);
+      continue;
+    }
+
+    const group = byAffiliate.find((candidate) => candidate.team.id === entry.assignment?.team.id);
+    (group?.entries ?? roster).push(entry);
   }
 
-  return { roster, nonRoster };
+  return { roster, nonRoster, byAffiliate };
 }

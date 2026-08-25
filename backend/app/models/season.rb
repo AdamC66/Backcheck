@@ -13,6 +13,9 @@ class Season < ApplicationRecord
   scope :current, -> { where(starts_on: ..Date.current, ends_on: Date.current..) }
   scope :chronological, -> { order(:starts_on) }
 
+  # A calendar overlap, not an equal range — leagues number seasons independently.
+  scope :overlapping, ->(reference) { where("starts_on <= ? AND ends_on >= ?", reference.ends_on, reference.starts_on) }
+
   private
 
   def ends_after_starts

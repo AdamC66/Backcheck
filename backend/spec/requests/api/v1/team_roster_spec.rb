@@ -57,6 +57,43 @@ RSpec.describe "GET /api/v1/teams/:team_id/roster", type: :request do
     expect(entry.dig("assignment", "contract_level")).to eq("ahl")
   end
 
+  it "still finds an assignment when the parent's own roster has already moved to a newer season" do
+    marlies = create(:team, league: ahl, abbreviation: "MRL", name: "Toronto Marlies")
+    create(:team_affiliation, parent_team: team, affiliate_team: marlies, season: season)
+    ahl_season = create(:season, league: ahl, label: "2025-26", starts_on: season.starts_on, ends_on: season.ends_on)
+
+    player = create(:player, first_name: "Easton", last_name: "Cowan")
+    create(:roster_spot, player: player, team: marlies, season: ahl_season,
+                        contract_level: RosterSpot::CONTRACT_LEVELS[:ahl])
+    next_season = create(:season, league: nhl, label: "2026-27", starts_on: Date.new(2026, 10, 1),
+                                 ends_on: Date.new(2027, 4, 1))
+    create(:roster_spot, player: player, team: team, season: next_season,
+                        contract_level: RosterSpot::CONTRACT_LEVELS[:nhl])
+
+    get "/api/v1/teams/#{team.id}/roster", headers: auth_headers(super_admin)
+
+    expect(response.parsed_body.dig("meta", "season")).to eq("2026-27")
+    entry = response.parsed_body["data"].find { |e| e.dig("player", "last_name") == "Cowan" }
+    expect(entry.dig("assignment", "team", "abbreviation")).to eq("MRL")
+  end
+
+  it "doesn't treat a stale nhl-tagged affiliate row as a current assignment" do
+    marlies = create(:team, league: ahl, abbreviation: "MRL", name: "Toronto Marlies")
+    create(:team_affiliation, parent_team: team, affiliate_team: marlies, season: season)
+    ahl_season = create(:season, league: ahl, label: "2025-26", starts_on: season.starts_on, ends_on: season.ends_on)
+
+    player = create(:player, first_name: "Anthony", last_name: "Stolarz")
+    create(:roster_spot, player: player, team: team, season: season,
+                        contract_level: RosterSpot::CONTRACT_LEVELS[:nhl])
+    create(:roster_spot, player: player, team: marlies, season: ahl_season,
+                        contract_level: RosterSpot::CONTRACT_LEVELS[:nhl])
+
+    get "/api/v1/teams/#{team.id}/roster", headers: auth_headers(super_admin)
+
+    entry = response.parsed_body["data"].find { |e| e.dig("player", "last_name") == "Stolarz" }
+    expect(entry["assignment"]).to be_nil
+  end
+
   it "skips a newer season that's been seeded but has no roster yet" do
     create(:roster_spot, team: team, season: season)
     create(:season, league: nhl, label: "2026-27", starts_on: Date.new(2026, 10, 1), ends_on: Date.new(2027, 4, 1))

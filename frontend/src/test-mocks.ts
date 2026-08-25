@@ -5,6 +5,7 @@ import type { League, LeagueWithTeams } from "@/models/leagues";
 import type { RosterEntry, RosterMeta, RosterPlayer } from "@/models/roster";
 import type { RosterTransaction, RosterTransactionsMeta } from "@/models/rosterTransactions";
 import type { Standing, StandingsMeta } from "@/models/standings";
+import type { TeamAffiliation } from "@/models/teamAffiliations";
 import type { Team } from "@/models/teams";
 
 // Shared fixtures so test files assert against one definition of "a user" rather
@@ -240,6 +241,12 @@ export const ROSTER_TRANSACTIONS: Envelope<RosterTransaction[], RosterTransactio
   data: [rosterTransactionFor()],
   meta: { page: 1, per_page: 25, total_count: 1, total_pages: 1 },
 };
+
+export function teamAffiliationFor(id: number, team: Team): TeamAffiliation {
+  return { id, team };
+}
+
+export const TEAM_AFFILIATIONS: TeamAffiliation[] = [teamAffiliationFor(1, teamFor(3, "MRL"))];
 
 export const TEAM_ROSTER: Envelope<RosterEntry[], RosterMeta> = {
   data: [

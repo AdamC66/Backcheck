@@ -8,15 +8,13 @@ import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
 import { useAuth } from "@/auth/useAuth";
 import { isTeamGm } from "@/lib/membership";
-import { groupRosterByPosition, splitRosterForTabs } from "@/lib/roster";
+import { affiliateTabValue, groupRosterByPosition, splitRosterForTabs } from "@/lib/roster";
+import { useCallPlayerUp } from "@/models/useCallPlayerUp";
+import { useTeamAffiliations } from "@/models/useTeamAffiliations";
 import { useTeamRoster } from "@/models/useTeamRoster";
 import { useRosterTransactions } from "@/models/useRosterTransactions";
+import { useSendPlayerDown } from "@/models/useSendPlayerDown";
 import { useSetRosterStatus } from "@/models/useSetRosterStatus";
-
-const TAB_OPTIONS = [
-  { value: "roster", label: "Roster" },
-  { value: "non_roster", label: "Non-Roster" },
-];
 
 // A valid :id is guaranteed by TeamPage, which redirects before this ever renders.
 export function TeamRosterPage() {
@@ -24,12 +22,27 @@ export function TeamRosterPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const teamId = Number(id);
 
-  const tab = searchParams.get("tab") === "non_roster" ? "non_roster" : "roster";
   const [transactionsPage, setTransactionsPage] = useState(1);
   const { user } = useAuth();
   const roster = useTeamRoster(teamId);
   const setStatus = useSetRosterStatus(teamId);
+  const affiliations = useTeamAffiliations(teamId);
+  const affiliateTeams = (affiliations.data ?? []).map((affiliation) => affiliation.team);
+  const sendDown = useSendPlayerDown(teamId);
+  const callUp = useCallPlayerUp(teamId);
   const transactions = useRosterTransactions(teamId, roster.data?.meta?.season, transactionsPage);
+
+  // One tab per current affiliate, labeled by its league (e.g. "AHL").
+  const tabOptions = [
+    { value: "roster", label: "Main Roster" },
+    ...affiliateTeams.map((team) => ({
+      value: affiliateTabValue(team.id),
+      label: team.league?.abbreviation ?? team.abbreviation,
+    })),
+    { value: "non_roster", label: "Non-Roster" },
+  ];
+  const tabParam = searchParams.get("tab") ?? "roster";
+  const tab = tabOptions.some((option) => option.value === tabParam) ? tabParam : "roster";
 
   function selectTab(next: string) {
     setSearchParams(next === "roster" ? {} : { tab: next }, { replace: true });
@@ -43,11 +56,32 @@ export function TeamRosterPage() {
     return <Text tone="danger">Could not load this team's roster.</Text>;
   }
 
-  const { roster: rosterEntries, nonRoster } = splitRosterForTabs(roster.data.data);
+  const {
+    roster: rosterEntries,
+    nonRoster,
+    byAffiliate,
+  } = splitRosterForTabs(roster.data.data, affiliateTeams);
+  const affiliateGroup = byAffiliate.find((group) => affiliateTabValue(group.team.id) === tab);
+
   const sections: RosterListSection[] =
     tab === "non_roster"
       ? [{ key: "non-roster", label: null, entries: nonRoster }]
-      : groupRosterByPosition(rosterEntries);
+      : affiliateGroup
+        ? [
+            {
+              key: `affiliate-${affiliateGroup.team.id}`,
+              label: null,
+              entries: affiliateGroup.entries,
+            },
+          ]
+        : groupRosterByPosition(rosterEntries);
+
+  const emptyStateMessage = (() => {
+    if (tab === "non_roster") return "No players currently non-roster.";
+    if (affiliateGroup) return `No players currently loaned to ${affiliateGroup.team.name}.`;
+
+    return "No players on file.";
+  })();
 
   return (
     <Stack gap="sm">
@@ -65,7 +99,7 @@ export function TeamRosterPage() {
       ) : (
         <Stack gap="sm">
           <SegmentedControl
-            options={TAB_OPTIONS}
+            options={tabOptions}
             value={tab}
             onChange={selectTab}
             label="Roster view"
@@ -75,18 +109,19 @@ export function TeamRosterPage() {
           <div className="flex flex-col items-start gap-5 sm:flex-row">
             <div className="w-full min-w-0 flex-1">
               {sections.every((section) => section.entries.length === 0) ? (
-                <Text tone="muted">
-                  {tab === "non_roster"
-                    ? "No players currently non-roster."
-                    : "No players on file."}
-                </Text>
+                <Text tone="muted">{emptyStateMessage}</Text>
               ) : (
                 <RosterList
                   sections={sections}
                   canManageRoster={isTeamGm(user, teamId)}
+                  affiliateTeams={affiliateTeams}
                   onSetStatus={(playerId, status, effectiveOn) =>
                     setStatus.mutate({ playerId, status, effectiveOn })
                   }
+                  onSendDown={(playerId, destinationTeamId) =>
+                    sendDown.mutate({ playerId, destinationTeamId })
+                  }
+                  onCallUp={(playerId) => callUp.mutate({ playerId })}
                 />
               )}
             </div>

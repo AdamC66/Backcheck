@@ -9,6 +9,16 @@ class TeamAffiliation < ApplicationRecord
 
   scope :for_season, ->(season) { where(season: season) }
 
+  # Newest season this team actually has an affiliation row for, not the league's
+  # newest season row — those can drift apart after a backfill.
+  def self.current_for(parent_team)
+    season = parent_team.league.seasons.where(id: where(parent_team: parent_team).select(:season_id))
+                         .chronological.last
+    return none if season.nil?
+
+    for_season(season).where(parent_team: parent_team)
+  end
+
   private
 
   def affiliate_is_a_lower_tier

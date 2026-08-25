@@ -22,4 +22,10 @@ class Team < ApplicationRecord
   validates :nhl_team_id, uniqueness: true, allow_nil: true
   validates :primary_color, :secondary_color, :tertiary_color,
             format: { with: HEX_COLOR }, allow_nil: true
+
+  # Newest season *with roster spots*, not just the newest season row — a season can be
+  # seeded well ahead of this team having any data in it.
+  def current_roster_season
+    league.seasons.where(id: RosterSpot.where(team: self).select(:season_id)).order(:starts_on).last
+  end
 end

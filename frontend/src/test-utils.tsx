@@ -3,6 +3,7 @@ import { render as rtlRender, type RenderOptions } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { AuthProvider } from "@/auth/AuthProvider";
+import { ToastProvider } from "@/toast/ToastProvider";
 
 // Retries and caching make tests slow and order-dependent, so each render gets a
 // fresh client with both switched off.
@@ -29,7 +30,9 @@ export function renderWithProviders(
     return (
       <QueryClientProvider client={createTestQueryClient()}>
         <MemoryRouter initialEntries={[route]}>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </AuthProvider>
         </MemoryRouter>
       </QueryClientProvider>
     );

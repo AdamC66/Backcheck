@@ -26,20 +26,29 @@ class TeamRoster
     RosterStatus.open.where(team: team, season: season).index_by(&:player_id)
   end
 
-  def affiliate_team_ids
-    @affiliate_team_ids ||= team.affiliations_as_parent.pluck(:affiliate_team_id)
+  def affiliations
+    @affiliations ||= TeamAffiliation.current_for(team)
   end
 
-  # Ordered by league tier so a player conditioning-stinted from AHL to ECHL still shows
-  # the AHL spot — the org relationship a loan doesn't erase — when both exist at once.
+  # Ordered by league tier so a conditioning stint still shows the AHL spot. contract_level:
+  # nhl on an affiliate row means "up with the parent club," not "here" — excluded so a
+  # two-way player who's actually in the NHL doesn't read as sent down.
   def affiliate_assignments_by_player_id
-    return {} if affiliate_team_ids.empty?
+    return {} if affiliations.empty?
 
-    RosterSpot.where(team_id: affiliate_team_ids)
-              .joins(:season, team: :league)
-              .where("seasons.starts_on <= ? AND seasons.ends_on >= ?", season.ends_on, season.starts_on)
-              .order("leagues.tier")
-              .includes(team: [ :league, { logo_attachment: :blob } ])
-              .each_with_object({}) { |spot, memo| memo[spot.player_id] ||= spot }
+    scopes = affiliations.filter_map do |affiliation|
+      affiliate_season = affiliation.affiliate_team.league.seasons.overlapping(affiliation.season).chronological.last
+      next if affiliate_season.nil?
+
+      RosterSpot.where(team: affiliation.affiliate_team, season: affiliate_season)
+                .where.not(contract_level: RosterSpot::CONTRACT_LEVELS[:nhl])
+    end
+    return {} if scopes.empty?
+
+    scopes.reduce { |combined, scope| combined.or(scope) }
+          .joins(team: :league)
+          .order("leagues.tier")
+          .includes(team: [ :league, { logo_attachment: :blob } ])
+          .each_with_object({}) { |spot, memo| memo[spot.player_id] ||= spot }
   end
 end

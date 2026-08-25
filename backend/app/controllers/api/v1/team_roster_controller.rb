@@ -16,14 +16,12 @@ module Api
 
       private
 
-      # Newest season *with roster spots*, not just the newest row — a season is seeded
-      # ahead of its own data here too. An explicit ?season= is taken as asked, empty or
-      # not, same as the games and standings endpoints.
+      # An explicit ?season= is taken as asked, empty or not, same as the games and
+      # standings endpoints.
       def find_season
-        seasons = team.league.seasons
-        return seasons.find_by(label: params[:season]) if params[:season].present?
+        return team.league.seasons.find_by(label: params[:season]) if params[:season].present?
 
-        seasons.where(id: RosterSpot.where(team: team).select(:season_id)).chronological.last
+        team.current_roster_season
       end
 
       def render_not_found_season

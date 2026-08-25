@@ -9,9 +9,20 @@ export interface PlayerRowProps {
   entry: RosterEntry;
   canManageRoster: boolean;
   onManageStatus: (entry: RosterEntry) => void;
+  /** Only offered when there's a destination and the player isn't already on loan elsewhere. */
+  canSendDown: boolean;
+  onSendDown: (entry: RosterEntry) => void;
+  onCallUp: (entry: RosterEntry) => void;
 }
 
-export function PlayerRow({ entry, canManageRoster, onManageStatus }: PlayerRowProps) {
+export function PlayerRow({
+  entry,
+  canManageRoster,
+  onManageStatus,
+  canSendDown,
+  onSendDown,
+  onCallUp,
+}: PlayerRowProps) {
   const { player } = entry;
   const fullName = `${player.first_name} ${player.last_name}`;
 
@@ -29,6 +40,26 @@ export function PlayerRow({ entry, canManageRoster, onManageStatus }: PlayerRowP
 
       <AssignmentBadge assignment={entry.assignment} />
       <RosterStatusBadge status={entry.roster_status.status} />
+
+      {canSendDown && entry.assignment === null ? (
+        <button
+          type="button"
+          onClick={() => onSendDown(entry)}
+          className="shrink-0 cursor-pointer border border-slate-300 px-1.5 py-0.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
+        >
+          Send down
+        </button>
+      ) : null}
+
+      {canManageRoster && entry.assignment !== null ? (
+        <button
+          type="button"
+          onClick={() => onCallUp(entry)}
+          className="shrink-0 cursor-pointer border border-slate-300 px-1.5 py-0.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
+        >
+          Call up
+        </button>
+      ) : null}
 
       {canManageRoster ? (
         <button

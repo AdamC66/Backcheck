@@ -14,6 +14,9 @@ describe("PlayerRow", () => {
           })}
           canManageRoster={false}
           onManageStatus={vi.fn()}
+          canSendDown={false}
+          onSendDown={vi.fn()}
+          onCallUp={vi.fn()}
         />
       </ul>,
     );
@@ -30,7 +33,14 @@ describe("PlayerRow", () => {
 
     render(
       <ul>
-        <PlayerRow entry={entry} canManageRoster onManageStatus={onManageStatus} />
+        <PlayerRow
+          entry={entry}
+          canManageRoster
+          onManageStatus={onManageStatus}
+          canSendDown={false}
+          onSendDown={vi.fn()}
+          onCallUp={vi.fn()}
+        />
       </ul>,
     );
 
