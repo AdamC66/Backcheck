@@ -16,7 +16,8 @@ module Api
 
         render_data(games.map { |game| GameSerializer.new(game).as_json },
                     meta: { dates: page.dates, count: games.size,
-                            prev_cursor: page.prev_cursor, next_cursor: page.next_cursor })
+                            prev_cursor: page.prev_cursor, next_cursor: page.next_cursor }
+                            .merge(stats_syncing_meta(games)))
       end
 
       private

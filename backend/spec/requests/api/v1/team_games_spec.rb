@@ -52,4 +52,20 @@ RSpec.describe "GET /api/v1/teams/:team_id/games", type: :request do
 
     expect(response).to have_http_status(:ok)
   end
+
+  it "includes meta.stats_syncing when a returned game is mid-recalculation" do
+    create(:game, season: season, home_team: team, away_team: opponent, stats_syncing: true)
+
+    get "/api/v1/teams/#{team.id}/games", headers: auth_headers(super_admin)
+
+    expect(response.parsed_body.dig("meta", "stats_syncing")).to be true
+  end
+
+  it "omits meta.stats_syncing rather than sending it false when nothing is recalculating" do
+    create(:game, season: season, home_team: team, away_team: opponent)
+
+    get "/api/v1/teams/#{team.id}/games", headers: auth_headers(super_admin)
+
+    expect(response.parsed_body["meta"]).not_to have_key("stats_syncing")
+  end
 end

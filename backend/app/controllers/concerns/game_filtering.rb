@@ -38,4 +38,9 @@ module GameFiltering
   def filter_game_type(scope)
     params[:game_type] == "regular_season" ? scope.regular_season : scope
   end
+
+  # Omitted rather than sent false — meta carries derived info, not a value with nothing to say.
+  def stats_syncing_meta(games)
+    games.any?(&:stats_syncing) ? { stats_syncing: true } : {}
+  end
 end

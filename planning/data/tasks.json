@@ -646,7 +646,7 @@
     "title": "Surface stats_syncing in team games / player stats API meta",
     "description": "Per the existing { data, meta? } envelope: team games and any endpoint touching a game currently mid-recalculation include stats_syncing in meta when true, matching the existing convention that meta carries derived/pagination info and is omitted rather than sent false when there's nothing to say — so the frontend can show a \"recalculating\" state instead of silently serving numbers that are about to change. Depends on TASK-62.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "low",
     "acceptance_criteria": [
       "A request spec proves meta.stats_syncing appears when the underlying game has stats_syncing: true, and is absent (not present-and-false) otherwise"

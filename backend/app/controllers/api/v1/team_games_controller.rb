@@ -52,7 +52,7 @@ module Api
           from: range&.first || games.first&.game_date,
           to: range&.last || games.last&.game_date,
           count: games.size
-        }
+        }.merge(stats_syncing_meta(games))
       end
 
       def render_not_found_season

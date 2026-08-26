@@ -57,4 +57,20 @@ RSpec.describe "GET /api/v1/leagues/:league_slug/games", type: :request do
 
     expect(get_games(direction: "sideways").dig("error", "message")).to match(/direction/)
   end
+
+  it "includes meta.stats_syncing when a returned game is mid-recalculation" do
+    games_on(Date.new(2026, 1, 5), 1, stats_syncing: true)
+
+    body = get_games(date: "2026-01-05")
+
+    expect(body.dig("meta", "stats_syncing")).to be true
+  end
+
+  it "omits meta.stats_syncing rather than sending it false when nothing is recalculating" do
+    games_on(Date.new(2026, 1, 5), 1)
+
+    body = get_games(date: "2026-01-05")
+
+    expect(body["meta"]).not_to have_key("stats_syncing")
+  end
 end
