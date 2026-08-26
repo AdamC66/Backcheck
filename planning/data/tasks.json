@@ -671,7 +671,7 @@
     "title": "Wire advanced-stats ingestion/recompute into the admin sync console",
     "description": "Once play-by-play/shift ingestion (deferred, not part of this epic) and TASK-62's recompute job exist, a super admin needs to trigger them the same way every other sync kind already works — through EPIC-12's SyncKindRegistry / AdminSyncOrchestrator / New Sync trigger form, not a separate one-off mechanism. Add a new sync kind (or kinds) to SyncKindRegistry with its required scope axes (team + season, matching team_schedule/game_stats), have AdminSyncOrchestrator dispatch to whichever ingestion/recompute service this epic's ingestion task and TASK-62 land as, and let it show up in the existing New Sync form as just another kind option — no new frontend page. Depends on the actual ingestion path and TASK-62 existing first; this task is only the admin-console wiring.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "low",
     "acceptance_criteria": [
       "The new kind appears in GET /api/v1/admin/sync_kinds with its scope axes, the same shape every existing kind already returns",

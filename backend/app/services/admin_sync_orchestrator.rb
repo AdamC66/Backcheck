@@ -1,4 +1,7 @@
 class AdminSyncOrchestrator
+  # These track progress per game rather than per team — one item can mean 82 games.
+  PER_GAME_KINDS = %i[game_stats advanced_stats].freeze
+
   def initialize(sync_run:)
     @sync_run = sync_run
   end
@@ -34,11 +37,11 @@ class AdminSyncOrchestrator
     sync_run.update!(total_steps: compute_total_steps)
   end
 
-  # game_stats counts its actual games, not the one item that tracks them — otherwise
-  # a team with 82 games finishing looks identical to one with 2.
+  # A per-game kind counts its actual games, not the one item that tracks them —
+  # otherwise a team with 82 games finishing looks identical to one with 2.
   def compute_total_steps
     sync_run.sync_run_items.sum do |item|
-      item.kind_name == :game_stats ? games_for(item.team).count : 1
+      PER_GAME_KINDS.include?(item.kind_name) ? games_for(item.team).count : 1
     end
   end
 
@@ -62,8 +65,8 @@ class AdminSyncOrchestrator
   def run_item(item)
     item.update!(status: SyncRun::STATUSES[:running], started_at: Time.current)
 
-    if item.kind_name == :game_stats
-      run_game_stats_item(item)
+    if PER_GAME_KINDS.include?(item.kind_name)
+      run_per_game_item(item)
     else
       run_single_step_item(item)
     end
@@ -87,7 +90,7 @@ class AdminSyncOrchestrator
 
   # One item can mean 82 games, so it gets its own cancellation check and a step
   # advance per game — the same "X/Y" progress the other kinds get per team.
-  def run_game_stats_item(item)
+  def run_per_game_item(item)
     games = games_for(item.team).to_a
     failed = false
 
@@ -97,11 +100,11 @@ class AdminSyncOrchestrator
         return
       end
 
-      label = "game stats — #{item.team.name} (#{index + 1}/#{games.size})"
+      label = "#{item.kind_name.to_s.tr('_', ' ')} — #{item.team.name} (#{index + 1}/#{games.size})"
       sync_run.update!(current_step_label: label)
 
       begin
-        SyncGameStats.new(game: game, client: nhl_client).call
+        call_per_game_service(item.kind_name, game)
         sync_run.log("Completed #{label}")
       rescue StandardError => e
         failed = true
@@ -114,6 +117,15 @@ class AdminSyncOrchestrator
 
     item.update!(status: failed ? SyncRun::STATUSES[:failed] : SyncRun::STATUSES[:completed],
                  finished_at: Time.current)
+  end
+
+  def call_per_game_service(kind_name, game)
+    case kind_name
+    when :game_stats
+      SyncGameStats.new(game: game, client: nhl_client).call
+    when :advanced_stats
+      MarkGameForStatsRecompute.new(game: game).call
+    end
   end
 
   # A raw UPDATE, not sync_run.increment!, so a concurrent writer's value is never

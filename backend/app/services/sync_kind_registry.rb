@@ -9,7 +9,10 @@ module SyncKindRegistry
     daily_scores: { service: SyncDailyScores, scope: [ :league, :date ] },
     # SyncGameStats itself takes a single game, but the admin trigger tracks progress
     # per team: one item means "resync every finished game this team/season has."
-    game_stats: { service: SyncGameStats, scope: [ :team, :season ] }
+    game_stats: { service: SyncGameStats, scope: [ :team, :season ] },
+    # Recompute-only, same as a corrected-game trigger (MarkGameForStatsRecompute) —
+    # not a new NHL API integration.
+    advanced_stats: { service: MarkGameForStatsRecompute, scope: [ :team, :season ] }
   }.freeze
 
   def self.for(kind)

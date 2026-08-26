@@ -8,6 +8,7 @@ RSpec.describe "GET /api/v1/admin/sync_kinds", type: :request do
     kinds = response.parsed_body["data"].index_by { |entry| entry["kind"] }
     expect(kinds["team_roster"]["scope"]).to eq([ "team" ])
     expect(kinds["standings"]["scope"]).to eq([ "league", "date" ])
+    expect(kinds["advanced_stats"]["scope"]).to eq([ "team", "season" ])
     expect(kinds.keys).to match_array(SyncRun::SYNC_KINDS.keys.map(&:to_s))
   end
 

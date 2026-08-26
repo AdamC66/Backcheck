@@ -81,6 +81,27 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.sync_run_items.first.status).to eq(SyncRun::STATUSES[:completed])
   end
 
+  it "runs the same corrected-game recompute path as TASK-62 for an advanced_stats item" do
+    season = create(:season, league: league)
+    games = Array.new(2) do |n|
+      create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+             starts_at: Time.utc(2025, 10, 8 + n))
+    end
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:advanced_stats] ])
+    recomputed_games = []
+    allow(MarkGameForStatsRecompute).to receive(:new) do |game:|
+      recomputed_games << game
+      instance_double(MarkGameForStatsRecompute, call: nil)
+    end
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    expect(recomputed_games).to match_array(games)
+    expect(run.total_steps).to eq(games.size)
+    expect(run.status).to eq(SyncRun::STATUSES[:completed])
+  end
+
   it "checks for cancellation between games within a single game_stats item" do
     season = create(:season, league: league)
     create(:game, season: season, home_team: team, away_team: create(:team, league: league),

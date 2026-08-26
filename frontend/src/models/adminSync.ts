@@ -8,7 +8,8 @@ export type SyncKind =
   | "team_schedule"
   | "standings"
   | "daily_scores"
-  | "game_stats";
+  | "game_stats"
+  | "advanced_stats";
 
 export const SYNC_KIND_LABELS: Record<SyncKind, string> = {
   team_roster: "Team roster",
@@ -17,6 +18,7 @@ export const SYNC_KIND_LABELS: Record<SyncKind, string> = {
   standings: "Standings",
   daily_scores: "Daily scores",
   game_stats: "Game stats",
+  advanced_stats: "Advanced stats",
 };
 
 export interface SyncRun {

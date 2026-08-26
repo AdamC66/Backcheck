@@ -15,6 +15,10 @@ RSpec.describe SyncKindRegistry do
     expect(described_class.scope_axes(:standings)).to eq([ :league, :date ])
   end
 
+  it "requires team and season for advanced_stats, same as game_stats" do
+    expect(described_class.scope_axes(:advanced_stats)).to eq([ :team, :season ])
+  end
+
   it "normalizes the integer form SyncRunItem#kind stores" do
     expect(described_class.scope_axes(SyncRun::SYNC_KINDS[:team_schedule])).to eq([ :team, :season ])
   end
