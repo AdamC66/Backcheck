@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, Navigate, Outlet, useParams } from "react-router";
 import { PageShell } from "@/components/PageShell/PageShell";
+import { Row } from "@/components/Row/Row";
 import { SideNav } from "@/components/SideNav/SideNav";
 import { TeamTheme } from "@/components/TeamTheme/TeamTheme";
 import { Text } from "@/components/Text/Text";
+import { ResyncTeamMenu } from "@/containers/TeamPage/ResyncTeamMenu";
 import { UserMenu } from "@/containers/UserMenu";
 import { useTeam } from "@/models/useTeam";
 
@@ -54,7 +56,15 @@ export function TeamPage() {
   }
 
   return (
-    <PageShell actions={<UserMenu />} width="full">
+    <PageShell
+      actions={
+        <Row gap="sm">
+          <ResyncTeamMenu teamId={teamId} league={league} />
+          <UserMenu />
+        </Row>
+      }
+      width="full"
+    >
       <TeamTheme team={team.data} className="flex min-w-0 flex-1">
         {navOpen ? (
           <div

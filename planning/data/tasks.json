@@ -515,7 +515,7 @@
     "title": "Contextual single-team resync",
     "description": "A Resync action on a team's existing page, pre-filling the trigger flow to that one team and posting straight to create.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "low"
   }
 ]

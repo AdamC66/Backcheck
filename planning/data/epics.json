@@ -92,7 +92,7 @@
     "project_id": "backcheck",
     "title": "Admin data sync console",
     "description": "Superuser-only panel to trigger roster/stats/schedule/standings syncs on demand, scoped to a league, season, or single team, with live progress (e.g. '12/21 teams — syncing San Jose'). Sits on top of EPIC-8's existing sync services/clients rather than replacing them — one new AdminSyncOrchestratorJob loops through the resolved scope calling SyncTeamRoster/SyncStandings/etc. directly, tracked via new SyncRun/SyncRunItem rows (see DECISIONS.md, 2026-08-25). Shares the Super Admin surface with EPIC-7 but is a distinct concern: EPIC-7 is manual data overrides, this is operating the ingestion pipeline that already runs automatically via recurring.yml.",
-    "status": "in_progress",
+    "status": "done",
     "priority": "medium"
   }
 ]
