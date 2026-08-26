@@ -488,7 +488,7 @@
     "title": "Admin nav entry + Sync Dashboard page",
     "description": "Admin entry in UserMenu.tsx, rendered only when the current user is super admin (confirm is_super_admin is actually serialized to the frontend user payload — it may not be yet). New src/containers/Admin/ (folder, not a flat file, since it owns child routes the way TeamPage does) with a SyncDashboardPage listing recent runs. New src/models/adminSync.ts + useSyncRuns hook + a queryKeys entry, following the request-fn/hook split. Route guarded by a super-admin equivalent of RequireAuth.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium"
   },
   {

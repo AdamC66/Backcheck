@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router";
 import { LoginPage } from "@/containers/LoginPage";
 import { RedirectIfAuthenticated } from "@/auth/RedirectIfAuthenticated";
 import { RequireAuth } from "@/auth/RequireAuth";
+import { RequireSuperAdmin } from "@/auth/RequireSuperAdmin";
 import { DashboardPage } from "@/containers/DashboardPage";
 import { LeaguePage } from "@/containers/LeaguePage";
 import { TeamPage } from "@/containers/TeamPage/TeamPage";
@@ -9,6 +10,8 @@ import { TeamOverviewPage } from "@/containers/TeamPage/TeamOverviewPage";
 import { TeamSchedulePage } from "@/containers/TeamPage/TeamSchedulePage";
 import { TeamRosterPage } from "@/containers/TeamPage/TeamRosterPage";
 import { TeamStatsPage } from "@/containers/TeamPage/TeamStatsPage";
+import { AdminPage } from "@/containers/Admin/AdminPage";
+import { SyncDashboardPage } from "@/containers/Admin/SyncDashboardPage";
 
 export function App() {
   return (
@@ -49,6 +52,16 @@ export function App() {
         <Route path="schedule" element={<TeamSchedulePage />} />
         <Route path="roster" element={<TeamRosterPage />} />
         <Route path="stats" element={<TeamStatsPage />} />
+      </Route>
+      <Route
+        path="/admin"
+        element={
+          <RequireSuperAdmin>
+            <AdminPage />
+          </RequireSuperAdmin>
+        }
+      >
+        <Route index element={<SyncDashboardPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

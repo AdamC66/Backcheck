@@ -2,13 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { fetchCurrentUser, login } from "@/models/auth";
 import { fetchLeagues } from "@/models/leagues";
+import { fetchSyncRuns } from "@/models/adminSync";
 import { TOKEN_KEY } from "@/lib/tokenStorage";
-import { LEAGUES, SUPER_ADMIN } from "@/test-mocks";
+import { LEAGUES, SUPER_ADMIN, TEAM_USER } from "@/test-mocks";
 import { renderWithProviders, screen } from "@/test-utils";
 import { App } from "../App";
 
 vi.mock("@/models/auth");
 vi.mock("@/models/leagues");
+vi.mock("@/models/adminSync");
 
 describe("App routing", () => {
   beforeEach(() => {
@@ -44,5 +46,25 @@ describe("App routing", () => {
     renderWithProviders(<App />, { route: "/" });
 
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+  });
+
+  it("lets a super admin reach the sync dashboard", async () => {
+    localStorage.setItem(TOKEN_KEY, "test-token");
+    vi.mocked(fetchCurrentUser).mockResolvedValue(SUPER_ADMIN);
+    vi.mocked(fetchSyncRuns).mockResolvedValue({ data: [], meta: { counts: {} } });
+
+    renderWithProviders(<App />, { route: "/admin" });
+
+    expect(await screen.findByRole("heading", { name: "Admin" })).toBeInTheDocument();
+  });
+
+  it("keeps a non-super-admin off the admin dashboard", async () => {
+    localStorage.setItem(TOKEN_KEY, "test-token");
+    vi.mocked(fetchCurrentUser).mockResolvedValue(TEAM_USER);
+    vi.mocked(fetchLeagues).mockResolvedValue(LEAGUES);
+
+    renderWithProviders(<App />, { route: "/admin" });
+
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
   });
 });

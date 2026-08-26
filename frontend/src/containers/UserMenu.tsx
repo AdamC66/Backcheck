@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
 import { Avatar } from "@/components/Avatar/Avatar";
 import { Text } from "@/components/Text/Text";
 import { useAuth } from "@/auth/useAuth";
@@ -62,6 +63,17 @@ export function UserMenu() {
             <Text variant="caption">{user.email}</Text>
             {user.is_super_admin ? <Text variant="caption">Super Admin</Text> : null}
           </div>
+
+          {user.is_super_admin ? (
+            <Link
+              to="/admin"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="block w-full px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Admin
+            </Link>
+          ) : null}
 
           <button
             type="button"

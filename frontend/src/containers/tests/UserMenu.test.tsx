@@ -2,15 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { fetchCurrentUser, logout } from "@/models/auth";
 import { TOKEN_KEY } from "@/lib/tokenStorage";
-import { SUPER_ADMIN } from "@/test-mocks";
+import { SUPER_ADMIN, TEAM_USER } from "@/test-mocks";
 import { renderWithProviders, screen, waitFor } from "@/test-utils";
 import { UserMenu } from "../UserMenu";
 
 vi.mock("@/models/auth");
 
-async function renderSignedIn() {
+async function renderSignedIn(user = SUPER_ADMIN) {
   localStorage.setItem(TOKEN_KEY, "test-token");
-  vi.mocked(fetchCurrentUser).mockResolvedValue(SUPER_ADMIN);
+  vi.mocked(fetchCurrentUser).mockResolvedValue(user);
 
   renderWithProviders(<UserMenu />);
 
@@ -48,5 +48,21 @@ describe("UserMenu", () => {
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
     expect(logout).not.toHaveBeenCalled();
+  });
+
+  it("shows an Admin link for a super admin", async () => {
+    const trigger = await renderSignedIn();
+
+    await userEvent.click(trigger);
+
+    expect(screen.getByRole("menuitem", { name: "Admin" })).toBeInTheDocument();
+  });
+
+  it("hides the Admin link for a non-super-admin user", async () => {
+    const trigger = await renderSignedIn(TEAM_USER);
+
+    await userEvent.click(trigger);
+
+    expect(screen.queryByRole("menuitem", { name: "Admin" })).not.toBeInTheDocument();
   });
 });
