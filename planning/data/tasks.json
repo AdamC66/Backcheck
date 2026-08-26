@@ -591,7 +591,7 @@
     "title": "Migration + model for player_season_advanced_stats (chained running-total snapshots)",
     "description": "Running-total snapshot per player/season, one row per game boundary rather than per calendar date — each row's totals are the prior row's totals plus that game's delta, so the rows chain rather than each being an independent recompute (contrast with skater_season_stats/goalie_season_stats, TASK-44, which re-sums from scratch every time). References player, team, season, as_of_game (→ games). Same stat columns as player_game_advanced_stats (TASK-60) plus games_played. Add stale (boolean, default false) — flipped true when an earlier game in the chain gets corrected, cleared once the chain is rebuilt forward from that point (TASK-63). Unique index on (player_id, season_id, strength_state, as_of_game_id). Depends on TASK-60.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "Unique index on (player_id, season_id, strength_state, as_of_game_id) prevents two snapshot rows from claiming the same point in a player's chain",

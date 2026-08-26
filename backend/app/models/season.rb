@@ -5,6 +5,7 @@ class Season < ApplicationRecord
   has_many :team_standings, dependent: :destroy
   has_many :skater_season_stats, dependent: :destroy
   has_many :goalie_season_stats, dependent: :destroy
+  has_many :player_season_advanced_stats, dependent: :destroy
 
   validates :label, presence: true, uniqueness: { scope: :league_id }
   validates :nhl_season_id, uniqueness: true, allow_nil: true

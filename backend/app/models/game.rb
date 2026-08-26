@@ -11,6 +11,8 @@ class Game < ApplicationRecord
   has_many :game_events, dependent: :destroy
   has_many :shifts, dependent: :destroy
   has_many :player_game_advanced_stats, dependent: :destroy
+  has_many :player_season_advanced_stats, foreign_key: :as_of_game_id, dependent: :destroy,
+           inverse_of: :as_of_game
 
   validates :nhl_game_id, presence: true, uniqueness: true
   validates :game_type, presence: true
