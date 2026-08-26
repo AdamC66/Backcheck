@@ -32,6 +32,7 @@ Rails.application.routes.draw do
           end
         end
         resources :sync_kinds, only: [ :index ]
+        get "roadmap", to: "roadmap#show"
       end
     end
   end

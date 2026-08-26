@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, Navigate, Outlet, useParams } from "react-router";
+import { ChevronIcon } from "@/components/ChevronIcon/ChevronIcon";
 import { PageShell } from "@/components/PageShell/PageShell";
 import { Row } from "@/components/Row/Row";
 import { SideNav } from "@/components/SideNav/SideNav";
@@ -17,22 +18,6 @@ const NAV_ITEMS = [
 ];
 
 const DESKTOP_BREAKPOINT = 1024;
-
-function ChevronIcon({ direction }: { direction: "left" | "right" }) {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.4"
-      strokeLinecap="square"
-    >
-      <path d={direction === "left" ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} />
-    </svg>
-  );
-}
 
 export function TeamPage() {
   const { id } = useParams();

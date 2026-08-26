@@ -34,6 +34,8 @@ export const SYNC_RUNS_KEY = ["sync-runs"] as const;
 
 export const syncRunKey = (id: number) => ["sync-run", id] as const;
 
+export const ROADMAP_KEY = ["roadmap"] as const;
+
 export const SYNC_KINDS_KEY = ["sync-kinds"] as const;
 
 export const seasonsKey = (leagueSlug: string) => ["seasons", leagueSlug] as const;

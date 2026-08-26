@@ -55,7 +55,7 @@ describe("App routing", () => {
 
     renderWithProviders(<App />, { route: "/admin" });
 
-    expect(await screen.findByRole("heading", { name: "Admin" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Sync Runs" })).toBeInTheDocument();
   });
 
   it("keeps a non-super-admin off the admin dashboard", async () => {

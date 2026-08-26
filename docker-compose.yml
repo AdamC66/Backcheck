@@ -19,6 +19,8 @@ services:
       # Seed manifests live outside the build context; the container's WORKDIR is /app,
       # so this lands them exactly where ImportTeams looks (Rails.root/../data).
       - ./data:/data:ro
+      # Same reasoning, for RoadmapController reading planning/data directly.
+      - ./planning:/planning:ro
       - bundle_cache:/usr/local/bundle
     ports:
       - "3000:3000"

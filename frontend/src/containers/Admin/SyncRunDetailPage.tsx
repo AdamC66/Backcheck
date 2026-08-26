@@ -1,4 +1,4 @@
-import { Link, Navigate, useParams } from "react-router";
+import { Navigate, useParams } from "react-router";
 import { Button } from "@/components/Button/Button";
 import { Row } from "@/components/Row/Row";
 import { Stack } from "@/components/Stack/Stack";
@@ -12,9 +12,6 @@ import { useCancelSyncRun } from "@/models/useCancelSyncRun";
 import { useSyncRun } from "@/models/useSyncRun";
 
 const ACTIVE_STATUSES = new Set(["queued", "running"]);
-
-const BACK_LINK_CLASS =
-  "text-sm font-medium text-slate-500 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900";
 
 function ProgressBar({ percent }: { percent: number }) {
   return (
@@ -56,25 +53,11 @@ export function SyncRunDetailPage() {
   }
 
   if (run.isPending) {
-    return (
-      <Stack gap="lg">
-        <Link to="/admin" className={BACK_LINK_CLASS}>
-          ← Sync Runs
-        </Link>
-        <Text tone="muted">Loading sync run…</Text>
-      </Stack>
-    );
+    return <Text tone="muted">Loading sync run…</Text>;
   }
 
   if (run.isError || run.data === undefined) {
-    return (
-      <Stack gap="lg">
-        <Link to="/admin" className={BACK_LINK_CLASS}>
-          ← Sync Runs
-        </Link>
-        <Text tone="danger">Could not load this sync run.</Text>
-      </Stack>
-    );
+    return <Text tone="danger">Could not load this sync run.</Text>;
   }
 
   const data = run.data;
@@ -82,10 +65,6 @@ export function SyncRunDetailPage() {
 
   return (
     <Stack gap="lg">
-      <Link to="/admin" className={BACK_LINK_CLASS}>
-        ← Sync Runs
-      </Link>
-
       <Row justify="between">
         <Stack gap="xs">
           <Text variant="subheading">

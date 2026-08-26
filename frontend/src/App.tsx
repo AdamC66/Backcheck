@@ -14,6 +14,7 @@ import { AdminPage } from "@/containers/Admin/AdminPage";
 import { SyncDashboardPage } from "@/containers/Admin/SyncDashboardPage";
 import { NewSyncRunPage } from "@/containers/Admin/NewSyncRunPage";
 import { SyncRunDetailPage } from "@/containers/Admin/SyncRunDetailPage";
+import { RoadmapPage } from "@/containers/Admin/RoadmapPage";
 
 export function App() {
   return (
@@ -66,6 +67,7 @@ export function App() {
         <Route index element={<SyncDashboardPage />} />
         <Route path="sync/new" element={<NewSyncRunPage />} />
         <Route path="sync/:id" element={<SyncRunDetailPage />} />
+        <Route path="roadmap" element={<RoadmapPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

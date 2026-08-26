@@ -331,7 +331,7 @@
     "epic_id": "EPIC-9",
     "title": "GM: call up / send down players across a TeamAffiliation",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "description": "Reassigns a roster_spots row between a parent team and its affiliate (existing TeamAffiliation, TASK-28). Authorization is hierarchical, not peer-to-peer: the acting GM's team must be the parent_team in a TeamAffiliation row for the current season where the affiliate_team is the target player's team. The affiliate's own GM cannot initiate the same move. Depends on TASK-3. v1 doesn't check Regular Waiver exemption (Article 13) — a veteran being sent down in real life would often need to clear waivers first, where other clubs can claim him. That's TASK-43.",
     "acceptance_criteria": [
@@ -517,5 +517,33 @@
     "type": "feature",
     "status": "done",
     "priority": "low"
+  },
+  {
+    "id": "TASK-56",
+    "epic_id": "EPIC-8",
+    "title": "Self-healing player identity in UpsertGameStats",
+    "description": "Real gap found running the admin sync console against live 2026-27 data: a player who left a team's org before rolling off appears in that team's game logs/stats for a season he played but is permanently invisible to us, because the only thing that ever creates a Player row (SyncTeamRoster) syncs /v1/roster/{team}/current — present-tense only, never a past season. Once a player is off every current roster, no existing sync path can ever discover him again, so UpsertGameStats#player_for finds no match, skips the stat row, and reports the id in missing_players. This isn't timing (won't self-resolve when the season rolls over) and isn't rare (a full-season vet who's since left an org and a one-game-of-career call-up hit the exact same code path). Fix: on a miss, UpsertGameStats fetches NhlClient#player_landing (new client method, /v1/player/{id}/landing) to create a real, fully-populated Player on the spot, and also upserts a RosterSpot for (player, team, season) using the team/season already known from the game/boxscore context — contract_level: unknown (existing enum value, never yet used) and contract_level_inferred: true (existing flag, currently only ever set false), so it reads as inferred rather than authoritative. RosterSpot::SOURCES needs a new value (nhl_api/hockeytech/manual don't honestly describe \"inferred from a stat line, not a roster feed\"). UpsertGameStats needs a client: passed through from SyncGameStats (it doesn't take one today). missing_players should then only ever report an id the landing lookup itself couldn't resolve (e.g. a 404), not merely \"wasn't already known.\" Deliberately out of scope: a full historical-roster pull from club-stats/{team}/{season}/{gameType} (participation data) — that only adds coverage for a player who was rostered all season but never dressed for a single game, which self-healing can't catch since it never sees a boxscore for him. Shelved unless zero-game roster completeness actually becomes a real product need; see DECISIONS.md for the full reasoning.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "A boxscore player id with no matching Player creates one via the player-landing lookup instead of skipping the stat row",
+      "The newly created player also gets a RosterSpot for (team, season) with contract_level: unknown and contract_level_inferred: true, not just a bare Player row",
+      "missing_players only reports an id when the landing lookup itself fails, not merely because the player wasn't already known"
+    ]
+  },
+  {
+    "id": "TASK-57",
+    "epic_id": "EPIC-8",
+    "title": "Goalie goals/assists are structurally unrepresentable",
+    "description": "A goalie can record a goal (shooting into an empty net) or an assist — rare, but real, and currently lost entirely: goalie_game_stats has no goals/assists columns, and neither does goalie_season_stats (the recomputed cache), so there's nowhere for UpsertGameStats#upsert_goalie or RecomputeSeasonStats#upsert_goalie to write them even if they tried to — this is a schema gap, not a dropped value in the ingestion code. Fix mirrors what skaters already do at both layers: add goals/assists integer columns (default 0) to both tables, set them in upsert_goalie from row.fetch(\"goals\", 0)/row.fetch(\"assists\", 0) exactly like upsert_skater already does, and sum them into the season cache in RecomputeSeasonStats#upsert_goalie the same way skater goals/assists are already summed. Before locking in field names: the one boxscore fixture on hand doesn't show goals/assists keys on the goalie row at all, but that's almost certainly because it's a scoreless-for-that-goalie game (fixtures are trimmed by dropping whole teams/games, never by editing fields), not evidence the API omits those keys generally — same discipline TASK-45's original field scope used (\"confirmed against a live boxscore response rather than assumed from docs\") should apply here: pull a real boxscore from a game where a goalie actually recorded a point before committing to the shape.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "acceptance_criteria": [
+      "Field shape (goals/assists keys on a goalie's boxscore row) verified against a real live boxscore from a game where a goalie recorded a point, not assumed from the trimmed fixture",
+      "A goalie's goals/assists are captured in goalie_game_stats the same way SkaterGameStat already captures a skater's",
+      "goalie_season_stats.goals/assists are recomputed from goalie_game_stats the same way skater season totals already are"
+    ]
   }
 ]
