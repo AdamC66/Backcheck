@@ -7,7 +7,9 @@ module SyncKindRegistry
     team_schedule: { service: SyncTeamSchedule, scope: [ :team, :season ] },
     standings: { service: SyncStandings, scope: [ :league, :date ] },
     daily_scores: { service: SyncDailyScores, scope: [ :league, :date ] },
-    game_stats: { service: SyncGameStats, scope: [ :game ] }
+    # SyncGameStats itself takes a single game, but the admin trigger tracks progress
+    # per team: one item means "resync every finished game this team/season has."
+    game_stats: { service: SyncGameStats, scope: [ :team, :season ] }
   }.freeze
 
   def self.for(kind)

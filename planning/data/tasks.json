@@ -462,7 +462,7 @@
     "title": "AdminSyncOrchestratorJob",
     "description": "queue_as :ingest. Resolves the requested scope into a team/date list via TASK-49's registry, creates SyncRunItem rows, flips SyncRun to running, then loops calling the matching existing service (e.g. SyncTeamRoster.new(team:, client: NhlClient.new(min_interval: sync_run.min_interval)).call) directly — no new job classes for the existing six. Increments SyncRun.current_step atomically (UPDATE ... SET current_step = current_step + 1, not a Ruby read-modify-write) and sets current_step_label after each item; captures a failing item's error without aborting the run; checks for a cancelled status before starting each new item. Design decision (loop-in-process vs. fan-out to the existing per-team jobs) logged in DECISIONS.md.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "high",
     "acceptance_criteria": [
       "A job spec against stubbed services proves current_step ends at total_steps with correct per-item labels",
