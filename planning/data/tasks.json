@@ -545,5 +545,184 @@
       "A goalie's goals/assists are captured in goalie_game_stats the same way SkaterGameStat already captures a skater's",
       "goalie_season_stats.goals/assists are recomputed from goalie_game_stats the same way skater season totals already are"
     ]
+  },
+  {
+    "id": "TASK-58",
+    "epic_id": "EPIC-13",
+    "title": "Migrations + models for game_events and shifts",
+    "description": "Raw per-game event tables — the source data the rollup tables in this epic get computed from, though nothing populates them yet (no ingestion in this task). game_events: one row per play-by-play event (shot, goal, faceoff, hit, giveaway, takeaway, penalty, blocked_shot). References game, team (nullable — not every event has a clean team attribution), primary_player (required), secondary_player (nullable, for assists/blockers/drawn-by). Columns: nhl_event_id (bigint, unique scoped to game_id, same upstream-key-for-re-sync convention as Game#nhl_game_id), period, period_time_seconds, event_type, shot_type, zone, strength_state, x_coord, y_coord. shifts: one row per player per on-ice stint. References game, player, team. Columns: nhl_shift_id (unique scoped to game_id), period, start_time_seconds, end_time_seconds. event_type/shot_type/zone/strength_state are small closed sets — model as explicit hash constants (Game::GAME_TYPES / RosterSpot::CONTRACT_LEVELS pattern), not free strings.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "high",
+    "acceptance_criteria": [
+      "nhl_event_id and nhl_shift_id are unique per game, not globally — matches the natural-key-per-scope pattern hockeytech_team_id/hockeytech_season_id already use",
+      "primary_player is required on game_events; secondary_player and team are nullable"
+    ]
+  },
+  {
+    "id": "TASK-59",
+    "epic_id": "EPIC-13",
+    "title": "Migration + model for xg_models (versioned xG coefficients)",
+    "description": "Versioned xG coefficient sets a future model-computation step reads from — no training/fitting logic here, just the table. Columns: version (unique), coefficients (jsonb), trained_at, active (boolean). Exactly one row may be active at a time; enforce with a partial unique index (WHERE active) rather than a model validation alone, so a race between two activations can't leave two actives — the same reasoning already applied elsewhere in this schema to hard invariants a validation alone can't guarantee.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "A partial unique index, not just a model validation, makes two simultaneously-active rows impossible even under a race",
+      "Activating a new version and deactivating the previous one is one atomic operation, not two writes that could interleave"
+    ]
+  },
+  {
+    "id": "TASK-60",
+    "epic_id": "EPIC-13",
+    "title": "Migration + model for player_game_advanced_stats (per-game rollup)",
+    "description": "Materialized per-game advanced-stat rollup — recomputed wholesale, never live-computed at read time and never hand-edited, same philosophy as skater_game_stats/goalie_game_stats (TASK-26). References game, player, team, xg_model (the coefficient version that produced this row's xG figures, so a later re-run with a newer model is traceable). Columns: strength_state (default \"all\"), corsi_for/against, fenwick_for/against, xg_for/against, zone_entries, zone_exits, toi_seconds. Unique index on (game_id, player_id, strength_state) — a player gets one row per strength state per game (\"all\", \"5v5\", \"pp\", ...), not one row per game. Depends on TASK-59 for the xg_model_id FK.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "Unique index on (game_id, player_id, strength_state) lets the same player hold separate \"all\" and \"5v5\" rows for one game without colliding",
+      "xg_model_id is required, not nullable — a row's xG figures are meaningless without knowing which coefficient version produced them"
+    ]
+  },
+  {
+    "id": "TASK-61",
+    "epic_id": "EPIC-13",
+    "title": "Migration + model for player_season_advanced_stats (chained running-total snapshots)",
+    "description": "Running-total snapshot per player/season, one row per game boundary rather than per calendar date — each row's totals are the prior row's totals plus that game's delta, so the rows chain rather than each being an independent recompute (contrast with skater_season_stats/goalie_season_stats, TASK-44, which re-sums from scratch every time). References player, team, season, as_of_game (→ games). Same stat columns as player_game_advanced_stats (TASK-60) plus games_played. Add stale (boolean, default false) — flipped true when an earlier game in the chain gets corrected, cleared once the chain is rebuilt forward from that point (TASK-63). Unique index on (player_id, season_id, strength_state, as_of_game_id). Depends on TASK-60.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "Unique index on (player_id, season_id, strength_state, as_of_game_id) prevents two snapshot rows from claiming the same point in a player's chain",
+      "stale defaults false and is a plain flag on the row — nothing computes off it besides TASK-63's job deciding what needs rebuilding"
+    ]
+  },
+  {
+    "id": "TASK-66",
+    "epic_id": "EPIC-13",
+    "title": "Migration + model for team_game_advanced_stats (per-game team rollup)",
+    "description": "Materialized per-game team-level advanced-stat rollup — same recomputed-never-live-computed strategy already used everywhere else in this schema (skater/goalie game+season stats, player_game/season_advanced_stats), applied at team grain rather than a GROUP BY over player rows at read time. Confirmed against hockey-reference's team gamelog page, which shows team-level CF/CA/CF%/FF/FA/FF%/oZS%/PDO per game alongside the basic box score line — that's this table's shape, not something derived on the fly. References game, team. Columns: strength_state (default \"all\"), corsi_for/against, fenwick_for/against, xg_for/against, faceoff_wins/losses, pdo, toi_seconds — same column shape as player_game_advanced_stats (TASK-60) where it overlaps, plus the team-only PDO/faceoff figures the gamelog page shows. Unique index on (game_id, team_id, strength_state). Depends on TASK-60 for the sibling shape.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "Unique index on (game_id, team_id, strength_state) — one row per team per strength state per game",
+      "Nothing computes this at read time from player rows — it's populated by the same recompute job as player_game_advanced_stats (TASK-62)"
+    ]
+  },
+  {
+    "id": "TASK-67",
+    "epic_id": "EPIC-13",
+    "title": "Migration + model for team_season_advanced_stats (per-season team rollup, recomputed from scratch)",
+    "description": "Season-level team rollup — unlike player_season_advanced_stats (TASK-61), this needs no chained snapshots: a team can't get traded mid-season the way a player can, so there's no cross-entity game-order-chaining problem to solve. Recomputed from scratch from team_game_advanced_stats after every relevant write, same pattern as skater_season_stats/goalie_season_stats (TASK-44) — a full re-sum bounded by one team's season (≤~82 games), never incremented in place. References team, season. Columns: strength_state (default \"all\"), corsi_for/against, fenwick_for/against, xg_for/against, faceoff_wins/losses, pdo, toi_seconds, games_played. Unique index on (team_id, season_id, strength_state). Depends on TASK-66.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "Recomputed wholesale from team_game_advanced_stats, never incremented in place — matches skater_season_stats/goalie_season_stats's existing recompute discipline",
+      "Unique index on (team_id, season_id, strength_state)"
+    ]
+  },
+  {
+    "id": "TASK-62",
+    "epic_id": "EPIC-13",
+    "title": "Recalculation job: rebuild the stat chain forward from a corrected game",
+    "description": "Add stats_syncing (boolean, default false) to games. When corrected data arrives for a game: set games.stats_syncing = true, and mark that game's players' player_season_advanced_stats rows from that game forward as stale = true — flagging only, no recompute yet. Enqueue a job (queue_as :ingest, the same single-threaded queue every ingestion job already uses) that: rebuilds game_events/shifts for the corrected game (the actual NHL API re-fetch is out of scope — TASK-58's tables just need to accept being upserted again by whatever ingestion lands later), rebuilds player_game_advanced_stats for that game, then rebuilds the player_season_advanced_stats chain forward from that game for each affected player — ordered by each player's actual games (via player_game_advanced_stats/shifts), not calendar date, since an affiliate call-up means a player's games aren't always sequential within one team's schedule. Rebuild = delete the stale tail, reinsert fresh snapshot rows chained off the prior (non-stale) row's totals plus each subsequent game's delta. Wrap each player's rebuild in its own transaction, so one player's failure can't corrupt another's totals, and so the whole job is safe to re-run — a partial prior run must never cause a game's delta to be double-counted on retry. The same job also rebuilds team_game_advanced_stats (TASK-66) for both teams in the corrected game and re-sums team_season_advanced_stats (TASK-67) for each — team-season has no chain to walk forward (a team can't get traded mid-season the way a player can), so it's a plain from-scratch re-sum over that team's season, same discipline skater_season_stats/goalie_season_stats already use. On success: rebuilt player and team rows read stale = false where applicable, and games.stats_syncing flips back to false only once every affected player's chain and both teams' rollups have been rebuilt, not after the first.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "high",
+    "acceptance_criteria": [
+      "A spec proves rebuilding a player's chain from a corrected mid-season game produces the same final totals as a from-scratch recompute of every game in order",
+      "A spec proves the job is safe to re-run: interrupting it partway and re-running from the top never double-counts a game's delta",
+      "A spec proves chain order follows the player's actual games, including a cross-team affiliate stint, not calendar date",
+      "games.stats_syncing is false again only once every affected player's chain has been rebuilt, not after the first one completes",
+      "A spec proves the corrected game's two team_game_advanced_stats rows and both teams' team_season_advanced_stats are rebuilt by this same job run, not a separate mechanism"
+    ]
+  },
+  {
+    "id": "TASK-63",
+    "epic_id": "EPIC-13",
+    "title": "Surface stats_syncing in team games / player stats API meta",
+    "description": "Per the existing { data, meta? } envelope: team games and any endpoint touching a game currently mid-recalculation include stats_syncing in meta when true, matching the existing convention that meta carries derived/pagination info and is omitted rather than sent false when there's nothing to say — so the frontend can show a \"recalculating\" state instead of silently serving numbers that are about to change. Depends on TASK-62.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "acceptance_criteria": [
+      "A request spec proves meta.stats_syncing appears when the underlying game has stats_syncing: true, and is absent (not present-and-false) otherwise"
+    ]
+  },
+  {
+    "id": "TASK-64",
+    "epic_id": "EPIC-13",
+    "title": "Score-state (close/all) advanced stat splits — recompute from stored events, no new NHL calls",
+    "description": "Hockey-reference slices advanced stats by score-state (\"close\" — within one goal in the 1st/2nd, tied in the 3rd — vs. all situations) in addition to strength_state, doubling every strength-state table (All/EV/PP/SH/5v5 x close/all-score). Deliberately out of v1 scope (TASK-60/61 ship strength_state only) — more surface than a hockey-reference-inspired v1 needs. Cheap to add later specifically because score-state is derivable entirely from data TASK-58 already stores: the score at any event reconstructs from goal-type game_events rows already in the table, so this is a new aggregation dimension over already-ingested game_events/shifts, not a new api-web.nhle.com integration or client call. Adding it means a score_state column/dimension on player_game_advanced_stats/player_season_advanced_stats (or a sibling table) plus a one-time backfill recomputing score-state-filtered rollups for every game already ingested by then. Depends on TASK-58/60/61/62.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "acceptance_criteria": [
+      "The backfill recomputes score-state splits for already-ingested games using only stored game_events/shifts — no NHL API call is made",
+      "The backfill is safe to re-run, same requirement TASK-62's forward-chain rebuild already has"
+    ]
+  },
+  {
+    "id": "TASK-65",
+    "epic_id": "EPIC-13",
+    "title": "Wire advanced-stats ingestion/recompute into the admin sync console",
+    "description": "Once play-by-play/shift ingestion (deferred, not part of this epic) and TASK-62's recompute job exist, a super admin needs to trigger them the same way every other sync kind already works — through EPIC-12's SyncKindRegistry / AdminSyncOrchestrator / New Sync trigger form, not a separate one-off mechanism. Add a new sync kind (or kinds) to SyncKindRegistry with its required scope axes (team + season, matching team_schedule/game_stats), have AdminSyncOrchestrator dispatch to whichever ingestion/recompute service this epic's ingestion task and TASK-62 land as, and let it show up in the existing New Sync form as just another kind option — no new frontend page. Depends on the actual ingestion path and TASK-62 existing first; this task is only the admin-console wiring.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low",
+    "acceptance_criteria": [
+      "The new kind appears in GET /api/v1/admin/sync_kinds with its scope axes, the same shape every existing kind already returns",
+      "Triggering it from the existing New Sync form enqueues the same recompute path a corrected-game trigger (TASK-62) would use, not a separate code path"
+    ]
+  },
+  {
+    "id": "TASK-68",
+    "epic_id": "EPIC-14",
+    "title": "Query objects for league-wide skater/goalie search, filter, sort, pagination",
+    "description": "New app/queries/ objects (matching RosterStatusPage/GameDatePage's existing hand-rolled offset-pagination style, not a pagination gem) building the read for a league-wide (or per-league) player list: name search (ilike), filters (league, team, position, season, game_type), sort on any column from a fixed allowlist spanning both skater_season_stats/goalie_season_stats and player_season_advanced_stats (TASK-61) — never an arbitrary client-supplied column/direction string, same discipline as never interpolating raw SQL. Skaters and goalies get separate query objects, not one merged query — matches the rest of this schema's skater/goalie separation. Depends on EPIC-13 (player_season_advanced_stats) for the advanced-stat columns.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "high",
+    "acceptance_criteria": [
+      "Sort column/direction are validated against a fixed allowlist — an unrecognized column is rejected, not silently interpolated into ORDER BY",
+      "meta shape (page/per_page/total_count/total_pages) matches RosterStatusPage's existing convention rather than inventing a new one"
+    ]
+  },
+  {
+    "id": "TASK-69",
+    "epic_id": "EPIC-14",
+    "title": "GET endpoints for league-wide skater/goalie search",
+    "description": "Controllers wiring TASK-68's query objects to routes, request params validated against the same allowlists, response following the existing { data, meta } envelope. Each row serializes both basic and advanced stat columns. Depends on TASK-68.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "high",
+    "acceptance_criteria": [
+      "Request specs cover search, at least one filter, sort (including an invalid-column 422), and pagination"
+    ]
+  },
+  {
+    "id": "TASK-70",
+    "epic_id": "EPIC-14",
+    "title": "Extend DataTable with server-side pagination and filtering row models",
+    "description": "TanStack Table's pagination and filtering row models — explicitly deferred at DataTable's original build (docs/DECISIONS.md) for exactly this use case. DataTable needs a server-driven mode: pagination state comes from the backend's page/per_page/meta (TASK-69), not a client-side row model operating over an already-fetched full array, since a league-wide list is hundreds of rows and can't be fetched whole up front. Existing SkaterStatsTable/GoalieStatsTable usages (team-scoped, small row counts, client-side sort) must keep working unchanged — this is an added mode, not a rewrite of the existing one. Depends on TASK-69.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "high",
+    "acceptance_criteria": [
+      "Existing team-scoped DataTable usages (SkaterStatsTable/GoalieStatsTable) are unaffected — same client-side sort behavior as today",
+      "A server-driven table correctly reflects the backend's current page/total without re-fetching or re-sorting client-side"
+    ]
+  },
+  {
+    "id": "TASK-71",
+    "epic_id": "EPIC-14",
+    "title": "League-wide player search page",
+    "description": "New page wiring TASK-69's endpoints through TASK-70's extended DataTable: a search input, filter controls (league/team/position/season), sortable columns spanning basic and advanced stats, and pagination controls. Separate skater/goalie views (tabs or separate routes), not a merged table. Depends on TASK-70.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium"
   }
 ]

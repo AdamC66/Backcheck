@@ -94,5 +94,21 @@
     "description": "Superuser-only panel to trigger roster/stats/schedule/standings syncs on demand, scoped to a league, season, or single team, with live progress (e.g. '12/21 teams — syncing San Jose'). Sits on top of EPIC-8's existing sync services/clients rather than replacing them — one new AdminSyncOrchestratorJob loops through the resolved scope calling SyncTeamRoster/SyncStandings/etc. directly, tracked via new SyncRun/SyncRunItem rows (see DECISIONS.md, 2026-08-25). Shares the Super Admin surface with EPIC-7 but is a distinct concern: EPIC-7 is manual data overrides, this is operating the ingestion pipeline that already runs automatically via recurring.yml.",
     "status": "done",
     "priority": "medium"
+  },
+  {
+    "id": "EPIC-13",
+    "project_id": "backcheck",
+    "title": "Advanced analytics schema: play-by-play, shifts, xG, rollups",
+    "description": "Extends the existing domain model (League/Team/Season/Player/RosterEntry/Game/TeamStanding/SkaterStatLine/GoalieStatLine) with play-by-play events, shift data, versioned xG coefficients, and cached per-game/per-season advanced-stat rollups with a recalculation pipeline for corrected data. Backend only: schema, models, associations, indexes, and the recompute job structure. NHL API client calls for play-by-play/shift-chart ingestion are explicitly deferred to a later epic — these tables are built to accept upserts, not to be populated yet. A frontend to surface any of this is anticipated but not yet scoped as its own epic.",
+    "status": "backlog",
+    "priority": "medium"
+  },
+  {
+    "id": "EPIC-14",
+    "project_id": "backcheck",
+    "title": "League-wide player search & stats table",
+    "description": "A single searchable, filterable, sortable, paginated player list — backend-driven, not the client-side sort-only wiring DataTable has today. This is the actual trigger for TanStack Table's pagination/filtering row models, deliberately deferred until now (see docs/DECISIONS.md's DataTable entry: 'not built speculatively now'). Waited on EPIC-13 deliberately: sortable/filterable columns span both basic totals (skater_season_stats/goalie_season_stats) and advanced ones (Corsi/Fenwick/xG from player_season_advanced_stats), so this couldn't be scoped correctly before that data existed. Skaters and goalies stay separate views, not merged into one table — same reasoning already applied everywhere else in this schema (a combined skater+goalie shape was the prior attempt's mistake, per DECISIONS.md).",
+    "status": "backlog",
+    "priority": "medium"
   }
 ]
