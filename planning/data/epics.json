@@ -110,5 +110,13 @@
     "description": "A single searchable, filterable, sortable, paginated player list — backend-driven, not the client-side sort-only wiring DataTable has today. This is the actual trigger for TanStack Table's pagination/filtering row models, deliberately deferred until now (see docs/DECISIONS.md's DataTable entry: 'not built speculatively now'). Waited on EPIC-13 deliberately: sortable/filterable columns span both basic totals (skater_season_stats/goalie_season_stats) and advanced ones (Corsi/Fenwick/xG from player_season_advanced_stats), so this couldn't be scoped correctly before that data existed. Skaters and goalies stay separate views, not merged into one table — same reasoning already applied everywhere else in this schema (a combined skater+goalie shape was the prior attempt's mistake, per DECISIONS.md).",
     "status": "backlog",
     "priority": "medium"
+  },
+  {
+    "id": "EPIC-15",
+    "project_id": "backcheck",
+    "title": "Play-by-play/shift ingestion; validate and surface advanced stats",
+    "description": "Builds the ingestion path EPIC-13 deliberately deferred: a real NHL client for play-by-play and shift-chart data, upserting into game_events/shifts (TASK-58), wired through ComputeGameAdvancedStats (TASK-72) and the existing recompute pipeline (TASK-62) end to end — closing the composition point TASK-72 was left unwired at. Also validates the whole computation pipeline's accuracy against real data: on-ice attribution, Corsi/Fenwick/xG, and score-state splits (TASK-64) have only ever been exercised against synthetic spec fixtures, never a real game. Frontend: surfaces these now-real advanced stats, which requires building game detail and player detail pages that don't exist yet at all, plus extending the existing team stats page.",
+    "status": "backlog",
+    "priority": "medium"
   }
 ]
