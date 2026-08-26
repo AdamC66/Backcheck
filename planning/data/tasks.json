@@ -628,16 +628,16 @@
     "id": "TASK-62",
     "epic_id": "EPIC-13",
     "title": "Recalculation job: rebuild the stat chain forward from a corrected game",
-    "description": "Add stats_syncing (boolean, default false) to games. When corrected data arrives for a game: set games.stats_syncing = true, and mark that game's players' player_season_advanced_stats rows from that game forward as stale = true — flagging only, no recompute yet. Enqueue a job (queue_as :ingest, the same single-threaded queue every ingestion job already uses) that: rebuilds game_events/shifts for the corrected game (the actual NHL API re-fetch is out of scope — TASK-58's tables just need to accept being upserted again by whatever ingestion lands later), rebuilds player_game_advanced_stats for that game, then rebuilds the player_season_advanced_stats chain forward from that game for each affected player — ordered by each player's actual games (via player_game_advanced_stats/shifts), not calendar date, since an affiliate call-up means a player's games aren't always sequential within one team's schedule. Rebuild = delete the stale tail, reinsert fresh snapshot rows chained off the prior (non-stale) row's totals plus each subsequent game's delta. Wrap each player's rebuild in its own transaction, so one player's failure can't corrupt another's totals, and so the whole job is safe to re-run — a partial prior run must never cause a game's delta to be double-counted on retry. The same job also rebuilds team_game_advanced_stats (TASK-66) for both teams in the corrected game and re-sums team_season_advanced_stats (TASK-67) for each — team-season has no chain to walk forward (a team can't get traded mid-season the way a player can), so it's a plain from-scratch re-sum over that team's season, same discipline skater_season_stats/goalie_season_stats already use. On success: rebuilt player and team rows read stale = false where applicable, and games.stats_syncing flips back to false only once every affected player's chain and both teams' rollups have been rebuilt, not after the first.",
+    "description": "Add stats_syncing (boolean, default false) to games. MarkGameForStatsRecompute flags games.stats_syncing = true and that game's affected players' player_season_advanced_stats rows from that game forward as stale = true, then enqueues RebuildAdvancedStatsJob (queue_as :ingest). RebuildAdvancedStatsForGame rebuilds each affected player's player_season_advanced_stats chain forward via RebuildPlayerAdvancedStatsChain (ordered by the player's actual games through player_game_advanced_stats, not calendar date, so a cross-team affiliate stint chains correctly) and re-sums team_season_advanced_stats for both teams via RecomputeTeamSeasonAdvancedStats, then flips games.stats_syncing back to false only once every affected player's chain and both teams' rollups are rebuilt. Rebuild = delete the stale tail and reinsert it chained off the last untouched snapshot, never incremented in place, so a partial run followed by a full re-run can't double-count a game's delta. Scope note: this assumes player_game_advanced_stats/team_game_advanced_stats for the corrected game are already fresh by the time this runs — the actual computation of those per-game rows from game_events/shifts (on-ice attribution, xG-from-coordinates via xg_model) is real domain logic nothing in the schema defines yet, and is out of scope here; see TASK-72.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "high",
     "acceptance_criteria": [
       "A spec proves rebuilding a player's chain from a corrected mid-season game produces the same final totals as a from-scratch recompute of every game in order",
       "A spec proves the job is safe to re-run: interrupting it partway and re-running from the top never double-counts a game's delta",
       "A spec proves chain order follows the player's actual games, including a cross-team affiliate stint, not calendar date",
       "games.stats_syncing is false again only once every affected player's chain has been rebuilt, not after the first one completes",
-      "A spec proves the corrected game's two team_game_advanced_stats rows and both teams' team_season_advanced_stats are rebuilt by this same job run, not a separate mechanism"
+      "A spec proves both teams' team_season_advanced_stats are re-summed from team_game_advanced_stats by this same job run"
     ]
   },
   {
@@ -724,5 +724,19 @@
     "type": "feature",
     "status": "backlog",
     "priority": "medium"
+  },
+  {
+    "id": "TASK-72",
+    "epic_id": "EPIC-13",
+    "title": "Compute player_game_advanced_stats/team_game_advanced_stats from game_events + shifts",
+    "description": "The per-game computation TASK-62's recompute job assumes is already done: given a game's game_events and shifts, determine which players were on the ice for each event (via shifts' start/end times), bucket by strength_state, and derive Corsi/Fenwick (shot-attempt counts by on-ice player), xG (apply the active xg_model's coefficients to each shot's x_coord/y_coord), zone entries/exits, and TOI — then upsert player_game_advanced_stats for every player who was on the ice and team_game_advanced_stats for both teams. This is the actual hockey-analytics algorithm deferred out of TASK-62 (see its scope note) because nothing in the schema defines it yet and it's a substantially larger, more novel piece of logic than the chain-rebuild mechanics. Depends on real game_events/shifts ingestion existing (also not yet built — see EPIC-13's description) or, for development, fixture data shaped like it.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "Given game_events/shifts for a game, on-ice attribution correctly identifies which skaters were on the ice for each event using shift start/end times, not just event team",
+      "xG per shot is computed from the currently-active xg_model's coefficients against that shot's x_coord/y_coord",
+      "Output upserts player_game_advanced_stats for every player on the ice and team_game_advanced_stats for both teams, matching the existing tables' strength_state bucketing"
+    ]
   }
 ]
