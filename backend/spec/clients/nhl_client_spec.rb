@@ -35,4 +35,12 @@ RSpec.describe NhlClient do
 
     expect { unthrottled_client.roster("TOR") }.to raise_error(described_class::TooManyRedirects)
   end
+
+  it "returns play-by-play for a game" do
+    stub_nhl("/v1/gamecenter/2024020204/play-by-play", fixture: "play_by_play")
+
+    result = unthrottled_client.play_by_play(2024020204)
+
+    expect(result["plays"].map { |play| play["typeDescKey"] }).to include("goal", "shot-on-goal")
+  end
 end

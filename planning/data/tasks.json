@@ -759,7 +759,7 @@
     "title": "NHL play-by-play + shift-chart client methods",
     "description": "Add play-by-play (likely /v1/gamecenter/{id}/play-by-play on api-web.nhle.com, same host NhlClient already talks to) and shift-chart (historically a separate host — api.nhle.com/stats/rest/en/shiftcharts — unverified, needs checking against a live response the way every other endpoint in this codebase was confirmed before being trusted, not assumed from third-party docs) client methods. If the shift-chart host really does differ from api-web.nhle.com, this may need its own client class (same reasoning as HockeyTechClient being separate from NhlClient), not a bolted-on method on the wrong client.",
     "type": "spike",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "Both endpoints' actual response shapes are confirmed against a live call, not assumed from docs",
@@ -770,13 +770,14 @@
     "id": "TASK-75",
     "epic_id": "EPIC-15",
     "title": "UpsertGameEvents / UpsertShifts services",
-    "description": "Parse a game's play-by-play response into game_events rows and its shift-chart response into shifts rows, upserting on the natural key (nhl_event_id/nhl_shift_id scoped to game_id — TASK-58's existing convention). Report unmatched players the way UpsertGameStats already does via missing_players, not by raising or silently skipping. Depends on TASK-74.",
+    "description": "Parse a game's play-by-play response into game_events rows and its shift-chart response into shifts rows, upserting on the natural key (nhl_event_id/nhl_shift_id scoped to game_id — TASK-58's existing convention). Report unmatched players the way UpsertGameStats already does via missing_players, not by raising or silently skipping. Depends on TASK-74. Incorporates findings from that research (see docs/DECISIONS.md): filter shift-chart rows to typeCode 517 (real shifts), discarding typeCode 505 goal-marker noise; skip play-by-play types not modeled (period-start/end, stoppage, delayed-penalty, game-end); derive strength_state per event from situationCode (away vs. home skater-count comparison) rather than guessing; parse \"MM:SS\" shift start/end times the same way parse_toi already does. Add GameEvent::SHOT_TYPES[:between_legs] (real data has it, schema doesn't) and GameEvent#tertiary_player (nullable, class_name: \"Player\") for a goal's second assist. Fix XgFormula's coordinate normalization using each event's homeTeamDefendingSide instead of the TASK-72 placeholder assumption, since the parser already needs that field for zone/coordinate attribution — this supersedes TASK-73.",
     "type": "feature",
     "status": "backlog",
     "priority": "medium",
     "acceptance_criteria": [
       "Re-running against the same payload is a no-op (upsert, not append) — matches every other ingestion path in this codebase",
-      "An event/shift referencing an unrecognized player is reported, not silently dropped or a hard failure"
+      "An event/shift referencing an unrecognized player is reported, not silently dropped or a hard failure",
+      "A spec proves XgFormula's fixed normalization scores the same physical shot location identically regardless of which end the team defends that period"
     ]
   },
   {

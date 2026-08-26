@@ -356,5 +356,24 @@ Extended `player_game_advanced_stats`/`player_season_advanced_stats`/`team_game_
 
 `ComputeGameAdvancedStats` reconstructs the score entering each event by scanning `goal`-type `game_events` in `(period, period_time_seconds, id)` order — a plain in-memory scan, not a stored running total, since nothing else needs live score state and the event volume per game is small. Backfilling existing games (once real ingestion exists) is `rake advanced_stats:backfill`: a plain rake task looping `ComputeGameAdvancedStats` + `RebuildAdvancedStatsForGame` per game with stored `game_events`, no NHL API call — safe to re-run because both of those services already recompute wholesale rather than increment in place.
 
+### Play-by-play/shift-chart endpoints (TASK-74): confirmed against live responses
+**Status:** Settled
+
+EPIC-15's ingestion work opened by pulling real play-by-play and shift-chart data for an actual game, rather than assuming shapes from third-party docs — same discipline as every other endpoint in this codebase. Findings:
+
+**Two endpoints, two hosts.** Play-by-play (`/v1/gamecenter/{id}/play-by-play`) lives on the same host as everything else (`api-web.nhle.com`) — added directly to `NhlClient`. Shift-chart (`api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId={id}`) is a genuinely different host and REST style, so it got its own `NhlStatsClient` — same reasoning as `HockeyTechClient` being separate from `NhlClient`: duplicated throttle/retry machinery over a shared base class, matching that existing precedent.
+
+**This resolves the xG coordinate-frame question TASK-73 only ever simplified around.** Every play-by-play event carries `homeTeamDefendingSide` (`"left"`/`"right"`), which is exactly what's needed to normalize `x_coord`/`y_coord` to "distance/angle from the attacking net" correctly — no assumption required. Folded the fix into TASK-75's parser rather than leaving it as a separate follow-up, since the parser already has to read this field to attribute zone/coordinates correctly.
+
+**Real event types confirmed against our schema.** All 9 of `GameEvent::EVENT_TYPES` (as of TASK-72, including `missed_shot`) exist in the real feed as `typeDescKey` values (`goal`, `shot-on-goal`, `faceoff`, `hit`, `giveaway`, `takeaway`, `penalty`, `blocked-shot`, `missed-shot`). The feed also carries `period-start`/`period-end`/`stoppage`/`delayed-penalty`/`game-end` — not modeled, and don't need to be; the parser just skips them.
+
+**One shot-type gap found:** real data includes `between-legs`, which `GameEvent::SHOT_TYPES` doesn't have. Same cheap fix as `missed_shot` — a new hash value, no migration.
+
+**A goal can have two assists** (`assist1PlayerId`, `assist2PlayerId`), but `GameEvent` only had one `secondary_player` slot. Added `tertiary_player` (nullable, `class_name: "Player"`) specifically for a goal's second assist, rather than silently dropping it — real accuracy gap for a stat people care about.
+
+**`situationCode`** (a 4-digit string, e.g. `"1551"` = away-goalie-in/away-skaters/home-skaters/home-goalie-in) gives precise strength-state derivation per event — including empty-net situations — rather than needing to infer it. Comparing away vs. home skater counts gives even-strength/power-play/short-handed directly; our schema's `even_strength` bucket still doesn't distinguish 5v5/4v4/3v3 (unchanged limitation from TASK-72).
+
+**The shift-chart feed mixes in goal-marker noise.** Real shift rows are `typeCode 517`. `typeCode 505` rows are goal annotations (`duration: null`, `shiftNumber: 0`) duplicating what play-by-play's own `goal` events already report — the parser filters to `517` and discards `505`, the client itself doesn't filter (same "client fetches, caller filters" split as `HockeyTechClient`'s coaching-staff row).
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

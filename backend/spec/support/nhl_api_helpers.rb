@@ -13,9 +13,19 @@ module NhlApiHelpers
       .to_return(status: status, body: body || nhl_fixture(fixture), headers: { "Content-Type" => "application/json" })
   end
 
+  def stub_nhl_stats(path, fixture: nil, body: nil, status: 200, query: nil)
+    stub = stub_request(:get, "https://api.nhle.com#{path}")
+    stub = stub.with(query: query) if query
+    stub.to_return(status: status, body: body || nhl_fixture(fixture), headers: { "Content-Type" => "application/json" })
+  end
+
   # The client sleeps between requests; specs shouldn't.
   def unthrottled_client
     NhlClient.new(min_interval: 0)
+  end
+
+  def unthrottled_stats_client
+    NhlStatsClient.new(min_interval: 0)
   end
 end
 
@@ -23,5 +33,8 @@ RSpec.configure do |config|
   config.include NhlApiHelpers
 
   # Process-wide, so without a reset each spec waits on the previous spec's request.
-  config.before { NhlClient.last_request_at = nil }
+  config.before do
+    NhlClient.last_request_at = nil
+    NhlStatsClient.last_request_at = nil
+  end
 end

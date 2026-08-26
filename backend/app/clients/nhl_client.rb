@@ -52,6 +52,10 @@ class NhlClient
     get("/v1/gamecenter/#{nhl_game_id}/boxscore")
   end
 
+  def play_by_play(nhl_game_id)
+    get("/v1/gamecenter/#{nhl_game_id}/play-by-play")
+  end
+
   # The only endpoint here that redirects: "current" is an alias for whichever season is
   # presently in effect, and its 307 has no body — the resolved season is the one thing
   # worth keeping from the hop, since it's otherwise thrown away.
