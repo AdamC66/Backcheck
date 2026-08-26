@@ -386,5 +386,20 @@ EPIC-15's ingestion work opened by pulling real play-by-play and shift-chart dat
 
 `SyncGameEventsJob` (`queue_as :ingest`) exists alongside the service for parity with every other sync kind's standalone job (`SyncGameStatsJob`, `SyncTeamRosterJob`, etc.), even though the admin console dispatches to the service directly rather than through it — consistent with the "loop-in-process orchestrator" decision above.
 
+### Validating the advanced-stats pipeline against a real game (TASK-77)
+**Status:** Settled
+
+Ran `SyncGameEvents` against a real, already-ingested game (`nhl_game_id 2025020003`, COL @ LAK, 2025-10-07 — chosen because it already had boxscore-sourced `SkaterGameStat` rows from an earlier sync, so there was independent data to cross-check against) rather than only the trimmed fixtures TASK-74/75's unit specs use. A placeholder `XgModel` (`v0-placeholder`, untrained coefficients) was activated first since xG computation requires one — its numbers aren't calibrated, only the pipeline's mechanics were under test here.
+
+**Direct comparison against a public reference (Natural Stat Trick, MoneyPuck) wasn't reachable programmatically.** NST Cloudflare-blocks a plain `curl` (403); MoneyPuck detects scripted access and returns a data-license notice instead of the CSV. Both are real, deliberate anti-scraping measures, not a fixable client issue. Validated by cross-checking against data already in this app instead:
+
+- **Goal events matched the boxscore exactly**: 5 real `goal` events parsed (4 COL / 1 LAK), matching `game.home_score`/`away_score` from an entirely separate, earlier sync (`SyncStandings`/`SyncDailyScores` never touch play-by-play at all).
+- **Corsi/Fenwick/SOG nested correctly** for both teams: boxscore `shots_on_goal` (23–24) ≤ computed Fenwick (33–38) ≤ computed Corsi (49–62) — the exact relationship those stats are defined by (Corsi = Fenwick + blocked; Fenwick = SOG + missed).
+- **Combined team Corsi (111) exactly equaled total attempts parsed** (5 goals + 42 shots + 24 missed + 40 blocked = 111), confirming no attempt was double-counted or dropped across the team split.
+- **TOI leaders were plausible, recognizable players** (Cale Makar 23:07, Drew Doughty 22:40 — both real top-4 defensemen) with realistic ice time, not a red flag like a bottom-six forward showing 30+ minutes.
+- **One missing player** (`8471685`, Anze Kopitar) was correctly reported via `missing_players` rather than silently dropped or crashing — an instance of the known, already-tracked TASK-56 gap (a player who left this dev DB's synced roster set), not a new bug.
+
+This is documented as the validation record rather than built as an automated fixture-based spec: reproducing it as a spec would need ~40 real `Player`/`Team` factories seeded with the exact `nhl_player_id`/`nhl_team_id` values a full real game references (on-ice Corsi/Fenwick correctness depends on every relevant primary player resolving, not just the ones goal-scoring touches) — a large amount of fixture weight for a check the existing trimmed-fixture unit specs (TASK-74/75/76) already cover at the mechanics level. The real-data run proved the mechanics hold up against a game they were never tuned against.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

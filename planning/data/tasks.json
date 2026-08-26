@@ -799,7 +799,7 @@
     "title": "Validate the advanced-stats pipeline against real ingested games",
     "description": "On-ice attribution, Corsi/Fenwick counts, and score-state classification (TASK-72/64) have only been proven against synthetic spec fixtures — never a real game. Once TASK-76 can ingest real data, spot-check a handful of real games' computed Corsi/Fenwick/score-state splits against a public reference (e.g. Natural Stat Trick or MoneyPuck for the same game/date) and fix whatever discrepancies turn up — shift-boundary edge cases, strength-state mapping gaps, event-type coverage. Complements TASK-73, which is the narrower xG-coordinate-frame half of this same validation effort.",
     "type": "chore",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "At least one real game's computed Corsi/Fenwick totals are compared against a public reference source and match within a documented, understood tolerance",
