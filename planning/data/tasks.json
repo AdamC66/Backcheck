@@ -497,7 +497,7 @@
     "title": "New Sync trigger form",
     "description": "Cascading league/season/team fields that show or hide per the selected kind (per TASK-49's registry — reflect it as a small typed TS constant reviewed against the Ruby side, or expose it from the API; worth deciding at implementation time rather than presupposing here), a rate-limit preset selector mapped to min_interval, posting to the create endpoint.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium"
   },
   {

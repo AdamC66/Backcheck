@@ -31,3 +31,7 @@ export const rosterTransactionsKey = (teamId: number, season?: string, page?: nu
   [...rosterTransactionsTeamKey(teamId), season ?? "all", page ?? 1] as const;
 
 export const SYNC_RUNS_KEY = ["sync-runs"] as const;
+
+export const SYNC_KINDS_KEY = ["sync-kinds"] as const;
+
+export const seasonsKey = (leagueSlug: string) => ["seasons", leagueSlug] as const;

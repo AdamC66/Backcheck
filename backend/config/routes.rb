@@ -11,6 +11,7 @@ Rails.application.routes.draw do
       resources :leagues, only: [ :index, :show ], param: :slug do
         resources :standings, only: [ :index ]
         resources :games, only: [ :index ], controller: "league_games"
+        resources :seasons, only: [ :index ]
       end
 
       resources :teams, only: [ :show ] do
@@ -30,6 +31,7 @@ Rails.application.routes.draw do
             post :cancel
           end
         end
+        resources :sync_kinds, only: [ :index ]
       end
     end
   end

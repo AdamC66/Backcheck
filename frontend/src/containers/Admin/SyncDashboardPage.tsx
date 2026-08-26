@@ -1,20 +1,13 @@
+import { Link } from "react-router";
+import { Button } from "@/components/Button/Button";
 import { Row } from "@/components/Row/Row";
 import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
-import type { SyncKind, SyncRun } from "@/models/adminSync";
+import { SYNC_KIND_LABELS, type SyncRun } from "@/models/adminSync";
 import { useSyncRuns } from "@/models/useSyncRuns";
 
-const KIND_LABELS: Record<SyncKind, string> = {
-  team_roster: "Team roster",
-  affiliate_roster: "Affiliate roster",
-  team_schedule: "Team schedule",
-  standings: "Standings",
-  daily_scores: "Daily scores",
-  game_stats: "Game stats",
-};
-
 function kindsLabel(run: SyncRun) {
-  return run.sync_kinds.map((kind) => KIND_LABELS[kind]).join(", ");
+  return run.sync_kinds.map((kind) => SYNC_KIND_LABELS[kind]).join(", ");
 }
 
 function SyncRunRow({ run }: { run: SyncRun }) {
@@ -43,7 +36,14 @@ export function SyncDashboardPage() {
 
   return (
     <Stack gap="md">
-      <Text variant="subheading">Sync Runs</Text>
+      <Row justify="between">
+        <Text variant="subheading">Sync Runs</Text>
+        <Link to="/admin/sync/new">
+          <Button type="button" size="sm">
+            New Sync
+          </Button>
+        </Link>
+      </Row>
 
       {runs.isPending ? <Text tone="muted">Loading sync runs…</Text> : null}
       {runs.isError ? <Text tone="danger">Could not load sync runs.</Text> : null}

@@ -12,6 +12,7 @@ import { TeamRosterPage } from "@/containers/TeamPage/TeamRosterPage";
 import { TeamStatsPage } from "@/containers/TeamPage/TeamStatsPage";
 import { AdminPage } from "@/containers/Admin/AdminPage";
 import { SyncDashboardPage } from "@/containers/Admin/SyncDashboardPage";
+import { NewSyncRunPage } from "@/containers/Admin/NewSyncRunPage";
 
 export function App() {
   return (
@@ -62,6 +63,7 @@ export function App() {
         }
       >
         <Route index element={<SyncDashboardPage />} />
+        <Route path="sync/new" element={<NewSyncRunPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

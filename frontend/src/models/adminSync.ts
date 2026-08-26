@@ -1,4 +1,4 @@
-import { requestWithMeta, type Envelope } from "@/lib/apiClient";
+import { request, requestWithMeta, type Envelope } from "@/lib/apiClient";
 
 export type SyncRunStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
@@ -9,6 +9,15 @@ export type SyncKind =
   | "standings"
   | "daily_scores"
   | "game_stats";
+
+export const SYNC_KIND_LABELS: Record<SyncKind, string> = {
+  team_roster: "Team roster",
+  affiliate_roster: "Affiliate roster",
+  team_schedule: "Team schedule",
+  standings: "Standings",
+  daily_scores: "Daily scores",
+  game_stats: "Game stats",
+};
 
 export interface SyncRun {
   id: number;
@@ -36,4 +45,32 @@ export interface SyncRunsMeta {
 
 export function fetchSyncRuns(): Promise<Envelope<SyncRun[], SyncRunsMeta>> {
   return requestWithMeta<SyncRun[], SyncRunsMeta>("/admin/sync_runs");
+}
+
+export type ScopeAxis = "team" | "season" | "league" | "date";
+
+export interface SyncKindInfo {
+  kind: SyncKind;
+  scope: ScopeAxis[];
+}
+
+export function fetchSyncKinds(): Promise<SyncKindInfo[]> {
+  return request<SyncKindInfo[]>("/admin/sync_kinds");
+}
+
+export type MinIntervalPreset = "conservative" | "normal" | "aggressive";
+
+export interface CreateSyncRunPayload {
+  sync_kinds: SyncKind[];
+  league_id?: number;
+  season_id?: number;
+  team_id?: number;
+  min_interval_preset?: MinIntervalPreset;
+}
+
+export function createSyncRun(payload: CreateSyncRunPayload): Promise<SyncRun> {
+  return request<SyncRun>("/admin/sync_runs", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
