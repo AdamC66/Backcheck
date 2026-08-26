@@ -81,7 +81,7 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.sync_run_items.first.status).to eq(SyncRun::STATUSES[:completed])
   end
 
-  it "runs the same corrected-game recompute path as TASK-62 for an advanced_stats item" do
+  it "ingests real events/shifts and recomputes for an advanced_stats item" do
     season = create(:season, league: league)
     games = Array.new(2) do |n|
       create(:game, season: season, home_team: team, away_team: create(:team, league: league),
@@ -89,9 +89,9 @@ RSpec.describe AdminSyncOrchestrator do
     end
     run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:advanced_stats] ])
     recomputed_games = []
-    allow(MarkGameForStatsRecompute).to receive(:new) do |game:|
+    allow(SyncGameEvents).to receive(:new) do |game:, **|
       recomputed_games << game
-      instance_double(MarkGameForStatsRecompute, call: nil)
+      instance_double(SyncGameEvents, call: [])
     end
 
     described_class.new(sync_run: run).call

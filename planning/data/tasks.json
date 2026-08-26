@@ -786,7 +786,7 @@
     "title": "Wire real ingestion through to the advanced-stats recompute pipeline",
     "description": "The composition TASK-72 was deliberately left un-wired for: a job that calls UpsertGameEvents + UpsertShifts, then ComputeGameAdvancedStats, then MarkGameForStatsRecompute for one game — same shape as SyncGameStats composing UpsertGameStats + RecomputeSeasonStats today. Decide during implementation whether this extends the existing admin sync console 'advanced_stats' kind (TASK-65) to do real ingestion now instead of MarkGameForStatsRecompute alone, or is a second kind — TASK-65's kind currently assumes computation already happened, which stops being true once this exists.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "Triggering ingestion for a real game populates game_events/shifts, then player_game_advanced_stats/team_game_advanced_stats, then rebuilds the season-grain rollups, in one traceable run",

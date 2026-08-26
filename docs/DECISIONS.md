@@ -377,5 +377,14 @@ EPIC-15's ingestion work opened by pulling real play-by-play and shift-chart dat
 
 **The shift-chart feed mixes in goal-marker noise.** Real shift rows are `typeCode 517`. `typeCode 505` rows are goal annotations (`duration: null`, `shiftNumber: 0`) duplicating what play-by-play's own `goal` events already report — the parser filters to `517` and discards `505`, the client itself doesn't filter (same "client fetches, caller filters" split as `HockeyTechClient`'s coaching-staff row).
 
+### Wiring real ingestion into the advanced-stats pipeline (TASK-76): extended the existing sync kind
+**Status:** Settled
+
+`SyncGameEvents` closes the composition `ComputeGameAdvancedStats` (TASK-72) was deliberately left out of: `UpsertGameEvents` + `UpsertShifts`, then `ComputeGameAdvancedStats`, then `MarkGameForStatsRecompute` for one game — same shape as `SyncGameStats` composing `UpsertGameStats` + `RecomputeSeasonStats` today.
+
+**Extended the existing admin sync console `advanced_stats` kind (TASK-65) rather than adding a second one.** That kind's per-game dispatch previously called `MarkGameForStatsRecompute` directly, which assumed `player_game_advanced_stats`/`team_game_advanced_stats` were already fresh — true only because nothing populated them yet. Now that real ingestion exists, that assumption is false, so the same kind's dispatch calls `SyncGameEvents` instead (which itself ends by calling `MarkGameForStatsRecompute`) — a strict superset of the old behavior, not a parallel mechanism a super admin would have to choose between. `AdminSyncOrchestrator` gained an `nhl_stats_client` alongside its existing `nhl_client`/`hockey_tech_client`, same `min_interval` threading.
+
+`SyncGameEventsJob` (`queue_as :ingest`) exists alongside the service for parity with every other sync kind's standalone job (`SyncGameStatsJob`, `SyncTeamRosterJob`, etc.), even though the admin console dispatches to the service directly rather than through it — consistent with the "loop-in-process orchestrator" decision above.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

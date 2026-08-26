@@ -124,7 +124,7 @@ class AdminSyncOrchestrator
     when :game_stats
       SyncGameStats.new(game: game, client: nhl_client).call
     when :advanced_stats
-      MarkGameForStatsRecompute.new(game: game).call
+      SyncGameEvents.new(game: game, client: nhl_client, stats_client: nhl_stats_client).call
     end
   end
 
@@ -172,6 +172,10 @@ class AdminSyncOrchestrator
 
   def nhl_client
     @nhl_client ||= NhlClient.new(min_interval: sync_run.min_interval)
+  end
+
+  def nhl_stats_client
+    @nhl_stats_client ||= NhlStatsClient.new(min_interval: sync_run.min_interval)
   end
 
   def hockey_tech_client(team)
