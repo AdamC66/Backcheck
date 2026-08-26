@@ -11,6 +11,11 @@ class Player < ApplicationRecord
   has_many :goalie_game_stats, dependent: :destroy
   has_many :skater_season_stats, dependent: :destroy
   has_many :goalie_season_stats, dependent: :destroy
+  has_many :primary_game_events, class_name: "GameEvent", foreign_key: :primary_player_id,
+           dependent: :destroy, inverse_of: :primary_player
+  has_many :secondary_game_events, class_name: "GameEvent", foreign_key: :secondary_player_id,
+           dependent: :nullify, inverse_of: :secondary_player
+  has_many :shifts, dependent: :destroy
 
   before_validation :assign_normalized_name
 

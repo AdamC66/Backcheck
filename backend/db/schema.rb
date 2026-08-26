@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_005240) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_010001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_005240) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "game_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "event_type", null: false
+    t.bigint "game_id", null: false
+    t.bigint "nhl_event_id", null: false
+    t.integer "period", null: false
+    t.integer "period_time_seconds", null: false
+    t.bigint "primary_player_id", null: false
+    t.bigint "secondary_player_id"
+    t.integer "shot_type"
+    t.integer "strength_state"
+    t.bigint "team_id"
+    t.datetime "updated_at", null: false
+    t.integer "x_coord"
+    t.integer "y_coord"
+    t.integer "zone"
+    t.index ["game_id", "nhl_event_id"], name: "index_game_events_on_game_id_and_nhl_event_id", unique: true
+    t.index ["game_id"], name: "index_game_events_on_game_id"
+    t.index ["primary_player_id"], name: "index_game_events_on_primary_player_id"
+    t.index ["secondary_player_id"], name: "index_game_events_on_secondary_player_id"
+    t.index ["team_id"], name: "index_game_events_on_team_id"
   end
 
   create_table "games", force: :cascade do |t|
@@ -256,6 +279,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_005240) do
     t.index ["nhl_season_id"], name: "index_seasons_on_nhl_season_id", unique: true
   end
 
+  create_table "shifts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "end_time_seconds", null: false
+    t.bigint "game_id", null: false
+    t.bigint "nhl_shift_id", null: false
+    t.integer "period", null: false
+    t.bigint "player_id", null: false
+    t.integer "start_time_seconds", null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "nhl_shift_id"], name: "index_shifts_on_game_id_and_nhl_shift_id", unique: true
+    t.index ["game_id"], name: "index_shifts_on_game_id"
+    t.index ["player_id"], name: "index_shifts_on_player_id"
+    t.index ["team_id"], name: "index_shifts_on_team_id"
+  end
+
   create_table "skater_game_stats", force: :cascade do |t|
     t.integer "assists", default: 0, null: false
     t.integer "blocked_shots", default: 0, null: false
@@ -430,6 +469,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_005240) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "game_events", "games"
+  add_foreign_key "game_events", "players", column: "primary_player_id"
+  add_foreign_key "game_events", "players", column: "secondary_player_id"
+  add_foreign_key "game_events", "teams"
   add_foreign_key "games", "seasons"
   add_foreign_key "games", "teams", column: "away_team_id"
   add_foreign_key "games", "teams", column: "home_team_id"
@@ -452,6 +495,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_005240) do
   add_foreign_key "roster_statuses", "seasons"
   add_foreign_key "roster_statuses", "teams"
   add_foreign_key "seasons", "leagues"
+  add_foreign_key "shifts", "games"
+  add_foreign_key "shifts", "players"
+  add_foreign_key "shifts", "teams"
   add_foreign_key "skater_game_stats", "games"
   add_foreign_key "skater_game_stats", "players"
   add_foreign_key "skater_game_stats", "teams"

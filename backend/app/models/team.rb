@@ -15,6 +15,8 @@ class Team < ApplicationRecord
            dependent: :destroy, inverse_of: :affiliate_team
   has_many :skater_game_stats, dependent: :restrict_with_error
   has_many :goalie_game_stats, dependent: :restrict_with_error
+  has_many :game_events, dependent: :restrict_with_error
+  has_many :shifts, dependent: :restrict_with_error
   has_many :skater_season_stats, dependent: :destroy
   has_many :goalie_season_stats, dependent: :destroy
 

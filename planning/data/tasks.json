@@ -552,7 +552,7 @@
     "title": "Migrations + models for game_events and shifts",
     "description": "Raw per-game event tables — the source data the rollup tables in this epic get computed from, though nothing populates them yet (no ingestion in this task). game_events: one row per play-by-play event (shot, goal, faceoff, hit, giveaway, takeaway, penalty, blocked_shot). References game, team (nullable — not every event has a clean team attribution), primary_player (required), secondary_player (nullable, for assists/blockers/drawn-by). Columns: nhl_event_id (bigint, unique scoped to game_id, same upstream-key-for-re-sync convention as Game#nhl_game_id), period, period_time_seconds, event_type, shot_type, zone, strength_state, x_coord, y_coord. shifts: one row per player per on-ice stint. References game, player, team. Columns: nhl_shift_id (unique scoped to game_id), period, start_time_seconds, end_time_seconds. event_type/shot_type/zone/strength_state are small closed sets — model as explicit hash constants (Game::GAME_TYPES / RosterSpot::CONTRACT_LEVELS pattern), not free strings.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "high",
     "acceptance_criteria": [
       "nhl_event_id and nhl_shift_id are unique per game, not globally — matches the natural-key-per-scope pattern hockeytech_team_id/hockeytech_season_id already use",
