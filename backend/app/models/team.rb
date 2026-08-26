@@ -18,6 +18,7 @@ class Team < ApplicationRecord
   has_many :game_events, dependent: :restrict_with_error
   has_many :shifts, dependent: :restrict_with_error
   has_many :player_game_advanced_stats, dependent: :restrict_with_error
+  has_many :team_game_advanced_stats, dependent: :restrict_with_error
   has_many :skater_season_stats, dependent: :destroy
   has_many :goalie_season_stats, dependent: :destroy
   has_many :player_season_advanced_stats, dependent: :destroy

@@ -604,7 +604,7 @@
     "title": "Migration + model for team_game_advanced_stats (per-game team rollup)",
     "description": "Materialized per-game team-level advanced-stat rollup — same recomputed-never-live-computed strategy already used everywhere else in this schema (skater/goalie game+season stats, player_game/season_advanced_stats), applied at team grain rather than a GROUP BY over player rows at read time. Confirmed against hockey-reference's team gamelog page, which shows team-level CF/CA/CF%/FF/FA/FF%/oZS%/PDO per game alongside the basic box score line — that's this table's shape, not something derived on the fly. References game, team. Columns: strength_state (default \"all\"), corsi_for/against, fenwick_for/against, xg_for/against, faceoff_wins/losses, pdo, toi_seconds — same column shape as player_game_advanced_stats (TASK-60) where it overlaps, plus the team-only PDO/faceoff figures the gamelog page shows. Unique index on (game_id, team_id, strength_state). Depends on TASK-60 for the sibling shape.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "Unique index on (game_id, team_id, strength_state) — one row per team per strength state per game",
