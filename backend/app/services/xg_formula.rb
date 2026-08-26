@@ -1,16 +1,19 @@
-# A logistic model over distance/angle to the net. Coordinates are assumed to already
-# be relative to the attacking net at (89, 0) — a documented v1 simplification, since
-# there's no real ingested play-by-play yet to validate a period/team-aware rink
-# normalization against. See docs/DECISIONS.md.
+# A logistic model over distance/angle to the target net. target_net_x is the x
+# position of the net a shot is aimed at — resolved by the caller per event from
+# home_team_defending_side, since which end a team defends flips by period. Confirmed
+# against a live play-by-play response (TASK-74/75) rather than assumed (see
+# docs/DECISIONS.md) — this replaced an earlier "coordinates are pre-normalized"
+# placeholder from TASK-72.
 class XgFormula
-  NET_X = 89
+  HALF_RINK_X = 89
 
-  def self.calculate(coefficients:, x_coord:, y_coord:)
-    return 0.0 if x_coord.nil? || y_coord.nil?
+  def self.calculate(coefficients:, x_coord:, y_coord:, target_net_x:)
+    return 0.0 if x_coord.nil? || y_coord.nil? || target_net_x.nil?
 
     coefficients = coefficients.symbolize_keys
-    distance = Math.sqrt(((NET_X - x_coord)**2) + (y_coord**2))
-    angle = Math.atan2(y_coord.abs, NET_X - x_coord)
+    dx = target_net_x - x_coord
+    distance = Math.sqrt((dx**2) + (y_coord**2))
+    angle = Math.atan2(y_coord.abs, dx.abs)
 
     z = coefficients.fetch(:intercept, 0).to_f +
         (coefficients.fetch(:distance, 0).to_f * distance) +

@@ -166,7 +166,18 @@ class ComputeGameAdvancedStats
   end
 
   def xg_for(event)
-    XgFormula.calculate(coefficients: xg_model.coefficients, x_coord: event.x_coord, y_coord: event.y_coord)
+    XgFormula.calculate(coefficients: xg_model.coefficients, x_coord: event.x_coord, y_coord: event.y_coord,
+                        target_net_x: target_net_x_for(event))
+  end
+
+  # The net a shot is aimed at, not the shooter's own — home's own net sits on
+  # home_team_defending_side; the away team shoots at that side, home shoots at the
+  # opposite one.
+  def target_net_x_for(event)
+    return nil if event.home_team_defending_side.blank? || event.team_id.nil?
+
+    home_net_x = event.home_team_defending_side == GameEvent::DEFENDING_SIDES[:left] ? -XgFormula::HALF_RINK_X : XgFormula::HALF_RINK_X
+    event.team_id == game.home_team_id ? -home_net_x : home_net_x
   end
 
   def persist_player_rows

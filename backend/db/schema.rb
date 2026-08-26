@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_080003) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -46,6 +46,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_080003) do
     t.datetime "created_at", null: false
     t.integer "event_type", null: false
     t.bigint "game_id", null: false
+    t.string "home_team_defending_side"
     t.bigint "nhl_event_id", null: false
     t.integer "period", null: false
     t.integer "period_time_seconds", null: false
@@ -54,6 +55,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_080003) do
     t.integer "shot_type"
     t.integer "strength_state"
     t.bigint "team_id"
+    t.bigint "tertiary_player_id"
     t.datetime "updated_at", null: false
     t.integer "x_coord"
     t.integer "y_coord"
@@ -63,6 +65,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_080003) do
     t.index ["primary_player_id"], name: "index_game_events_on_primary_player_id"
     t.index ["secondary_player_id"], name: "index_game_events_on_secondary_player_id"
     t.index ["team_id"], name: "index_game_events_on_team_id"
+    t.index ["tertiary_player_id"], name: "index_game_events_on_tertiary_player_id"
   end
 
   create_table "games", force: :cascade do |t|
@@ -581,6 +584,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_080003) do
   add_foreign_key "game_events", "games"
   add_foreign_key "game_events", "players", column: "primary_player_id"
   add_foreign_key "game_events", "players", column: "secondary_player_id"
+  add_foreign_key "game_events", "players", column: "tertiary_player_id"
   add_foreign_key "game_events", "teams"
   add_foreign_key "games", "seasons"
   add_foreign_key "games", "teams", column: "away_team_id"

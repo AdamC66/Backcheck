@@ -743,9 +743,9 @@
     "id": "TASK-73",
     "epic_id": "EPIC-15",
     "title": "Validate XgFormula's coordinate-frame assumption against real ingested play-by-play",
-    "description": "XgFormula (TASK-72) assumes x_coord/y_coord are already relative to the attacking net at (89, 0) — a documented v1 simplification, since real NHL coordinates are absolute rink position and which end a team defends flips by period, and there was no real ingested play-by-play yet to check the convention against (see docs/DECISIONS.md's TASK-72 entry). Once real play-by-play ingestion exists and game_events actually holds NHL data, verify whether the assumption holds. If NHL coordinates are absolute rink position (the expected case), XgFormula needs a per-period, per-team normalization step (flip x_coord based on which end that team defends that period) before computing distance/angle, and this task also updates the DECISIONS.md entry once resolved. Depends on real play-by-play/shift ingestion existing (deferred, not part of EPIC-13).",
+    "description": "XgFormula (TASK-72) assumes x_coord/y_coord are already relative to the attacking net at (89, 0) — a documented v1 simplification, since real NHL coordinates are absolute rink position and which end a team defends flips by period, and there was no real ingested play-by-play yet to check the convention against (see docs/DECISIONS.md's TASK-72 entry). Once real play-by-play ingestion exists and game_events actually holds NHL data, verify whether the assumption holds. If NHL coordinates are absolute rink position (the expected case), XgFormula needs a per-period, per-team normalization step (flip x_coord based on which end that team defends that period) before computing distance/angle, and this task also updates the DECISIONS.md entry once resolved. Depends on real play-by-play/shift ingestion existing (deferred, not part of EPIC-13). Superseded by TASK-75: homeTeamDefendingSide (confirmed present on every real play-by-play event) made this a fix, not a validation exercise — XgFormula.calculate now takes target_net_x:, resolved per event from that field, with a spec proving identical xG for the same physical shot regardless of which end is defended.",
     "type": "chore",
-    "status": "backlog",
+    "status": "done",
     "priority": "low",
     "acceptance_criteria": [
       "Compares XgFormula's output against a sample of real ingested game_events and confirms whether the (89,0)-relative assumption holds or needs per-period/per-team normalization",
@@ -772,7 +772,7 @@
     "title": "UpsertGameEvents / UpsertShifts services",
     "description": "Parse a game's play-by-play response into game_events rows and its shift-chart response into shifts rows, upserting on the natural key (nhl_event_id/nhl_shift_id scoped to game_id — TASK-58's existing convention). Report unmatched players the way UpsertGameStats already does via missing_players, not by raising or silently skipping. Depends on TASK-74. Incorporates findings from that research (see docs/DECISIONS.md): filter shift-chart rows to typeCode 517 (real shifts), discarding typeCode 505 goal-marker noise; skip play-by-play types not modeled (period-start/end, stoppage, delayed-penalty, game-end); derive strength_state per event from situationCode (away vs. home skater-count comparison) rather than guessing; parse \"MM:SS\" shift start/end times the same way parse_toi already does. Add GameEvent::SHOT_TYPES[:between_legs] (real data has it, schema doesn't) and GameEvent#tertiary_player (nullable, class_name: \"Player\") for a goal's second assist. Fix XgFormula's coordinate normalization using each event's homeTeamDefendingSide instead of the TASK-72 placeholder assumption, since the parser already needs that field for zone/coordinate attribution — this supersedes TASK-73.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "Re-running against the same payload is a no-op (upsert, not append) — matches every other ingestion path in this codebase",

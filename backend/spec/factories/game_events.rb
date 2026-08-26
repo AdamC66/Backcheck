@@ -13,5 +13,6 @@ FactoryBot.define do
     strength_state { GameEvent::STRENGTH_STATES[:even_strength] }
     x_coord { 62 }
     y_coord { -12 }
+    home_team_defending_side { GameEvent::DEFENDING_SIDES[:left] }
   end
 end
