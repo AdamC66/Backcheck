@@ -19,6 +19,15 @@ class SyncRun < ApplicationRecord
     cancelled: 4
   }.freeze
 
+  # Matches NhlClient/HockeyTechClient's own DEFAULT_MIN_INTERVAL (1.0) as "normal".
+  MIN_INTERVAL_PRESETS = {
+    conservative: 2.0,
+    normal: 1.0,
+    aggressive: 0.5
+  }.freeze
+
+  ACTIVITY_LOG_LIMIT = 200
+
   belongs_to :league, optional: true
   belongs_to :season, optional: true
   belongs_to :team, optional: true
@@ -35,6 +44,13 @@ class SyncRun < ApplicationRecord
     return 0 if total_steps.zero?
 
     (current_step.to_f / total_steps * 100).round
+  end
+
+  # No log aggregator exists in this app (see DECISIONS.md), so a run's own history
+  # lives on the row itself — capped, since a long run shouldn't grow this unbounded.
+  def log(message)
+    entries = activity_log + [ { "at" => Time.current.iso8601, "message" => message } ]
+    update!(activity_log: entries.last(ACTIVITY_LOG_LIMIT))
   end
 
   private

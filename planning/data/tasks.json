@@ -440,7 +440,7 @@
     "title": "Api::V1::Admin::BaseController with require_super_admin!",
     "description": "New Api::V1::Admin::BaseController < Api::V1::BaseController, before_action :require_super_admin! reading as one question (current_user.super_admin?) the same way BaseController#authorize_team! already does. Routes: namespace :admin under /api/v1 with sync_runs (index/show/create, member :cancel).",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "high",
     "acceptance_criteria": [
       "A request spec proves a non-super-admin user gets 403 on every admin route",
@@ -476,7 +476,7 @@
     "title": "Admin::SyncRunsController: index/show/create/cancel",
     "description": "index (recent runs + counts), show (progress + a capped jsonb activity log appended to by the orchestrator — nothing external to scrape logs from), create (validates scope against TASK-49's registry, builds a queued SyncRun with the chosen min_interval, enqueues AdminSyncOrchestratorJob), cancel (queued/running -> cancelled). Goes through render_data/render_error like every other endpoint, not a bare render json:. Serializers in app/serializers.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "high",
     "acceptance_criteria": [
       "Request specs for all four actions, including the 422 case for an invalid scope/kind combination"

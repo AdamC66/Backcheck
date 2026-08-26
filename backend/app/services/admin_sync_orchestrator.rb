@@ -6,9 +6,13 @@ class AdminSyncOrchestrator
   def call
     build_items
     sync_run.update!(status: SyncRun::STATUSES[:running], started_at: Time.current)
+    sync_run.log("Run started (#{sync_run.total_steps} step(s))")
 
     sync_run.sync_run_items.order(:id).each do |item|
-      break if cancelled?
+      if cancelled?
+        sync_run.log("Run cancelled")
+        break
+      end
 
       run_item(item)
       advance_step!
@@ -46,13 +50,17 @@ class AdminSyncOrchestrator
 
   def run_item(item)
     item.update!(status: SyncRun::STATUSES[:running], started_at: Time.current)
-    sync_run.update!(current_step_label: label_for(item))
+    label = label_for(item)
+    sync_run.update!(current_step_label: label)
+    sync_run.log("Starting #{label}")
 
     call_service(item)
 
     item.update!(status: SyncRun::STATUSES[:completed], finished_at: Time.current)
+    sync_run.log("Completed #{label}")
   rescue StandardError => e
     item.update!(status: SyncRun::STATUSES[:failed], finished_at: Time.current, error_message: e.message)
+    sync_run.log("Failed #{label}: #{e.message}")
   end
 
   # A raw UPDATE, not sync_run.increment!, so a concurrent writer's value is never
@@ -73,6 +81,7 @@ class AdminSyncOrchestrator
     end
 
     sync_run.update!(status: status, finished_at: Time.current)
+    sync_run.log("Run #{SyncRun::STATUSES.key(status)}")
   end
 
   def label_for(item)

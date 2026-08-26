@@ -24,4 +24,21 @@ RSpec.describe SyncRun, type: :model do
 
     expect(run.percent_complete).to eq(25)
   end
+
+  it "appends a timestamped message to the activity log" do
+    run = create(:sync_run)
+
+    run.log("Starting team roster")
+
+    expect(run.activity_log.last).to include("message" => "Starting team roster")
+  end
+
+  it "caps the activity log instead of growing it forever" do
+    run = create(:sync_run)
+
+    (SyncRun::ACTIVITY_LOG_LIMIT + 5).times { |n| run.log("event #{n}") }
+
+    expect(run.activity_log.size).to eq(SyncRun::ACTIVITY_LOG_LIMIT)
+    expect(run.activity_log.first["message"]).to eq("event 5")
+  end
 end
