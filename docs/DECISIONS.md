@@ -328,5 +328,20 @@ Deliberately deferred, and why:
 
 **AHL/ECHL stat richness via HockeyTech is unverified.** Only the roster feed's fields are confirmed so far (see "Rosters need a second upstream" above) — don't assume boxscore parity with the NHL until checked.
 
+### Advanced-stats computation (TASK-72): missed shots, xG coordinate frame, on-ice attribution
+**Status:** Settled, with a documented v1 simplification
+
+`ComputeGameAdvancedStats` derives `player_game_advanced_stats`/`team_game_advanced_stats` from `game_events`/`shifts`. Three decisions made building it:
+
+**Added `GameEvent::EVENT_TYPES[:missed_shot]`.** TASK-58 shipped without it (`goal, shot, faceoff, hit, giveaway, takeaway, penalty, blocked_shot`), which made Fenwick (unblocked attempts) indistinguishable from Corsi (all attempts) — there was no way to record an unblocked shot that missed the net as anything other than `shot` (on goal) or `blocked_shot`. A plain new hash value, no migration needed.
+
+**xG is scored on Fenwick events only (goal, shot, missed_shot), never `blocked_shot`.** A blocked shot's recorded coordinates are the blocker's position, not the shooter's release point — applying the xG model there would score the wrong location.
+
+**xG's distance/angle-to-net formula assumes `x_coord`/`y_coord` are already relative to the attacking net at `(89, 0)`.** Real NHL coordinates are absolute rink position, and which end a team defends flips by period — correctly normalizing for that needs to know each team's per-period attacking end, which nothing in this schema tracks yet (no real play-by-play has been ingested to check the convention against either — ingestion is still deferred, per EPIC-13's own scope note). Treating coordinates as pre-normalized is a known v1 simplification, not a claim that it's rink-accurate. Revisit once real ingested data exists to validate against.
+
+**On-ice attribution is the standard team-stat definition, not shooter-only.** A Corsi-tracked event credits every skater (excluding goalies) with a `Shift` row covering that event's `period`/`period_time_seconds` — the shooting team's on-ice skaters get `_for`, the opposing on-ice skaters get `_against` — not just the event's `primary_player`.
+
+**Known gaps, deliberately left for a later task:** `zone_entries`/`zone_exits` stay at their column default — nothing in `game_events` models a zone entry/exit, so there's nothing to derive them from yet. `toi_seconds` is only computed for the `"all"` bucket; splitting by strength_state would need a continuous strength-state timeline (when did a power play start/end) that this schema doesn't track — events carry their own strength_state, but there's no interval reconstruction between them.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

@@ -731,12 +731,26 @@
     "title": "Compute player_game_advanced_stats/team_game_advanced_stats from game_events + shifts",
     "description": "The per-game computation TASK-62's recompute job assumes is already done: given a game's game_events and shifts, determine which players were on the ice for each event (via shifts' start/end times), bucket by strength_state, and derive Corsi/Fenwick (shot-attempt counts by on-ice player), xG (apply the active xg_model's coefficients to each shot's x_coord/y_coord), zone entries/exits, and TOI — then upsert player_game_advanced_stats for every player who was on the ice and team_game_advanced_stats for both teams. This is the actual hockey-analytics algorithm deferred out of TASK-62 (see its scope note) because nothing in the schema defines it yet and it's a substantially larger, more novel piece of logic than the chain-rebuild mechanics. Depends on real game_events/shifts ingestion existing (also not yet built — see EPIC-13's description) or, for development, fixture data shaped like it.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "Given game_events/shifts for a game, on-ice attribution correctly identifies which skaters were on the ice for each event using shift start/end times, not just event team",
       "xG per shot is computed from the currently-active xg_model's coefficients against that shot's x_coord/y_coord",
       "Output upserts player_game_advanced_stats for every player on the ice and team_game_advanced_stats for both teams, matching the existing tables' strength_state bucketing"
+    ]
+  },
+  {
+    "id": "TASK-73",
+    "epic_id": "EPIC-13",
+    "title": "Validate XgFormula's coordinate-frame assumption against real ingested play-by-play",
+    "description": "XgFormula (TASK-72) assumes x_coord/y_coord are already relative to the attacking net at (89, 0) — a documented v1 simplification, since real NHL coordinates are absolute rink position and which end a team defends flips by period, and there was no real ingested play-by-play yet to check the convention against (see docs/DECISIONS.md's TASK-72 entry). Once real play-by-play ingestion exists and game_events actually holds NHL data, verify whether the assumption holds. If NHL coordinates are absolute rink position (the expected case), XgFormula needs a per-period, per-team normalization step (flip x_coord based on which end that team defends that period) before computing distance/angle, and this task also updates the DECISIONS.md entry once resolved. Depends on real play-by-play/shift ingestion existing (deferred, not part of EPIC-13).",
+    "type": "chore",
+    "status": "backlog",
+    "priority": "low",
+    "acceptance_criteria": [
+      "Compares XgFormula's output against a sample of real ingested game_events and confirms whether the (89,0)-relative assumption holds or needs per-period/per-team normalization",
+      "If normalization is needed, XgFormula (or a wrapper) correctly flips coordinates by attacking end before computing distance/angle, with a spec proving a shot from the same physical spot scores the same xG regardless of period or which end the team defends",
+      "docs/DECISIONS.md's TASK-72 entry is updated to reflect the resolved (not simplified) coordinate handling"
     ]
   }
 ]
