@@ -1,4 +1,6 @@
 class XgModel < ApplicationRecord
+  has_many :player_game_advanced_stats, dependent: :restrict_with_error
+
   validates :version, presence: true, uniqueness: true
   validates :coefficients, presence: true
   validates :trained_at, presence: true

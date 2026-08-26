@@ -16,6 +16,7 @@ class Player < ApplicationRecord
   has_many :secondary_game_events, class_name: "GameEvent", foreign_key: :secondary_player_id,
            dependent: :nullify, inverse_of: :secondary_player
   has_many :shifts, dependent: :destroy
+  has_many :player_game_advanced_stats, dependent: :destroy
 
   before_validation :assign_normalized_name
 

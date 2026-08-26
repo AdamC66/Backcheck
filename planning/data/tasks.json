@@ -578,7 +578,7 @@
     "title": "Migration + model for player_game_advanced_stats (per-game rollup)",
     "description": "Materialized per-game advanced-stat rollup — recomputed wholesale, never live-computed at read time and never hand-edited, same philosophy as skater_game_stats/goalie_game_stats (TASK-26). References game, player, team, xg_model (the coefficient version that produced this row's xG figures, so a later re-run with a newer model is traceable). Columns: strength_state (default \"all\"), corsi_for/against, fenwick_for/against, xg_for/against, zone_entries, zone_exits, toi_seconds. Unique index on (game_id, player_id, strength_state) — a player gets one row per strength state per game (\"all\", \"5v5\", \"pp\", ...), not one row per game. Depends on TASK-59 for the xg_model_id FK.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "Unique index on (game_id, player_id, strength_state) lets the same player hold separate \"all\" and \"5v5\" rows for one game without colliding",

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_030000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -176,6 +176,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_020000) do
     t.datetime "updated_at", null: false
     t.index ["player_id"], name: "index_player_external_ids_on_player_id"
     t.index ["source", "external_id"], name: "index_player_external_ids_on_source_and_external_id", unique: true
+  end
+
+  create_table "player_game_advanced_stats", force: :cascade do |t|
+    t.integer "corsi_against", default: 0, null: false
+    t.integer "corsi_for", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "fenwick_against", default: 0, null: false
+    t.integer "fenwick_for", default: 0, null: false
+    t.bigint "game_id", null: false
+    t.bigint "player_id", null: false
+    t.string "strength_state", default: "all", null: false
+    t.bigint "team_id", null: false
+    t.integer "toi_seconds", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.decimal "xg_against", precision: 6, scale: 3, default: "0.0", null: false
+    t.decimal "xg_for", precision: 6, scale: 3, default: "0.0", null: false
+    t.bigint "xg_model_id", null: false
+    t.integer "zone_entries", default: 0, null: false
+    t.integer "zone_exits", default: 0, null: false
+    t.index ["game_id", "player_id", "strength_state"], name: "index_pgas_on_game_player_strength_state", unique: true
+    t.index ["game_id"], name: "index_player_game_advanced_stats_on_game_id"
+    t.index ["player_id"], name: "index_player_game_advanced_stats_on_player_id"
+    t.index ["team_id"], name: "index_player_game_advanced_stats_on_team_id"
+    t.index ["xg_model_id"], name: "index_player_game_advanced_stats_on_xg_model_id"
   end
 
   create_table "players", force: :cascade do |t|
@@ -496,6 +520,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_020000) do
   add_foreign_key "memberships", "roles"
   add_foreign_key "memberships", "users"
   add_foreign_key "player_external_ids", "players"
+  add_foreign_key "player_game_advanced_stats", "games"
+  add_foreign_key "player_game_advanced_stats", "players"
+  add_foreign_key "player_game_advanced_stats", "teams"
+  add_foreign_key "player_game_advanced_stats", "xg_models"
   add_foreign_key "players", "teams", column: "draft_team_id"
   add_foreign_key "possible_duplicate_players", "players", column: "player_a_id"
   add_foreign_key "possible_duplicate_players", "players", column: "player_b_id"
