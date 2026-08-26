@@ -1,5 +1,13 @@
 import type { Envelope } from "@/lib/apiClient";
 import type { User } from "@/models/auth";
+import type {
+  GameDetail,
+  GameDetailMeta,
+  GoalieGameStat,
+  PlayerGameAdvancedStat,
+  SkaterGameStat,
+  TeamGameAdvancedStat,
+} from "@/models/gameDetail";
 import type { Game, GamesMeta } from "@/models/games";
 import type { League, LeagueWithTeams } from "@/models/leagues";
 import type { RosterEntry, RosterMeta, RosterPlayer } from "@/models/roster";
@@ -196,6 +204,128 @@ export const TEAM_GAMES: Envelope<Game[], GamesMeta> = {
     }),
   ],
   meta: { season: "2025-26", from: "2025-10-08", to: "2025-11-02", count: 2 },
+};
+
+export function skaterGameStatFor(overrides: Partial<SkaterGameStat> = {}): SkaterGameStat {
+  return {
+    player: playerFor(1),
+    team_id: TEAMS[0].id,
+    goals: 1,
+    assists: 1,
+    points: 2,
+    plus_minus: 1,
+    pim: 2,
+    hits: 3,
+    power_play_goals: 0,
+    shots_on_goal: 4,
+    faceoff_winning_pctg: null,
+    time_on_ice_seconds: 1236,
+    shifts: 22,
+    blocked_shots: 1,
+    giveaways: 2,
+    takeaways: 1,
+    ...overrides,
+  };
+}
+
+export function goalieGameStatFor(overrides: Partial<GoalieGameStat> = {}): GoalieGameStat {
+  return {
+    player: playerFor(2),
+    team_id: TEAMS[0].id,
+    even_strength_shots_against: 25,
+    even_strength_goals_against: 2,
+    power_play_shots_against: 5,
+    power_play_goals_against: 1,
+    shorthanded_shots_against: 1,
+    shorthanded_goals_against: 0,
+    shots_against: 31,
+    saves: 28,
+    goals_against: 3,
+    save_pctg: 0.9032,
+    pim: 0,
+    time_on_ice_seconds: 3600,
+    starter: true,
+    decision: "W",
+    ...overrides,
+  };
+}
+
+export function playerGameAdvancedStatFor(
+  overrides: Partial<PlayerGameAdvancedStat> = {},
+): PlayerGameAdvancedStat {
+  return {
+    player: playerFor(1),
+    team_id: TEAMS[0].id,
+    strength_state: "all",
+    score_state: "all",
+    corsi_for: 12,
+    corsi_against: 8,
+    fenwick_for: 9,
+    fenwick_against: 6,
+    xg_for: 0.85,
+    xg_against: 0.42,
+    zone_entries: 0,
+    zone_exits: 0,
+    toi_seconds: 1080,
+    ...overrides,
+  };
+}
+
+export function teamGameAdvancedStatFor(
+  overrides: Partial<TeamGameAdvancedStat> = {},
+): TeamGameAdvancedStat {
+  return {
+    team_id: TEAMS[0].id,
+    strength_state: "all",
+    score_state: "all",
+    corsi_for: 58,
+    corsi_against: 42,
+    fenwick_for: 45,
+    fenwick_against: 33,
+    xg_for: 2.85,
+    xg_against: 2.1,
+    faceoff_wins: 30,
+    faceoff_losses: 25,
+    pdo: 100.9,
+    toi_seconds: 3600,
+    ...overrides,
+  };
+}
+
+export const GAME_DETAIL: Envelope<GameDetail, GameDetailMeta> = {
+  data: {
+    game: gameFor(),
+    skaters: [
+      skaterGameStatFor({
+        player: playerFor(1, { first_name: "Auston", last_name: "Matthews" }),
+        team_id: TEAMS[0].id,
+        goals: 2,
+      }),
+      skaterGameStatFor({
+        player: playerFor(2, { first_name: "William", last_name: "Nylander" }),
+        team_id: TEAMS[1].id,
+      }),
+    ],
+    goalies: [
+      goalieGameStatFor({
+        player: playerFor(3, { first_name: "Anthony", last_name: "Stolarz" }),
+        team_id: TEAMS[0].id,
+      }),
+    ],
+    advanced: {
+      players: [
+        playerGameAdvancedStatFor({
+          player: playerFor(1, { first_name: "Auston", last_name: "Matthews" }),
+          team_id: TEAMS[0].id,
+        }),
+      ],
+      teams: [
+        teamGameAdvancedStatFor({ team_id: TEAMS[0].id }),
+        teamGameAdvancedStatFor({ team_id: TEAMS[1].id, corsi_for: 42, corsi_against: 58 }),
+      ],
+    },
+  },
+  meta: {},
 };
 
 export function playerFor(id: number, overrides: Partial<RosterPlayer> = {}): RosterPlayer {

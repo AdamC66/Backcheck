@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { OutcomeBadge } from "@/components/OutcomeBadge/OutcomeBadge";
 import { Text } from "@/components/Text/Text";
 import { formatShortDay, formatTime } from "@/lib/format";
@@ -29,27 +30,32 @@ function Result({ entry }: GameRowProps) {
 
 export function GameRow({ entry }: GameRowProps) {
   return (
-    <li className="flex items-center gap-3 border-b border-slate-100 px-3 py-2 last:border-0">
-      <span className="w-16 shrink-0 text-xs font-bold text-slate-400">
-        {formatShortDay(entry.game.game_date)}
-      </span>
+    <li className="border-b border-slate-100 last:border-0">
+      <Link
+        to={`/games/${entry.game.id}`}
+        className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50"
+      >
+        <span className="w-16 shrink-0 text-xs font-bold text-slate-400">
+          {formatShortDay(entry.game.game_date)}
+        </span>
 
-      <span className="w-6 shrink-0 text-xs font-bold text-slate-300">
-        {entry.isHome ? "vs" : "@"}
-      </span>
+        <span className="w-6 shrink-0 text-xs font-bold text-slate-300">
+          {entry.isHome ? "vs" : "@"}
+        </span>
 
-      <span className="flex min-w-0 flex-1 items-center gap-2">
-        {entry.opponent.logo_url === null ? null : (
-          <img src={entry.opponent.logo_url} alt="" className="h-5 w-5 shrink-0 object-contain" />
-        )}
-        <Text variant="title" className="truncate">
-          {entry.opponent.name}
-        </Text>
-      </span>
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          {entry.opponent.logo_url === null ? null : (
+            <img src={entry.opponent.logo_url} alt="" className="h-5 w-5 shrink-0 object-contain" />
+          )}
+          <Text variant="title" className="truncate">
+            {entry.opponent.name}
+          </Text>
+        </span>
 
-      <span className="shrink-0 text-sm">
-        <Result entry={entry} />
-      </span>
+        <span className="shrink-0 text-sm">
+          <Result entry={entry} />
+        </span>
+      </Link>
     </li>
   );
 }

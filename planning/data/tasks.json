@@ -812,7 +812,7 @@
     "title": "Game detail/boxscore page (frontend)",
     "description": "No per-game detail page exists at all today — games only appear as list rows (team schedule, league games, GameSerializer). Build one, showing the existing basic skater/goalie game stats plus the new advanced-stats splits (player_game_advanced_stats/team_game_advanced_stats) once real data exists via TASK-76. Needs a backend endpoint serving one game's full stat picture, which doesn't exist yet either — nothing currently serves a single game by id with its stat lines attached.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "A game detail page renders basic stats today and advanced-stats splits once TASK-76 provides real data, not before",
@@ -841,6 +841,19 @@
     "priority": "low",
     "acceptance_criteria": [
       "A player's page shows season-by-season basic stats today, and advanced-stats columns once real data exists via TASK-76"
+    ]
+  },
+  {
+    "id": "TASK-81",
+    "epic_id": "EPIC-15",
+    "title": "Train a real xG model to replace the placeholder coefficients",
+    "description": "The active XgModel (\"v0-placeholder\") has made-up coefficients (intercept: 0.2, distance: -0.05, angle: -0.02), not fitted ones — confirmed visibly wrong live (TOR @ ANA, 2026-03-30 showed 10.55-12.10 combined team xG; a real NHL team's xG per game is typically 2-4). The pipeline mechanics (on-ice attribution, per-shot formula application via XgFormula, home_team_defending_side coordinate normalization) are correct — only the coefficients are meaningless. Needs a real logistic regression (or similar) fit against historical shot data with actual goal/no-goal outcomes, using distance-to-net and angle-to-net as features (matching XgFormula's existing two-feature shape, or widening it if a real fit calls for more features e.g. shot_type, strength_state, rebound/rush indicators — that's a model-design decision for whoever builds this, not decided here). Once trained, XgModel.activate! swaps it in atomically, no other code changes needed. Depends on enough real game_events existing to fit against (TASK-74/75/76 ingestion, run across enough real games).",
+    "type": "spike",
+    "status": "backlog",
+    "priority": "low",
+    "acceptance_criteria": [
+      "A newly trained XgModel's per-team-per-game xG totals fall in a realistic range (roughly 1-6 per team per game) against a sample of real ingested games, not the placeholder's inflated numbers",
+      "The training process and feature choices are documented (in DECISIONS.md or alongside the training script) so the coefficients aren't a black box"
     ]
   }
 ]

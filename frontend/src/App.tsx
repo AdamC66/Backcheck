@@ -4,6 +4,7 @@ import { RedirectIfAuthenticated } from "@/auth/RedirectIfAuthenticated";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { RequireSuperAdmin } from "@/auth/RequireSuperAdmin";
 import { DashboardPage } from "@/containers/DashboardPage";
+import { GamePage } from "@/containers/GamePage";
 import { LeaguePage } from "@/containers/LeaguePage";
 import { TeamPage } from "@/containers/TeamPage/TeamPage";
 import { TeamOverviewPage } from "@/containers/TeamPage/TeamOverviewPage";
@@ -40,6 +41,14 @@ export function App() {
         element={
           <RequireAuth>
             <LeaguePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/games/:id"
+        element={
+          <RequireAuth>
+            <GamePage />
           </RequireAuth>
         }
       />

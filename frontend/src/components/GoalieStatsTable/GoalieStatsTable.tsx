@@ -1,5 +1,6 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable/DataTable";
+import { buildColumns } from "@/lib/buildColumns";
 import type { GoalieSeasonStat } from "@/models/teamStats";
 
 export interface GoalieStatsTableProps {
@@ -17,31 +18,35 @@ function formatGaa(value: number | null): string {
   return value === null ? "—" : value.toFixed(2);
 }
 
-const COLUMNS = [
-  columnHelper.accessor((row) => `${row.player.first_name} ${row.player.last_name}`, {
+const COLUMNS = buildColumns(columnHelper, [
+  {
+    name: (row) => `${row.player.first_name} ${row.player.last_name}`,
     id: "name",
     header: "Player",
-    meta: { align: "left", isRowHeader: true },
-  }),
-  columnHelper.accessor("games_played", { header: "GP", meta: { title: "Games played" } }),
-  columnHelper.accessor("games_started", { header: "GS", meta: { title: "Games started" } }),
-  columnHelper.accessor("wins", { header: "W", meta: { title: "Wins", emphasize: true } }),
-  columnHelper.accessor("losses", { header: "L", meta: { title: "Losses" } }),
-  columnHelper.accessor("ot_losses", { header: "OTL", meta: { title: "Overtime losses" } }),
-  columnHelper.accessor("shutouts", { header: "SO", meta: { title: "Shutouts" } }),
-  columnHelper.accessor("save_pctg", {
+    align: "left",
+    isRowHeader: true,
+  },
+  { name: "games_played", header: "GP", title: "Games played" },
+  { name: "games_started", header: "GS", title: "Games started" },
+  { name: "wins", header: "W", title: "Wins", emphasize: true },
+  { name: "losses", header: "L", title: "Losses" },
+  { name: "ot_losses", header: "OTL", title: "Overtime losses" },
+  { name: "shutouts", header: "SO", title: "Shutouts" },
+  {
+    name: "save_pctg",
     header: "SV%",
+    title: "Save percentage",
     cell: (info) => formatSavePctg(info.getValue()),
-    meta: { title: "Save percentage" },
-  }),
-  columnHelper.accessor("goals_against_average", {
+  },
+  {
+    name: "goals_against_average",
     header: "GAA",
+    title: "Goals against average",
     cell: (info) => formatGaa(info.getValue()),
-    meta: { title: "Goals against average" },
-  }),
-  columnHelper.accessor("shots_against", { header: "SA", meta: { title: "Shots against" } }),
-  columnHelper.accessor("saves", { header: "SV", meta: { title: "Saves" } }),
-];
+  },
+  { name: "shots_against", header: "SA", title: "Shots against" },
+  { name: "saves", header: "SV", title: "Saves" },
+]);
 
 export function GoalieStatsTable({ stats }: GoalieStatsTableProps) {
   return (
