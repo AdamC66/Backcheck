@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_25_014829) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_002329) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -310,6 +310,44 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_014829) do
     t.index ["team_id"], name: "index_skater_season_stats_on_team_id"
   end
 
+  create_table "sync_run_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.datetime "finished_at"
+    t.integer "kind", null: false
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.bigint "sync_run_id", null: false
+    t.bigint "team_id"
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_sync_run_items_on_status"
+    t.index ["sync_run_id"], name: "index_sync_run_items_on_sync_run_id"
+    t.index ["team_id"], name: "index_sync_run_items_on_team_id"
+  end
+
+  create_table "sync_runs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "current_step", default: 0, null: false
+    t.string "current_step_label"
+    t.text "error_message"
+    t.datetime "finished_at"
+    t.bigint "league_id"
+    t.float "min_interval", null: false
+    t.bigint "season_id"
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.integer "sync_kinds", default: [], null: false, array: true
+    t.bigint "team_id"
+    t.integer "total_steps", default: 0, null: false
+    t.bigint "triggered_by_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["league_id"], name: "index_sync_runs_on_league_id"
+    t.index ["season_id"], name: "index_sync_runs_on_season_id"
+    t.index ["status"], name: "index_sync_runs_on_status"
+    t.index ["team_id"], name: "index_sync_runs_on_team_id"
+    t.index ["triggered_by_id"], name: "index_sync_runs_on_triggered_by_id"
+  end
+
   create_table "team_affiliations", force: :cascade do |t|
     t.bigint "affiliate_team_id", null: false
     t.datetime "created_at", null: false
@@ -419,6 +457,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_014829) do
   add_foreign_key "skater_season_stats", "players"
   add_foreign_key "skater_season_stats", "seasons"
   add_foreign_key "skater_season_stats", "teams"
+  add_foreign_key "sync_run_items", "sync_runs"
+  add_foreign_key "sync_run_items", "teams"
+  add_foreign_key "sync_runs", "leagues"
+  add_foreign_key "sync_runs", "seasons"
+  add_foreign_key "sync_runs", "teams"
+  add_foreign_key "sync_runs", "users", column: "triggered_by_id"
   add_foreign_key "team_affiliations", "seasons"
   add_foreign_key "team_affiliations", "teams", column: "affiliate_team_id"
   add_foreign_key "team_affiliations", "teams", column: "parent_team_id"

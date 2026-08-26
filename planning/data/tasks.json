@@ -427,7 +427,7 @@
     "title": "SyncRun / SyncRunItem schema",
     "description": "sync_runs: scope description (league/season/team, all nullable as appropriate), sync_kinds requested, status enum (queued/running/completed/failed/cancelled), total_steps, current_step, current_step_label, min_interval used for the run, started_at/finished_at, error_message, triggered_by_id (FK users). sync_run_items: sync_run_id FK, team_id FK (nullable — standings/daily-scores have no team axis), kind, status enum, started_at/finished_at, error_message. Models with associations, enums, a percent_complete helper.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "high",
     "acceptance_criteria": [
       "percent_complete handles total_steps == 0 without dividing by zero",
@@ -453,7 +453,7 @@
     "title": "Registry mapping each sync kind to its valid scope axes",
     "description": "Roster/affiliate-roster/schedule take a team (+season for schedule); standings/daily-scores are league+date with no team axis; game-stats is per-game. A small registry (kind -> {service class, required scope axes}) is the single source of truth the orchestrator (TASK-50) and the trigger form (TASK-53) both read, so the UI never offers a team picker for a kind that doesn't take one.",
     "type": "spike",
-    "status": "backlog",
+    "status": "done",
     "priority": "high"
   },
   {

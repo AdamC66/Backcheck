@@ -23,6 +23,14 @@ Rails.application.routes.draw do
       end
 
       resources :roster_statuses, only: [ :index ]
+
+      namespace :admin do
+        resources :sync_runs, only: [ :index, :show, :create ] do
+          member do
+            post :cancel
+          end
+        end
+      end
     end
   end
 end
