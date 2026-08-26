@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/Button/Button";
 import { Row } from "@/components/Row/Row";
 import { SegmentedControl } from "@/components/SegmentedControl/SegmentedControl";
@@ -62,6 +62,13 @@ export function NewSyncRunPage() {
   return (
     <form onSubmit={handleSubmit}>
       <Stack gap="lg" className="max-w-md">
+        <Link
+          to="/admin"
+          className="text-sm font-medium text-slate-500 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+        >
+          ← Sync Runs
+        </Link>
+
         <Text variant="subheading">New Sync</Text>
 
         <Select

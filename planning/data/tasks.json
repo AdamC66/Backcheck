@@ -506,7 +506,7 @@
     "title": "Live progress view with polling",
     "description": "SyncRun detail page using React Query's refetchInterval (~1.5s) while status is queued/running, stopping once terminal. Renders progress bar, current-step label, per-item grid, and log tail per the Data Sync Console mockup. Cancel button posts to the cancel endpoint.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium"
   },
   {

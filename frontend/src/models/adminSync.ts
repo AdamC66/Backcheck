@@ -74,3 +74,32 @@ export function createSyncRun(payload: CreateSyncRunPayload): Promise<SyncRun> {
     body: JSON.stringify(payload),
   });
 }
+
+export interface SyncRunItemPayload {
+  id: number;
+  kind: SyncKind;
+  team_id: number | null;
+  team_name: string | null;
+  status: SyncRunStatus;
+  started_at: string | null;
+  finished_at: string | null;
+  error_message: string | null;
+}
+
+export interface SyncRunActivityLogEntry {
+  at: string;
+  message: string;
+}
+
+export interface SyncRunDetail extends SyncRun {
+  items: SyncRunItemPayload[];
+  activity_log: SyncRunActivityLogEntry[];
+}
+
+export function fetchSyncRun(id: number): Promise<SyncRunDetail> {
+  return request<SyncRunDetail>(`/admin/sync_runs/${id}`);
+}
+
+export function cancelSyncRun(id: number): Promise<SyncRun> {
+  return request<SyncRun>(`/admin/sync_runs/${id}/cancel`, { method: "POST" });
+}

@@ -62,6 +62,48 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.status).to eq(SyncRun::STATUSES[:failed])
   end
 
+  it "counts total_steps and current_step by real games for a game_stats item, not by the one item" do
+    season = create(:season, league: league)
+    games = Array.new(3) do |n|
+      create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+             starts_at: Time.utc(2025, 10, 8 + n))
+    end
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:game_stats] ])
+    allow(SyncGameStats).to receive(:new).and_return(instance_double(SyncGameStats, call: []))
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    expect(run.total_steps).to eq(games.size)
+    expect(run.current_step).to eq(games.size)
+    expect(run.current_step_label).to eq("game stats — Test Team (3/3)")
+    expect(run.sync_run_items.count).to eq(1)
+    expect(run.sync_run_items.first.status).to eq(SyncRun::STATUSES[:completed])
+  end
+
+  it "checks for cancellation between games within a single game_stats item" do
+    season = create(:season, league: league)
+    create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+           starts_at: Time.utc(2025, 10, 8))
+    create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+           starts_at: Time.utc(2025, 10, 9))
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:game_stats] ])
+    calls = 0
+    allow(SyncGameStats).to receive(:new) do |**|
+      calls += 1
+      run.update!(status: SyncRun::STATUSES[:cancelled]) if calls == 1
+      instance_double(SyncGameStats, call: [])
+    end
+
+    described_class.new(sync_run: run).call
+
+    expect(calls).to eq(1)
+    run.reload
+    expect(run.current_step).to eq(1)
+    expect(run.sync_run_items.first.status).to eq(SyncRun::STATUSES[:cancelled])
+    expect(run.status).to eq(SyncRun::STATUSES[:cancelled])
+  end
+
   it "stops before its next item once the run is cancelled mid-loop" do
     create(:team, league: league, name: "Team A")
     create(:team, league: league, name: "Team B")

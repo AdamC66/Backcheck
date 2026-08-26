@@ -12,22 +12,27 @@ function kindsLabel(run: SyncRun) {
 
 function SyncRunRow({ run }: { run: SyncRun }) {
   return (
-    <Row justify="between" className="border-b border-slate-100 py-3 last:border-b-0">
-      <Stack gap="xs">
-        <Text variant="label">{kindsLabel(run)}</Text>
-        <Text tone="muted" variant="caption">
-          {run.current_step_label ?? "Queued"}
-        </Text>
-      </Stack>
-      <Stack gap="xs" align="end">
-        <Text variant="caption" className="font-semibold tracking-wide uppercase">
-          {run.status}
-        </Text>
-        <Text tone="muted" variant="caption">
-          {run.current_step}/{run.total_steps} ({run.percent_complete}%)
-        </Text>
-      </Stack>
-    </Row>
+    <Link
+      to={`/admin/sync/${run.id}`}
+      className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+    >
+      <Row justify="between" className="border-b border-slate-100 py-3 last:border-b-0">
+        <Stack gap="xs">
+          <Text variant="label">{kindsLabel(run)}</Text>
+          <Text tone="muted" variant="caption">
+            {run.current_step_label ?? "Queued"}
+          </Text>
+        </Stack>
+        <Stack gap="xs" align="end">
+          <Text variant="caption" className="font-semibold tracking-wide uppercase">
+            {run.status}
+          </Text>
+          <Text tone="muted" variant="caption">
+            {run.current_step}/{run.total_steps} ({run.percent_complete}%)
+          </Text>
+        </Stack>
+      </Row>
+    </Link>
   );
 }
 
