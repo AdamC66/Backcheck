@@ -565,7 +565,7 @@
     "title": "Migration + model for xg_models (versioned xG coefficients)",
     "description": "Versioned xG coefficient sets a future model-computation step reads from — no training/fitting logic here, just the table. Columns: version (unique), coefficients (jsonb), trained_at, active (boolean). Exactly one row may be active at a time; enforce with a partial unique index (WHERE active) rather than a model validation alone, so a race between two activations can't leave two actives — the same reasoning already applied elsewhere in this schema to hard invariants a validation alone can't guarantee.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "A partial unique index, not just a model validation, makes two simultaneously-active rows impossible even under a race",

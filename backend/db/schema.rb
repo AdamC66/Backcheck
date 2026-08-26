@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_010001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_020000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -465,6 +465,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_010001) do
     t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
+  end
+
+  create_table "xg_models", force: :cascade do |t|
+    t.boolean "active", default: false, null: false
+    t.jsonb "coefficients", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "trained_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "version", null: false
+    t.index ["active"], name: "index_xg_models_on_active", unique: true, where: "active"
+    t.index ["version"], name: "index_xg_models_on_version", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
