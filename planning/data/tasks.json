@@ -617,7 +617,7 @@
     "title": "Migration + model for team_season_advanced_stats (per-season team rollup, recomputed from scratch)",
     "description": "Season-level team rollup — unlike player_season_advanced_stats (TASK-61), this needs no chained snapshots: a team can't get traded mid-season the way a player can, so there's no cross-entity game-order-chaining problem to solve. Recomputed from scratch from team_game_advanced_stats after every relevant write, same pattern as skater_season_stats/goalie_season_stats (TASK-44) — a full re-sum bounded by one team's season (≤~82 games), never incremented in place. References team, season. Columns: strength_state (default \"all\"), corsi_for/against, fenwick_for/against, xg_for/against, faceoff_wins/losses, pdo, toi_seconds, games_played. Unique index on (team_id, season_id, strength_state). Depends on TASK-66.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "Recomputed wholesale from team_game_advanced_stats, never incremented in place — matches skater_season_stats/goalie_season_stats's existing recompute discipline",

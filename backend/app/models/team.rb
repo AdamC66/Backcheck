@@ -22,6 +22,7 @@ class Team < ApplicationRecord
   has_many :skater_season_stats, dependent: :destroy
   has_many :goalie_season_stats, dependent: :destroy
   has_many :player_season_advanced_stats, dependent: :destroy
+  has_many :team_season_advanced_stats, dependent: :destroy
 
   scope :alphabetical, -> { order(:name) }
   scope :with_logo, -> { includes(logo_attachment: :blob) }

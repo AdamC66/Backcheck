@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_050000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_060000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -472,6 +472,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_050000) do
     t.index ["team_id"], name: "index_team_game_advanced_stats_on_team_id"
   end
 
+  create_table "team_season_advanced_stats", force: :cascade do |t|
+    t.integer "corsi_against", default: 0, null: false
+    t.integer "corsi_for", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "faceoff_losses", default: 0, null: false
+    t.integer "faceoff_wins", default: 0, null: false
+    t.integer "fenwick_against", default: 0, null: false
+    t.integer "fenwick_for", default: 0, null: false
+    t.integer "games_played", default: 0, null: false
+    t.decimal "pdo", precision: 6, scale: 3, default: "0.0", null: false
+    t.bigint "season_id", null: false
+    t.string "strength_state", default: "all", null: false
+    t.bigint "team_id", null: false
+    t.integer "toi_seconds", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.decimal "xg_against", precision: 6, scale: 3, default: "0.0", null: false
+    t.decimal "xg_for", precision: 6, scale: 3, default: "0.0", null: false
+    t.index ["season_id"], name: "index_team_season_advanced_stats_on_season_id"
+    t.index ["team_id", "season_id", "strength_state"], name: "index_tsas_on_team_season_strength_state", unique: true
+    t.index ["team_id"], name: "index_team_season_advanced_stats_on_team_id"
+  end
+
   create_table "team_standings", force: :cascade do |t|
     t.date "as_of_date", null: false
     t.string "conference_name"
@@ -605,6 +627,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_050000) do
   add_foreign_key "team_affiliations", "teams", column: "parent_team_id"
   add_foreign_key "team_game_advanced_stats", "games"
   add_foreign_key "team_game_advanced_stats", "teams"
+  add_foreign_key "team_season_advanced_stats", "seasons"
+  add_foreign_key "team_season_advanced_stats", "teams"
   add_foreign_key "team_standings", "seasons"
   add_foreign_key "team_standings", "teams"
   add_foreign_key "teams", "leagues"
