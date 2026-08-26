@@ -15,7 +15,7 @@ class RebuildPlayerAdvancedStatsChain
 
   def call
     ActiveRecord::Base.transaction do
-      strength_states_to_rebuild.each { |strength_state| rebuild_chain(strength_state) }
+      dimensions_to_rebuild.each { |strength_state, score_state| rebuild_chain(strength_state, score_state) }
     end
   end
 
@@ -23,29 +23,30 @@ class RebuildPlayerAdvancedStatsChain
 
   attr_reader :player, :from_game, :season
 
-  def strength_states_to_rebuild
-    PlayerGameAdvancedStat.where(player: player, game: from_game).distinct.pluck(:strength_state)
+  def dimensions_to_rebuild
+    PlayerGameAdvancedStat.where(player: player, game: from_game).distinct.pluck(:strength_state, :score_state)
   end
 
   # A player's actual games in the order they happened, not the team's schedule —
   # an affiliate call-up means their games aren't always sequential within one team's.
-  def ordered_rows(strength_state)
-    PlayerGameAdvancedStat.where(player: player, strength_state: strength_state)
+  def ordered_rows(strength_state, score_state)
+    PlayerGameAdvancedStat.where(player: player, strength_state: strength_state, score_state: score_state)
                            .joins(:game).order("games.starts_at ASC").to_a
   end
 
-  def rebuild_chain(strength_state)
-    rows = ordered_rows(strength_state)
+  def rebuild_chain(strength_state, score_state)
+    rows = ordered_rows(strength_state, score_state)
     from_index = rows.index { |row| row.game_id == from_game.id }
     return if from_index.nil?
 
     rows_from_here = rows[from_index..]
     prior_row = rows[from_index - 1] if from_index.positive?
     anchor = prior_row && PlayerSeasonAdvancedStat.find_by(
-      player: player, season: season, strength_state: strength_state, as_of_game_id: prior_row.game_id
+      player: player, season: season, strength_state: strength_state, score_state: score_state,
+      as_of_game_id: prior_row.game_id
     )
 
-    PlayerSeasonAdvancedStat.where(player: player, strength_state: strength_state,
+    PlayerSeasonAdvancedStat.where(player: player, strength_state: strength_state, score_state: score_state,
                                     as_of_game_id: rows_from_here.map(&:game_id)).destroy_all
 
     running_totals = SUMMABLE_COLUMNS.index_with { |col| anchor&.public_send(col) || 0 }
@@ -57,7 +58,7 @@ class RebuildPlayerAdvancedStatsChain
 
       PlayerSeasonAdvancedStat.create!(
         player: player, team: pgas.team, season: season, as_of_game: pgas.game,
-        strength_state: strength_state, games_played: games_played, stale: false,
+        strength_state: strength_state, score_state: score_state, games_played: games_played, stale: false,
         **running_totals
       )
     end

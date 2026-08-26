@@ -5,7 +5,8 @@ class PlayerSeasonAdvancedStat < ApplicationRecord
   belongs_to :as_of_game, class_name: "Game", inverse_of: :player_season_advanced_stats
 
   validates :strength_state, presence: true, inclusion: { in: PlayerGameAdvancedStat::STRENGTH_STATES.values }
-  validates :player_id, uniqueness: { scope: [ :season_id, :strength_state, :as_of_game_id ] }
+  validates :score_state, presence: true, inclusion: { in: PlayerGameAdvancedStat::SCORE_STATES.values }
+  validates :player_id, uniqueness: { scope: [ :season_id, :strength_state, :score_state, :as_of_game_id ] }
   validate :team_belongs_to_season_league
   validate :as_of_game_belongs_to_season
 

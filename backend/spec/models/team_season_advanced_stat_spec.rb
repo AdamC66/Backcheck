@@ -29,4 +29,22 @@ RSpec.describe TeamSeasonAdvancedStat, type: :model do
 
     expect(dup).not_to be_valid
   end
+
+  it "allows the same team and strength state to hold separate rows per score state" do
+    existing = create(:team_season_advanced_stat, score_state: PlayerGameAdvancedStat::SCORE_STATES[:all])
+
+    close = build(:team_season_advanced_stat, team: existing.team, season: existing.season,
+                  strength_state: existing.strength_state, score_state: PlayerGameAdvancedStat::SCORE_STATES[:close])
+
+    expect(close).to be_valid
+  end
+
+  it "rejects a duplicate score_state for the same team, season, and strength state" do
+    existing = create(:team_season_advanced_stat)
+
+    dup = build(:team_season_advanced_stat, team: existing.team, season: existing.season,
+                strength_state: existing.strength_state, score_state: existing.score_state)
+
+    expect(dup).not_to be_valid
+  end
 end

@@ -3,7 +3,8 @@ class TeamSeasonAdvancedStat < ApplicationRecord
   belongs_to :season
 
   validates :strength_state, presence: true, inclusion: { in: PlayerGameAdvancedStat::STRENGTH_STATES.values }
-  validates :team_id, uniqueness: { scope: [ :season_id, :strength_state ] }
+  validates :score_state, presence: true, inclusion: { in: PlayerGameAdvancedStat::SCORE_STATES.values }
+  validates :team_id, uniqueness: { scope: [ :season_id, :strength_state, :score_state ] }
   validate :team_belongs_to_season_league
 
   private

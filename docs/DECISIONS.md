@@ -343,5 +343,18 @@ Deliberately deferred, and why:
 
 **Known gaps, deliberately left for a later task:** `zone_entries`/`zone_exits` stay at their column default — nothing in `game_events` models a zone entry/exit, so there's nothing to derive them from yet. `toi_seconds` is only computed for the `"all"` bucket; splitting by strength_state would need a continuous strength-state timeline (when did a power play start/end) that this schema doesn't track — events carry their own strength_state, but there's no interval reconstruction between them.
 
+### Score-state splits (TASK-64): full cross product, all four advanced-stats tables, "close" definition
+**Status:** Settled
+
+Extended `player_game_advanced_stats`/`player_season_advanced_stats`/`team_game_advanced_stats`/`team_season_advanced_stats` with a `score_state` column (`"all"`/`"close"`, `PlayerGameAdvancedStat::SCORE_STATES`), widening each table's unique index to include it. Three decisions, checked before touching schema already shipped by TASK-60/61/66/67:
+
+**Applies to all four tables, not just the player-grain ones TASK-64's own description named.** `strength_state` already applies uniformly across player and team grain; leaving team-grain score-state out would have been an asymmetry with no real justification.
+
+**Full cross product of strength_state × score_state**, per TASK-64's own "doubling every strength-state table" framing — every strength bucket (all/5v5/pp/sh) gets both an all-score and a close-score row, including the rare "PP + close" combination. Mechanically consistent over selectively pruning odd combinations.
+
+**"close" = within one goal in the 1st/2nd period, tied in the 3rd, and all of overtime counts as close regardless of margin** (standard analytics convention) — evaluated using the score *entering* an event, so a goal that ties the game is itself still scored under the pre-goal (closer) state, not the game's tied.
+
+`ComputeGameAdvancedStats` reconstructs the score entering each event by scanning `goal`-type `game_events` in `(period, period_time_seconds, id)` order — a plain in-memory scan, not a stored running total, since nothing else needs live score state and the event volume per game is small. Backfilling existing games (once real ingestion exists) is `rake advanced_stats:backfill`: a plain rake task looping `ComputeGameAdvancedStats` + `RebuildAdvancedStatsForGame` per game with stored `game_events`, no NHL API call — safe to re-run because both of those services already recompute wholesale rather than increment in place.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

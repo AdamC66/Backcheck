@@ -40,4 +40,24 @@ RSpec.describe PlayerSeasonAdvancedStat, type: :model do
 
     expect(dup).not_to be_valid
   end
+
+  it "allows the same chain point to hold separate rows per score state" do
+    existing = create(:player_season_advanced_stat, score_state: PlayerGameAdvancedStat::SCORE_STATES[:all])
+
+    close = build(:player_season_advanced_stat, player: existing.player, season: existing.season,
+                  team: existing.team, as_of_game: existing.as_of_game, strength_state: existing.strength_state,
+                  score_state: PlayerGameAdvancedStat::SCORE_STATES[:close])
+
+    expect(close).to be_valid
+  end
+
+  it "rejects a duplicate score_state at the same chain point" do
+    existing = create(:player_season_advanced_stat)
+
+    dup = build(:player_season_advanced_stat, player: existing.player, season: existing.season,
+                team: existing.team, as_of_game: existing.as_of_game, strength_state: existing.strength_state,
+                score_state: existing.score_state)
+
+    expect(dup).not_to be_valid
+  end
 end

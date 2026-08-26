@@ -1,5 +1,8 @@
 class PlayerGameAdvancedStat < ApplicationRecord
   STRENGTH_STATES = { all: "all", five_v_five: "5v5", power_play: "pp", short_handed: "sh" }.freeze
+  # "close" = within one goal in the 1st/2nd, tied in the 3rd — all of OT counts as close
+  # regardless of margin. Evaluated using the score entering an event, not after it.
+  SCORE_STATES = { all: "all", close: "close" }.freeze
 
   belongs_to :game
   belongs_to :player
@@ -7,7 +10,8 @@ class PlayerGameAdvancedStat < ApplicationRecord
   belongs_to :xg_model
 
   validates :strength_state, presence: true, inclusion: { in: STRENGTH_STATES.values }
-  validates :player_id, uniqueness: { scope: [ :game_id, :strength_state ] }
+  validates :score_state, presence: true, inclusion: { in: SCORE_STATES.values }
+  validates :player_id, uniqueness: { scope: [ :game_id, :strength_state, :score_state ] }
   validate :team_played_in_game
 
   private

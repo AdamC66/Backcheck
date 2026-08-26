@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_080003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -187,6 +187,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_070000) do
     t.integer "fenwick_for", default: 0, null: false
     t.bigint "game_id", null: false
     t.bigint "player_id", null: false
+    t.string "score_state", default: "all", null: false
     t.string "strength_state", default: "all", null: false
     t.bigint "team_id", null: false
     t.integer "toi_seconds", default: 0, null: false
@@ -196,7 +197,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_070000) do
     t.bigint "xg_model_id", null: false
     t.integer "zone_entries", default: 0, null: false
     t.integer "zone_exits", default: 0, null: false
-    t.index ["game_id", "player_id", "strength_state"], name: "index_pgas_on_game_player_strength_state", unique: true
+    t.index ["game_id", "player_id", "strength_state", "score_state"], name: "index_pgas_on_game_player_strength_score", unique: true
     t.index ["game_id"], name: "index_player_game_advanced_stats_on_game_id"
     t.index ["player_id"], name: "index_player_game_advanced_stats_on_player_id"
     t.index ["team_id"], name: "index_player_game_advanced_stats_on_team_id"
@@ -212,6 +213,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_070000) do
     t.integer "fenwick_for", default: 0, null: false
     t.integer "games_played", default: 0, null: false
     t.bigint "player_id", null: false
+    t.string "score_state", default: "all", null: false
     t.bigint "season_id", null: false
     t.boolean "stale", default: false, null: false
     t.string "strength_state", default: "all", null: false
@@ -223,7 +225,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_070000) do
     t.integer "zone_entries", default: 0, null: false
     t.integer "zone_exits", default: 0, null: false
     t.index ["as_of_game_id"], name: "index_player_season_advanced_stats_on_as_of_game_id"
-    t.index ["player_id", "season_id", "strength_state", "as_of_game_id"], name: "index_psas_on_player_season_strength_game", unique: true
+    t.index ["player_id", "season_id", "strength_state", "score_state", "as_of_game_id"], name: "index_psas_on_player_season_strength_score_game", unique: true
     t.index ["player_id"], name: "index_player_season_advanced_stats_on_player_id"
     t.index ["season_id"], name: "index_player_season_advanced_stats_on_season_id"
     t.index ["team_id"], name: "index_player_season_advanced_stats_on_team_id"
@@ -462,13 +464,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_070000) do
     t.integer "fenwick_for", default: 0, null: false
     t.bigint "game_id", null: false
     t.decimal "pdo", precision: 6, scale: 3, default: "0.0", null: false
+    t.string "score_state", default: "all", null: false
     t.string "strength_state", default: "all", null: false
     t.bigint "team_id", null: false
     t.integer "toi_seconds", default: 0, null: false
     t.datetime "updated_at", null: false
     t.decimal "xg_against", precision: 6, scale: 3, default: "0.0", null: false
     t.decimal "xg_for", precision: 6, scale: 3, default: "0.0", null: false
-    t.index ["game_id", "team_id", "strength_state"], name: "index_tgas_on_game_team_strength_state", unique: true
+    t.index ["game_id", "team_id", "strength_state", "score_state"], name: "index_tgas_on_game_team_strength_score", unique: true
     t.index ["game_id"], name: "index_team_game_advanced_stats_on_game_id"
     t.index ["team_id"], name: "index_team_game_advanced_stats_on_team_id"
   end
@@ -483,6 +486,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_070000) do
     t.integer "fenwick_for", default: 0, null: false
     t.integer "games_played", default: 0, null: false
     t.decimal "pdo", precision: 6, scale: 3, default: "0.0", null: false
+    t.string "score_state", default: "all", null: false
     t.bigint "season_id", null: false
     t.string "strength_state", default: "all", null: false
     t.bigint "team_id", null: false
@@ -491,7 +495,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_070000) do
     t.decimal "xg_against", precision: 6, scale: 3, default: "0.0", null: false
     t.decimal "xg_for", precision: 6, scale: 3, default: "0.0", null: false
     t.index ["season_id"], name: "index_team_season_advanced_stats_on_season_id"
-    t.index ["team_id", "season_id", "strength_state"], name: "index_tsas_on_team_season_strength_state", unique: true
+    t.index ["team_id", "season_id", "strength_state", "score_state"], name: "index_tsas_on_team_season_strength_score", unique: true
     t.index ["team_id"], name: "index_team_season_advanced_stats_on_team_id"
   end
 

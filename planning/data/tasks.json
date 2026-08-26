@@ -658,7 +658,7 @@
     "title": "Score-state (close/all) advanced stat splits — recompute from stored events, no new NHL calls",
     "description": "Hockey-reference slices advanced stats by score-state (\"close\" — within one goal in the 1st/2nd, tied in the 3rd — vs. all situations) in addition to strength_state, doubling every strength-state table (All/EV/PP/SH/5v5 x close/all-score). Deliberately out of v1 scope (TASK-60/61 ship strength_state only) — more surface than a hockey-reference-inspired v1 needs. Cheap to add later specifically because score-state is derivable entirely from data TASK-58 already stores: the score at any event reconstructs from goal-type game_events rows already in the table, so this is a new aggregation dimension over already-ingested game_events/shifts, not a new api-web.nhle.com integration or client call. Adding it means a score_state column/dimension on player_game_advanced_stats/player_season_advanced_stats (or a sibling table) plus a one-time backfill recomputing score-state-filtered rollups for every game already ingested by then. Depends on TASK-58/60/61/62.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "low",
     "acceptance_criteria": [
       "The backfill recomputes score-state splits for already-ingested games using only stored game_events/shifts — no NHL API call is made",
