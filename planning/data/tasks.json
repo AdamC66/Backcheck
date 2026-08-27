@@ -855,5 +855,41 @@
       "A newly trained XgModel's per-team-per-game xG totals fall in a realistic range (roughly 1-6 per team per game) against a sample of real ingested games, not the placeholder's inflated numbers",
       "The training process and feature choices are documented (in DECISIONS.md or alongside the training script) so the coefficients aren't a black box"
     ]
+  },
+  {
+    "id": "TASK-82",
+    "epic_id": "EPIC-16",
+    "title": "Build the component library admin page",
+    "description": "A new route under /admin (Super Admin only, same guard as AdminPage's other pages) that imports every presentational component in frontend/src/components and renders each with a couple of representative prop combinations — e.g. Text's every variant/tone, SegmentedControl with 2-4 options and a selected value, DataTable with a few sample rows and columns built via buildColumns, badges in each of their states. One section per component, in a scannable list (mirrors AdminPage's existing SideNav shape rather than inventing new admin layout). No new component variants or props needed to ship this — it's a page that exercises what already exists.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low"
+  },
+  {
+    "id": "TASK-83",
+    "epic_id": "EPIC-12",
+    "title": "Multiselect teams on the New Sync Run form",
+    "description": "Real gap found recovering from a stuck sync run (TASK-56/57 era mass game_stats pull, interrupted by a machine restart mid-run): 6 of 32 NHL teams needed a follow-up sync, and NewSyncRunPage's team picker only takes one team at a time, forcing 6 separate trips through the form. Explicitly scoped as frontend-only, no backend/schema change: SyncRun stays one-team-or-whole-league per run exactly as it is today (a real multi-team-in-one-run redesign was considered and deliberately rejected here as more than this needed — see chat log/DECISIONS.md if revisited). Fix: turn the team <Select> into a multiselect; on submit, loop useCreateSyncRun once per selected team_id (same sync_kinds/season_id/preset each time) instead of a single createSyncRun call. Selecting zero teams keeps today's behavior (whole-league run) so this is additive, not a breaking change to the single-team case.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "low"
+  },
+  {
+    "id": "TASK-84",
+    "epic_id": "EPIC-12",
+    "title": "Dev has no real job queue: sync runs can't survive an interruption, and concurrent jobs deadlock each other",
+    "description": "Root cause found across two separate real incidents: development has no configured active_job.queue_adapter, so it falls back to Rails' true default, :async — an in-process thread pool tied to the puma process's own lifetime, with zero persisted execution state and no per-queue concurrency limit. config/queue.yml's ingest queue (processes: 1, threads: 1, specifically so NHL syncs can never run in parallel and burst the client's rate limit) is entirely inert under :async; it's only honored by Solid Queue, which only production actually uses (config/environments/production.rb sets queue_adapter = :solid_queue). Three consequences, not one: (1) a machine/editor restart mid-run kills the job with nothing left to resume it — sync run 10 hung at 83% this way, status stuck at running forever; (2) AdminSyncOrchestrator#call iterates every sync_run_item unconditionally and always re-runs it (a plain .each, no status filter), so even a correctly-retried job would blindly redo every already-completed team rather than resuming; (3) worse, and already actively happening under normal, uninterrupted operation: MarkGameForStatsRecompute enqueues RebuildAdvancedStatsJob per game and returns immediately rather than rebuilding inline, so as the orchestrator's single thread marches through one team's games, several of that team's RebuildAdvancedStatsJobs end up executing concurrently on :async's thread pool — each rewriting player_season_advanced_stats rows for the same shared roster in a different order. Real PG::TRDeadlockDetected errors resulted, roughly half of San Jose's 88 games failing in one run, and got steadily worse the deeper into a whole-league run it went. Root of that pattern: RebuildAdvancedStatsForGame rebuilds chains for players from *both* teams in a game and recomputes both teams' season rollups, and a whole-league advanced_stats run processes every game twice by design — once from each team's own schedule (games_for matches home or away) — so a shared game (e.g. ANA @ COL) gets fully reprocessed a second time once the other team's turn comes around. That second pass touches a much wider, already-built chain than the first fresh pass did, so collisions (and therefore failures) climb as more of the league accumulates chain data and as :async's unbounded, unserialized job backlog grows over the run's duration — not a steady rate. Not data corruption (a deadlock rolls back, doesn't partially write), but real, frequent sync failures during totally normal admin-console use, not just during a rare interruption. Fix needs both halves: run development on Solid Queue (making config/queue.yml's existing single-consumer ingest queue actually take effect, which alone would eliminate the deadlock scenario), plus make AdminSyncOrchestrator skip already status: completed items so a retried/resumed job doesn't redo finished work — a partially-done per-game item is safe to simply re-run from its first game, since UpsertGameStats/UpsertGameEvents/RebuildAdvancedStatsForGame are already natural-key upserts.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-85",
+    "epic_id": "EPIC-12",
+    "title": "Sync per-game kinds off the season's game list directly, not one item per team",
+    "description": "A whole-league sync_run (team: nil) creates one sync_run_item per team for game_stats/advanced_stats (PER_GAME_KINDS), and each item's games_for(team) matches home-or-away — so any two teams' games_for lists overlap on every game they played each other, and a shared game (e.g. ANA @ COL) gets fully reprocessed a second time once the later team's item comes up: a second network fetch, and for advanced_stats, a second full RebuildAdvancedStatsForGame pass rebuilding both teams' player chains and both teams' season rollups again. Wasteful on its own, and (per TASK-84) the second pass over an already-built chain is also the specific trigger that made PG::TRDeadlockDetected failures climb the deeper a run went. Real structural fix, not a patch: SyncRunItem.team is already optional (standings/daily_scores already run as a single team: nil item), and games_for(team) is already just Game.for_team(team).for_season(season)... — a filter on top of the season's full game list. So for PER_GAME_KINDS, stop fanning teams_for out into one item per team at all: build exactly one item (team: sync_run.team, i.e. nil for whole-league), and iterate Game.for_season(season).finished.chronological with the team filter applied only when sync_run.team is present. A game then physically cannot be visited twice in one run — no Set/tracking needed, and compute_total_steps stops double-counting shared games as a side effect (today's total_steps is roughly 2x actual unique games for a whole-league run). Only real wrinkle: run_per_game_item's step label currently reads \"#{kind} — #{item.team.name} (i/count)\", which breaks when item.team is nil for a whole-league item — switch it to name the actual matchup (e.g. \"advanced stats — ANA @ COL (i/count)\"), which is more informative anyway since it doesn't attribute a shared game to whichever team's turn it happened to be. Single-team-scoped runs are unaffected (same query, same one item, as today).",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium"
   }
 ]

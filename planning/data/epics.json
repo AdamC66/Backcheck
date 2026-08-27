@@ -118,5 +118,13 @@
     "description": "Builds the ingestion path EPIC-13 deliberately deferred: a real NHL client for play-by-play and shift-chart data, upserting into game_events/shifts (TASK-58), wired through ComputeGameAdvancedStats (TASK-72) and the existing recompute pipeline (TASK-62) end to end — closing the composition point TASK-72 was left unwired at. Also validates the whole computation pipeline's accuracy against real data: on-ice attribution, Corsi/Fenwick/xG, and score-state splits (TASK-64) have only ever been exercised against synthetic spec fixtures, never a real game. Frontend: surfaces these now-real advanced stats, which requires building game detail and player detail pages that don't exist yet at all, plus extending the existing team stats page.",
     "status": "backlog",
     "priority": "medium"
+  },
+  {
+    "id": "EPIC-16",
+    "project_id": "backcheck",
+    "title": "Component library admin page",
+    "description": "A super-admin-only page rendering every reusable presentational component from frontend/src/components (Text, Row, Stack, SegmentedControl, DataTable, Card, badges, etc.) with its variants/props side by side — a living style guide inside the app itself, not a separate Storybook.js build. Lets a dev sanity-check a shared component's look across every variant in one place instead of hunting through real pages, and doubles as a running check that TeamTheme/dashboard-redesign tokens stay consistent as new components are added.",
+    "status": "backlog",
+    "priority": "low"
   }
 ]
