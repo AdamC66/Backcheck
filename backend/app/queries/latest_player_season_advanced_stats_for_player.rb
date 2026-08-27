@@ -1,7 +1,5 @@
-# Same "chain of running-total snapshots" rationale as LatestPlayerSeasonAdvancedStats
-# (TASK-61): the latest as_of_game per bucket is the season total, not every chained row.
-# Scoped to one player across every season/team they've played for, rather than one
-# team+season across every player.
+# Same running-total-chain rationale as LatestPlayerSeasonAdvancedStats (TASK-61), but
+# scoped to one player across every season/team, not one team+season across every player.
 class LatestPlayerSeasonAdvancedStatsForPlayer
   def initialize(player:, game_type:)
     @player = player

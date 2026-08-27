@@ -36,12 +36,8 @@ class Player < ApplicationRecord
     ActiveSupport::Inflector.transliterate(parts.join(" "), "").downcase.gsub(/[^a-z0-9]/, "")
   end
 
-  # The org on the most recent roster_spot — a real roster fact, unlike deriving "current
-  # team" from stats, which is blank for a rostered player who hasn't recorded a game yet
-  # (or ever). This is the parent NHL org even when the player is currently loaned to an
-  # affiliate; resolving that (see TeamRoster's assignment concept) is a further step this
-  # doesn't take. updated_at breaks ties within one season — an in-season trade leaves two
-  # roster_spot rows with the same season.starts_on.
+  # Real roster fact, not derived from stats (a rostered player may have zero games).
+  # The parent org, not an active affiliate loan; same-season ties broken by updated_at.
   def current_team
     roster_spots.joins(:season).order("seasons.starts_on", :updated_at).last&.team
   end

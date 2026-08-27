@@ -48,10 +48,8 @@ function isScoreState(value: string | null): value is ScoreState {
 const BACK_LINK_CLASS =
   "mb-1 flex w-fit items-center gap-1.5 text-xs font-bold tracking-wide text-slate-400 uppercase hover:text-slate-600";
 
-// A player is reached from several other pages (a team roster, eventually a game box
-// score), so "back" means the page the visitor actually came from, not a fixed parent
-// route. A direct/refreshed load has no such entry — "default" is react-router's key
-// for that case — so it falls back to the dashboard instead of leaving the app.
+// "Back" means wherever the visitor came from, not a fixed route. A direct/refreshed
+// load has no such entry ("default" key) — falls back to the dashboard instead.
 function BackLink() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,8 +71,8 @@ function BackLink() {
   );
 }
 
-// A valid :id is trusted the same way TeamPage's child pages trust theirs — the API
-// 404s and the error branch below covers a bad or stale link.
+// A malformed or unknown :id has no separate client-side guard — it surfaces through
+// detail.isError below, since the API itself 404s.
 export function PlayerPage() {
   const { id } = useParams();
   const playerId = Number(id);

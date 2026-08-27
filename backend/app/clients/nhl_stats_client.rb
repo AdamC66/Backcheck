@@ -1,9 +1,7 @@
 require "net/http"
 
-# Serves shift-chart data — a different host and REST shape from NhlClient
-# (api-web.nhle.com), confirmed against a live response rather than assumed from docs.
-# No published rate limit, so the interval below is self-imposed the same way
-# NhlClient's is. Call it from jobs only.
+# Shift-chart data lives on a different host/REST shape than NhlClient (api-web.nhle.com)
+# — confirmed live, not assumed. Same self-imposed rate limit as NhlClient; jobs only.
 class NhlStatsClient
   BASE_URL = "https://api.nhle.com".freeze
   USER_AGENT = "Backcheck/1.0 (hockey analytics dashboard; contact via repository)".freeze
@@ -32,9 +30,8 @@ class NhlStatsClient
     @min_interval = (min_interval || ENV.fetch("NHL_STATS_API_MIN_INTERVAL", DEFAULT_MIN_INTERVAL)).to_f
   end
 
-  # typeCode 517 rows are real shifts; the feed also mixes in typeCode 505 goal-marker
-  # rows (null duration, shiftNumber 0) that duplicate what play-by-play already reports —
-  # callers filter, the client doesn't, same as HockeyTechClient's coaching-staff row.
+  # typeCode 505 rows are goal-marker noise (duplicates of play-by-play's own goal
+  # events), not real shifts — returned as-is; callers filter, same as HockeyTechClient's.
   def shift_chart(nhl_game_id)
     get("/stats/rest/en/shiftcharts", "cayenneExp" => "gameId=#{nhl_game_id}").fetch("data")
   end

@@ -1,7 +1,5 @@
-# Closes the composition TASK-72 was deliberately left open at: ingests a game's
-# real play-by-play/shift-chart data, computes its per-game advanced stats, then hands
-# off to the same corrected-game recompute path (MarkGameForStatsRecompute) any manual
-# correction would use — one entry point, not two.
+# Ingests a game's play-by-play/shift-chart data, computes advanced stats, then hands
+# off to the same MarkGameForStatsRecompute path a manual correction uses — one entry point.
 class SyncGameEvents
   attr_reader :missing_players
 

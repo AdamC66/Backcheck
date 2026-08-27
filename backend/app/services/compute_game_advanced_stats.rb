@@ -170,9 +170,8 @@ class ComputeGameAdvancedStats
                         target_net_x: target_net_x_for(event))
   end
 
-  # The net a shot is aimed at, not the shooter's own — home's own net sits on
-  # home_team_defending_side; the away team shoots at that side, home shoots at the
-  # opposite one.
+  # The net a shot is aimed at, not the shooter's own — home's net sits on
+  # home_team_defending_side; away shoots at that side, home shoots at the opposite one.
   def target_net_x_for(event)
     return nil if event.home_team_defending_side.blank? || event.team_id.nil?
 

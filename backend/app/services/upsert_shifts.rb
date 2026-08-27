@@ -1,7 +1,5 @@
-# Parses a game's shift-chart response into shifts rows. typeCode 517 rows are real
-# shifts; the feed also mixes in typeCode 505 goal-marker rows (null duration, shiftNumber
-# 0) that duplicate what play-by-play's own goal events already report — confirmed
-# against a live response (see docs/DECISIONS.md), not assumed.
+# typeCode 517 rows are real shifts; 505 rows are goal-marker noise duplicating
+# play-by-play's own goal events. Confirmed live, not assumed (docs/DECISIONS.md).
 class UpsertShifts
   REAL_SHIFT_TYPE_CODE = 517
 

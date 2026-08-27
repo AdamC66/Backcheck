@@ -1,6 +1,5 @@
 # player_season_advanced_stats is a chain of running-total snapshots (TASK-61), not
-# season totals on their own — the "season stats" a page wants is each player's most
-# recent snapshot per (strength_state, score_state), not every game-boundary row.
+# season totals — this picks each player's latest snapshot per (strength_state, score_state).
 class LatestPlayerSeasonAdvancedStats
   def initialize(team:, season:, game_type:)
     @team = team

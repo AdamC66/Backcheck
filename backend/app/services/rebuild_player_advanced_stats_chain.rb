@@ -27,11 +27,8 @@ class RebuildPlayerAdvancedStatsChain
     PlayerGameAdvancedStat.where(player: player, game: from_game).distinct.pluck(:strength_state, :score_state)
   end
 
-  # A player's actual games in the order they happened, not the team's schedule — an
-  # affiliate call-up means their games aren't always sequential within one team's.
-  # Scoped to from_game's own game_type: a playoff correction must never touch the
-  # regular-season chain, and vice versa — same reasoning skater_season_stats already
-  # applies by keying a separate row per game_type stint.
+  # A player's actual games in order, not the team's schedule (a call-up skips games).
+  # Scoped to from_game's game_type: a playoff correction never touches the regular chain.
   def ordered_rows(strength_state, score_state)
     PlayerGameAdvancedStat.where(player: player, strength_state: strength_state, score_state: score_state)
                            .joins(:game).where(games: { game_type: from_game.game_type })

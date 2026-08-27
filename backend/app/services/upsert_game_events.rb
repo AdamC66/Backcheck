@@ -1,6 +1,5 @@
-# Parses a game's play-by-play response into game_events rows. Only the play types this
-# schema models are stored (period-start/end, stoppage, delayed-penalty, and game-end are
-# skipped) — confirmed against a live response, not assumed (see docs/DECISIONS.md).
+# Only the play types this schema models are stored — period-start/end, stoppage,
+# delayed-penalty, and game-end are skipped. Confirmed live, not assumed (docs/DECISIONS.md).
 class UpsertGameEvents
   TYPE_MAP = {
     "goal" => GameEvent::EVENT_TYPES[:goal],

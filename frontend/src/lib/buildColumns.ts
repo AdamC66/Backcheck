@@ -6,7 +6,6 @@ export interface ColumnSpec<Row, Value = unknown> {
   // percentage) — id is required in the function case since there's no key to infer it from.
   name: Extract<keyof Row, string> | ((row: Row) => Value);
   id?: string;
-  // Short text shown in the column head, e.g. "CF".
   header: string;
   // Full-word tooltip on hover, e.g. "Corsi for" — defaults to header when the
   // abbreviation is already self-explanatory (a name column, say).
@@ -19,9 +18,8 @@ export interface ColumnSpec<Row, Value = unknown> {
   cell?: (info: CellContext<Row, Value>) => ReactNode;
 }
 
-// Turns a plain array of column specs into TanStack column defs in one pass, so a stat
-// table is just data (what columns, in what order) rather than a repeated
-// columnHelper.accessor call per column.
+// So a stat table is declared as plain data (columns, in order) rather than a
+// repeated columnHelper.accessor call per column.
 export function buildColumns<Row>(
   columnHelper: ColumnHelper<Row>,
   // Each column's Value genuinely differs, the same reason DataTable's own `columns`
