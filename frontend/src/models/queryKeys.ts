@@ -41,3 +41,6 @@ export const SYNC_KINDS_KEY = ["sync-kinds"] as const;
 export const seasonsKey = (leagueSlug: string) => ["seasons", leagueSlug] as const;
 
 export const gameDetailKey = (gameId: number) => ["game-detail", gameId] as const;
+
+export const playerDetailKey = (playerId: number, gameType?: string) =>
+  ["player-detail", playerId, gameType ?? "regular_season"] as const;

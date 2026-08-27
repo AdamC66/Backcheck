@@ -837,7 +837,7 @@
     "title": "Player detail page with season-by-season stats",
     "description": "No per-player detail page exists yet. Build one showing season-by-season basic and advanced stats (skater_season_stats/goalie_season_stats plus player_season_advanced_stats), inspired by the hockey-reference player-page review done for EPIC-13's frontend scoping. Sequencing note: EPIC-14's league-wide player list is a separate concern (search/filter/sort/paginate), but its rows should link here once both exist.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "low",
     "acceptance_criteria": [
       "A player's page shows season-by-season basic stats today, and advanced-stats columns once real data exists via TASK-76"

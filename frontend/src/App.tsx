@@ -6,6 +6,7 @@ import { RequireSuperAdmin } from "@/auth/RequireSuperAdmin";
 import { DashboardPage } from "@/containers/DashboardPage";
 import { GamePage } from "@/containers/GamePage";
 import { LeaguePage } from "@/containers/LeaguePage";
+import { PlayerPage } from "@/containers/PlayerPage";
 import { TeamPage } from "@/containers/TeamPage/TeamPage";
 import { TeamOverviewPage } from "@/containers/TeamPage/TeamOverviewPage";
 import { TeamSchedulePage } from "@/containers/TeamPage/TeamSchedulePage";
@@ -49,6 +50,14 @@ export function App() {
         element={
           <RequireAuth>
             <GamePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/players/:id"
+        element={
+          <RequireAuth>
+            <PlayerPage />
           </RequireAuth>
         }
       />

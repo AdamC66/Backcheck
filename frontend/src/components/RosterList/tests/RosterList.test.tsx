@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RosterList } from "../RosterList";
 import { rosterEntryFor, playerFor, teamFor } from "@/test-mocks";
+import { renderWithProviders, screen } from "@/test-utils";
 
 describe("RosterList", () => {
   it("renders each section under its label, keeping an injured player inline", () => {
-    render(
+    renderWithProviders(
       <RosterList
         sections={[
           {
@@ -34,7 +34,7 @@ describe("RosterList", () => {
   });
 
   it("omits an empty section entirely rather than rendering it with nothing in it", () => {
-    render(
+    renderWithProviders(
       <RosterList
         sections={[{ key: "forwards", label: "Forwards", entries: [] }]}
         canManageRoster={false}
@@ -52,7 +52,7 @@ describe("RosterList", () => {
     const user = userEvent.setup();
     const onSetStatus = vi.fn();
 
-    render(
+    renderWithProviders(
       <RosterList
         sections={[
           {
@@ -83,7 +83,7 @@ describe("RosterList", () => {
   });
 
   it("doesn't show a manage action to a user who isn't the team's GM", () => {
-    render(
+    renderWithProviders(
       <RosterList
         sections={[
           {
@@ -107,7 +107,7 @@ describe("RosterList", () => {
     const user = userEvent.setup();
     const onSendDown = vi.fn();
 
-    render(
+    renderWithProviders(
       <RosterList
         sections={[
           {
@@ -132,7 +132,7 @@ describe("RosterList", () => {
   });
 
   it("doesn't offer to send down a player already on loan at an affiliate", () => {
-    render(
+    renderWithProviders(
       <RosterList
         sections={[
           {
@@ -165,7 +165,7 @@ describe("RosterList", () => {
     const user = userEvent.setup();
     const onCallUp = vi.fn();
 
-    render(
+    renderWithProviders(
       <RosterList
         sections={[
           {

@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { AssignmentBadge } from "@/components/AssignmentBadge/AssignmentBadge";
 import { JerseyBadge } from "@/components/JerseyBadge/JerseyBadge";
 import { RosterStatusBadge } from "@/components/RosterStatusBadge/RosterStatusBadge";
@@ -30,9 +31,11 @@ export function PlayerRow({
     <li className="flex items-center gap-3 border-b border-slate-100 px-3 py-2 last:border-0">
       <JerseyBadge number={entry.jersey_number} fullName={fullName} />
 
-      <Text variant="title" className="min-w-0 flex-1 truncate">
-        {fullName}
-      </Text>
+      <Link to={`/players/${player.id}`} className="min-w-0 flex-1 truncate hover:underline">
+        <Text variant="title" className="truncate">
+          {fullName}
+        </Text>
+      </Link>
 
       <span className="w-7 shrink-0 bg-slate-100 px-1.5 py-0.5 text-center text-xs font-bold text-slate-500">
         {positionAbbreviation(player.position)}

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PlayerRow } from "../PlayerRow";
 import { rosterEntryFor, playerFor } from "@/test-mocks";
+import { renderWithProviders, screen } from "@/test-utils";
 
 describe("PlayerRow", () => {
   it("shows the player's name and position", () => {
-    render(
+    renderWithProviders(
       <ul>
         <PlayerRow
           entry={rosterEntryFor({
@@ -31,7 +31,7 @@ describe("PlayerRow", () => {
     const onManageStatus = vi.fn();
     const entry = rosterEntryFor({ player: playerFor(1) });
 
-    render(
+    renderWithProviders(
       <ul>
         <PlayerRow
           entry={entry}

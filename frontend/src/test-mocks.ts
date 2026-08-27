@@ -10,8 +10,16 @@ import type {
 } from "@/models/gameDetail";
 import type { Game, GamesMeta } from "@/models/games";
 import type { League, LeagueWithTeams } from "@/models/leagues";
+import type {
+  PlayerAdvancedSeason,
+  PlayerDetail,
+  PlayerDetailMeta,
+  PlayerGoalieSeason,
+  PlayerSkaterSeason,
+} from "@/models/playerDetail";
 import type { RosterEntry, RosterMeta, RosterPlayer } from "@/models/roster";
 import type { RosterTransaction, RosterTransactionsMeta } from "@/models/rosterTransactions";
+import type { Season } from "@/models/seasons";
 import type { Standing, StandingsMeta } from "@/models/standings";
 import type { TeamAffiliation } from "@/models/teamAffiliations";
 import type { Team } from "@/models/teams";
@@ -530,4 +538,105 @@ export const TEAM_STATS: Envelope<TeamStats, TeamStatsMeta> = {
     },
   },
   meta: { season: "2025-26", game_type: "regular_season", skater_count: 2, goalie_count: 1 },
+};
+
+export function seasonFor(id: number, label: string): Season {
+  return {
+    id,
+    label,
+    starts_on: `20${label.slice(0, 2)}-10-01`,
+    ends_on: `20${label.slice(-2)}-06-01`,
+  };
+}
+
+export function playerSkaterSeasonFor(
+  overrides: Partial<PlayerSkaterSeason> = {},
+): PlayerSkaterSeason {
+  return {
+    season: seasonFor(1, "24-25"),
+    team: teamFor(1, "TOR"),
+    games_played: 82,
+    goals: 20,
+    assists: 30,
+    points: 50,
+    plus_minus: 5,
+    pim: 24,
+    hits: 60,
+    power_play_goals: 8,
+    shots_on_goal: 180,
+    faceoff_winning_pctg: null,
+    time_on_ice_seconds: 89540,
+    shifts: 1840,
+    blocked_shots: 30,
+    giveaways: 40,
+    takeaways: 35,
+    ...overrides,
+  };
+}
+
+export function playerGoalieSeasonFor(
+  overrides: Partial<PlayerGoalieSeason> = {},
+): PlayerGoalieSeason {
+  return {
+    season: seasonFor(1, "24-25"),
+    team: teamFor(1, "TOR"),
+    games_played: 40,
+    games_started: 38,
+    wins: 20,
+    losses: 15,
+    ot_losses: 3,
+    shutouts: 2,
+    even_strength_shots_against: 900,
+    even_strength_goals_against: 80,
+    power_play_shots_against: 150,
+    power_play_goals_against: 20,
+    shorthanded_shots_against: 20,
+    shorthanded_goals_against: 2,
+    shots_against: 1070,
+    saves: 968,
+    goals_against: 102,
+    save_pctg: 0.9047,
+    goals_against_average: 2.55,
+    pim: 2,
+    time_on_ice_seconds: 144000,
+    ...overrides,
+  };
+}
+
+export function playerAdvancedSeasonFor(
+  overrides: Partial<PlayerAdvancedSeason> = {},
+): PlayerAdvancedSeason {
+  return {
+    season: seasonFor(1, "24-25"),
+    team: teamFor(1, "TOR"),
+    strength_state: "all",
+    score_state: "all",
+    games_played: 10,
+    corsi_for: 120,
+    corsi_against: 80,
+    fenwick_for: 90,
+    fenwick_against: 60,
+    xg_for: 8.5,
+    xg_against: 4.2,
+    zone_entries: 0,
+    zone_exits: 0,
+    toi_seconds: 10800,
+    ...overrides,
+  };
+}
+
+export const PLAYER_DETAIL: Envelope<PlayerDetail, PlayerDetailMeta> = {
+  data: {
+    player: playerFor(1, { first_name: "Auston", last_name: "Matthews" }),
+    current_team: teamFor(1, "TOR"),
+    skater_seasons: [
+      playerSkaterSeasonFor({ season: seasonFor(1, "24-25"), team: teamFor(1, "TOR"), goals: 40 }),
+      playerSkaterSeasonFor({ season: seasonFor(2, "25-26"), team: teamFor(1, "TOR"), goals: 45 }),
+    ],
+    goalie_seasons: [],
+    advanced_seasons: [
+      playerAdvancedSeasonFor({ season: seasonFor(2, "25-26"), team: teamFor(1, "TOR") }),
+    ],
+  },
+  meta: { game_type: "regular_season" },
 };
