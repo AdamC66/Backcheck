@@ -60,4 +60,26 @@ RSpec.describe PlayerSeasonAdvancedStat, type: :model do
 
     expect(dup).not_to be_valid
   end
+
+  it "rejects a game_type that doesn't match as_of_game's own game_type" do
+    stat = build(:player_season_advanced_stat, game_type: Game::GAME_TYPES[:playoffs])
+
+    expect(stat).not_to be_valid
+    expect(stat.errors[:game_type]).to include("must match as_of_game's game_type")
+  end
+
+  it "allows the same player to hold separate chains per game_type in one season" do
+    season = create(:season)
+    team = create(:team, league: season.league)
+    player = create(:player)
+    regular_game = create(:game, season: season, home_team: team, game_type: Game::GAME_TYPES[:regular_season])
+    playoff_game = create(:game, season: season, home_team: team, game_type: Game::GAME_TYPES[:playoffs])
+    create(:player_season_advanced_stat, player: player, season: season, team: team, as_of_game: regular_game,
+           game_type: Game::GAME_TYPES[:regular_season])
+
+    playoff_stat = build(:player_season_advanced_stat, player: player, season: season, team: team,
+                         as_of_game: playoff_game, game_type: Game::GAME_TYPES[:playoffs])
+
+    expect(playoff_stat).to be_valid
+  end
 end

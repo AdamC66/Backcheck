@@ -401,5 +401,18 @@ Ran `SyncGameEvents` against a real, already-ingested game (`nhl_game_id 2025020
 
 This is documented as the validation record rather than built as an automated fixture-based spec: reproducing it as a spec would need ~40 real `Player`/`Team` factories seeded with the exact `nhl_player_id`/`nhl_team_id` values a full real game references (on-ice Corsi/Fenwick correctness depends on every relevant primary player resolving, not just the ones goal-scoring touches) — a large amount of fixture weight for a check the existing trimmed-fixture unit specs (TASK-74/75/76) already cover at the mechanics level. The real-data run proved the mechanics hold up against a game they were never tuned against.
 
+### Team stats page advanced-stats section (TASK-79): game_type split added, plus a stats-season gap fixed
+**Status:** Settled
+
+Extended `GET /api/v1/teams/:id/stats` with an `advanced` key (`players`, `team`) alongside the existing basic skater/goalie stats, and `TeamStatsPage` with strength_state/score_state filters (`SegmentedControl`, URL-driven like the schedule page's game-type filter).
+
+**`Team#current_stats_season` was blind to advanced stats.** It only checked `SkaterSeasonStat`/`GoalieSeasonStat` existence, so a team with advanced stats synced but no basic boxscore stats yet (a real scenario — `SyncGameEvents`/TASK-76 and `SyncGameStats` are independent admin sync kinds) would 404 on this endpoint even though advanced data existed. Widened to also check `PlayerSeasonAdvancedStat`/`TeamSeasonAdvancedStat`.
+
+`player_season_advanced_stats` is a chain of running-total snapshots, not season totals on their own (TASK-61) — the endpoint uses a new query object, `LatestPlayerSeasonAdvancedStats`, to pick each player's most recent snapshot per (strength_state, score_state) rather than serving every chained row. `team_season_advanced_stats` needs no such step; TASK-67 already re-sums it from scratch, so there's exactly one row per split.
+
+**Follow-up: advanced stats gained a game_type split.** Shipping this surfaced that `player_season_advanced_stats`/`team_season_advanced_stats` had no `game_type` column at all — the season chain/re-sum ran across every game in a season regardless of preseason/regular-season/playoffs, unlike `skater_season_stats`/`goalie_season_stats` which are keyed `(player, team, season, game_type)`. Added `game_type` to both tables (migrated with a one-time backfill to `regular_season`, since every row synced so far was from a regular-season game), widened their unique indexes, and added a cross-field validation on `PlayerSeasonAdvancedStat` (`game_type` must match `as_of_game.game_type` — a chain never mixes game types, same reasoning `skater_season_stats` already applies by keying a separate row per stint). `RebuildPlayerAdvancedStatsChain` now scopes chain-walking to `from_game`'s own `game_type`, and `RecomputeTeamSeasonAdvancedStats` re-sums per `(strength_state, score_state, game_type)` triple. `TeamStatsController` threads the same resolved `game_type` through both the basic and advanced queries.
+
+This also surfaced that `TeamStatsPage` had no way to actually select preseason/playoffs at all — the page hardcoded a "regular season" label with no control, for basic stats too, not just advanced. Added a `GameType` `SegmentedControl` (preseason/regular season/playoffs) driving `useTeamStats`, which already accepted a `gameType` argument nothing was passing.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

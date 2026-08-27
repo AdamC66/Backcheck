@@ -4,6 +4,7 @@ FactoryBot.define do
     team { association :team, league: season.league }
 
     strength_state { PlayerGameAdvancedStat::STRENGTH_STATES[:all] }
+    game_type { Game::GAME_TYPES[:regular_season] }
     games_played { 10 }
     corsi_for { 580 }
     corsi_against { 420 }

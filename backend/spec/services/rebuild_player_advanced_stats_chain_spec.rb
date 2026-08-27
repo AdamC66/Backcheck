@@ -55,4 +55,24 @@ RSpec.describe RebuildPlayerAdvancedStatsChain do
     expect(final).to have_attributes(games_played: 3, corsi_for: 30)
     expect(PlayerSeasonAdvancedStat.where(player: player).count).to eq(3)
   end
+
+  it "never mixes a playoff correction into the regular-season chain, or vice versa" do
+    rebuild_from(game1)
+    rebuild_from(game2)
+    rebuild_from(game3)
+
+    playoff_game = create(:game, season: season, home_team: team_a, away_team: opponent,
+                          game_type: Game::GAME_TYPES[:playoffs], starts_at: Time.utc(2025, 10, 15))
+    create(:player_game_advanced_stat, game: playoff_game, player: player, team: team_a, xg_model: xg_model,
+           corsi_for: 99)
+
+    rebuild_from(playoff_game)
+
+    playoff_snapshot = PlayerSeasonAdvancedStat.find_by(player: player, as_of_game: playoff_game)
+    expect(playoff_snapshot).to have_attributes(games_played: 1, corsi_for: 99,
+                                                game_type: Game::GAME_TYPES[:playoffs])
+
+    regular_season_final = PlayerSeasonAdvancedStat.find_by(player: player, as_of_game: game3)
+    expect(regular_season_final).to have_attributes(games_played: 3, corsi_for: 30)
+  end
 end

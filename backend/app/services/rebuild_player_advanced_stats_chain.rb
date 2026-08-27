@@ -27,11 +27,15 @@ class RebuildPlayerAdvancedStatsChain
     PlayerGameAdvancedStat.where(player: player, game: from_game).distinct.pluck(:strength_state, :score_state)
   end
 
-  # A player's actual games in the order they happened, not the team's schedule —
-  # an affiliate call-up means their games aren't always sequential within one team's.
+  # A player's actual games in the order they happened, not the team's schedule — an
+  # affiliate call-up means their games aren't always sequential within one team's.
+  # Scoped to from_game's own game_type: a playoff correction must never touch the
+  # regular-season chain, and vice versa — same reasoning skater_season_stats already
+  # applies by keying a separate row per game_type stint.
   def ordered_rows(strength_state, score_state)
     PlayerGameAdvancedStat.where(player: player, strength_state: strength_state, score_state: score_state)
-                           .joins(:game).order("games.starts_at ASC").to_a
+                           .joins(:game).where(games: { game_type: from_game.game_type })
+                           .order("games.starts_at ASC").to_a
   end
 
   def rebuild_chain(strength_state, score_state)
@@ -43,10 +47,11 @@ class RebuildPlayerAdvancedStatsChain
     prior_row = rows[from_index - 1] if from_index.positive?
     anchor = prior_row && PlayerSeasonAdvancedStat.find_by(
       player: player, season: season, strength_state: strength_state, score_state: score_state,
-      as_of_game_id: prior_row.game_id
+      game_type: from_game.game_type, as_of_game_id: prior_row.game_id
     )
 
     PlayerSeasonAdvancedStat.where(player: player, strength_state: strength_state, score_state: score_state,
+                                    game_type: from_game.game_type,
                                     as_of_game_id: rows_from_here.map(&:game_id)).destroy_all
 
     running_totals = SUMMABLE_COLUMNS.index_with { |col| anchor&.public_send(col) || 0 }
@@ -58,7 +63,8 @@ class RebuildPlayerAdvancedStatsChain
 
       PlayerSeasonAdvancedStat.create!(
         player: player, team: pgas.team, season: season, as_of_game: pgas.game,
-        strength_state: strength_state, score_state: score_state, games_played: games_played, stale: false,
+        strength_state: strength_state, score_state: score_state, game_type: from_game.game_type,
+        games_played: games_played, stale: false,
         **running_totals
       )
     end

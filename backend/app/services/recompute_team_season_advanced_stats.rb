@@ -8,7 +8,7 @@ class RecomputeTeamSeasonAdvancedStats
   end
 
   def call
-    dimensions.each { |strength_state, score_state| upsert(strength_state, score_state) }
+    dimensions.each { |strength_state, score_state, game_type| upsert(strength_state, score_state, game_type) }
   end
 
   private
@@ -19,21 +19,22 @@ class RecomputeTeamSeasonAdvancedStats
     TeamGameAdvancedStat.where(team: team).joins(:game).merge(Game.for_season(season))
   end
 
-  # Union with existing rollup rows, not just current game rows — a dimension pair
+  # Union with existing rollup rows, not just current game rows — a dimension triple
   # whose last game just got deleted still needs a pass so its stale rollup is cleared.
   def dimensions
-    (base_rows.distinct.pluck(:strength_state, :score_state) +
-     existing_season_rows.distinct.pluck(:strength_state, :score_state)).uniq
+    (base_rows.distinct.pluck(:strength_state, :score_state, "games.game_type") +
+     existing_season_rows.distinct.pluck(:strength_state, :score_state, :game_type)).uniq
   end
 
   def existing_season_rows
     TeamSeasonAdvancedStat.where(team: team, season: season)
   end
 
-  def upsert(strength_state, score_state)
-    rows = base_rows.where(strength_state: strength_state, score_state: score_state)
+  def upsert(strength_state, score_state, game_type)
+    rows = base_rows.where(strength_state: strength_state, score_state: score_state,
+                           games: { game_type: game_type })
     scope = TeamSeasonAdvancedStat.where(team: team, season: season, strength_state: strength_state,
-                                        score_state: score_state)
+                                        score_state: score_state, game_type: game_type)
     return scope.destroy_all if rows.none?
 
     scope.first_or_initialize.update!(

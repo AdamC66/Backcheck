@@ -29,4 +29,20 @@ RSpec.describe RecomputeTeamSeasonAdvancedStats do
 
     expect(TeamSeasonAdvancedStat.find_by(team: team, season: season)).to be_nil
   end
+
+  it "re-sums regular-season and preseason games into separate rows, never combined" do
+    regular_game = create(:game, season: season, home_team: team, game_type: Game::GAME_TYPES[:regular_season])
+    preseason_game = create(:game, season: season, home_team: team, game_type: Game::GAME_TYPES[:preseason])
+    create(:team_game_advanced_stat, team: team, game: regular_game, corsi_for: 50)
+    create(:team_game_advanced_stat, team: team, game: preseason_game, corsi_for: 5)
+
+    recompute
+
+    regular = TeamSeasonAdvancedStat.find_by(team: team, season: season,
+                                             game_type: Game::GAME_TYPES[:regular_season])
+    preseason = TeamSeasonAdvancedStat.find_by(team: team, season: season,
+                                               game_type: Game::GAME_TYPES[:preseason])
+    expect(regular).to have_attributes(games_played: 1, corsi_for: 50)
+    expect(preseason).to have_attributes(games_played: 1, corsi_for: 5)
+  end
 end

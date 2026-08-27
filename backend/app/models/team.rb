@@ -40,10 +40,14 @@ class Team < ApplicationRecord
   end
 
   # Same reasoning as current_roster_season. A team can have goalie stats with no
-  # matching skater stats yet mid-backfill, so both are checked.
+  # matching skater stats yet mid-backfill, so both are checked — and advanced stats
+  # are synced through a separate admin sync kind (TASK-65/76), so a team can have
+  # those with no basic boxscore stats yet either.
   def current_stats_season
     league.seasons.where(id: SkaterSeasonStat.where(team: self).select(:season_id))
           .or(league.seasons.where(id: GoalieSeasonStat.where(team: self).select(:season_id)))
+          .or(league.seasons.where(id: PlayerSeasonAdvancedStat.where(team: self).select(:season_id)))
+          .or(league.seasons.where(id: TeamSeasonAdvancedStat.where(team: self).select(:season_id)))
           .order(:starts_on).last
   end
 end

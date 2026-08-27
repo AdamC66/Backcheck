@@ -1,4 +1,5 @@
 import { requestWithMeta, type Envelope } from "@/lib/apiClient";
+import type { ScoreState, StrengthState } from "@/models/gameDetail";
 import type { RosterPlayer } from "@/models/roster";
 
 export type GameType = "preseason" | "regular_season" | "playoffs";
@@ -45,9 +46,45 @@ export interface GoalieSeasonStat {
   time_on_ice_seconds: number;
 }
 
+export interface PlayerSeasonAdvancedStat {
+  player: RosterPlayer;
+  strength_state: StrengthState;
+  score_state: ScoreState;
+  games_played: number;
+  corsi_for: number;
+  corsi_against: number;
+  fenwick_for: number;
+  fenwick_against: number;
+  xg_for: number;
+  xg_against: number;
+  zone_entries: number;
+  zone_exits: number;
+  toi_seconds: number;
+}
+
+export interface TeamSeasonAdvancedStat {
+  strength_state: StrengthState;
+  score_state: ScoreState;
+  games_played: number;
+  corsi_for: number;
+  corsi_against: number;
+  fenwick_for: number;
+  fenwick_against: number;
+  xg_for: number;
+  xg_against: number;
+  faceoff_wins: number;
+  faceoff_losses: number;
+  pdo: number;
+  toi_seconds: number;
+}
+
 export interface TeamStats {
   skaters: SkaterSeasonStat[];
   goalies: GoalieSeasonStat[];
+  advanced: {
+    players: PlayerSeasonAdvancedStat[];
+    team: TeamSeasonAdvancedStat[];
+  };
 }
 
 export interface TeamStatsMeta {

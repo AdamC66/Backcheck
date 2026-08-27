@@ -17,7 +17,9 @@ import type { TeamAffiliation } from "@/models/teamAffiliations";
 import type { Team } from "@/models/teams";
 import type {
   GoalieSeasonStat,
+  PlayerSeasonAdvancedStat,
   SkaterSeasonStat,
+  TeamSeasonAdvancedStat,
   TeamStats,
   TeamStatsMeta,
 } from "@/models/teamStats";
@@ -455,6 +457,48 @@ export function goalieSeasonStatFor(overrides: Partial<GoalieSeasonStat> = {}): 
   };
 }
 
+export function playerSeasonAdvancedStatFor(
+  overrides: Partial<PlayerSeasonAdvancedStat> = {},
+): PlayerSeasonAdvancedStat {
+  return {
+    player: playerFor(1),
+    strength_state: "all",
+    score_state: "all",
+    games_played: 10,
+    corsi_for: 120,
+    corsi_against: 80,
+    fenwick_for: 90,
+    fenwick_against: 60,
+    xg_for: 8.5,
+    xg_against: 4.2,
+    zone_entries: 0,
+    zone_exits: 0,
+    toi_seconds: 10800,
+    ...overrides,
+  };
+}
+
+export function teamSeasonAdvancedStatFor(
+  overrides: Partial<TeamSeasonAdvancedStat> = {},
+): TeamSeasonAdvancedStat {
+  return {
+    strength_state: "all",
+    score_state: "all",
+    games_played: 10,
+    corsi_for: 580,
+    corsi_against: 420,
+    fenwick_for: 450,
+    fenwick_against: 330,
+    xg_for: 28.5,
+    xg_against: 21.0,
+    faceoff_wins: 300,
+    faceoff_losses: 250,
+    pdo: 100.9,
+    toi_seconds: 36000,
+    ...overrides,
+  };
+}
+
 export const TEAM_STATS: Envelope<TeamStats, TeamStatsMeta> = {
   data: {
     skaters: [
@@ -476,6 +520,14 @@ export const TEAM_STATS: Envelope<TeamStats, TeamStatsMeta> = {
         player: playerFor(3, { first_name: "Anthony", last_name: "Stolarz" }),
       }),
     ],
+    advanced: {
+      players: [
+        playerSeasonAdvancedStatFor({
+          player: playerFor(1, { first_name: "Auston", last_name: "Matthews" }),
+        }),
+      ],
+      team: [teamSeasonAdvancedStatFor()],
+    },
   },
   meta: { season: "2025-26", game_type: "regular_season", skater_count: 2, goalie_count: 1 },
 };

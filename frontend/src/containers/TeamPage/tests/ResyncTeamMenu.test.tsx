@@ -84,7 +84,9 @@ describe("ResyncTeamMenu", () => {
     await userEvent.click(screen.getByRole("button", { name: "Resync" }));
     await userEvent.click(await screen.findByRole("menuitem", { name: "Team roster" }));
 
-    expect(createSyncRun).toHaveBeenCalledWith({
+    // react-query's mutationFn is called with (variables, context) — only the first
+    // argument is this mutation's actual payload.
+    expect(vi.mocked(createSyncRun).mock.calls[0]?.[0]).toEqual({
       sync_kinds: ["team_roster"],
       league_id: LEAGUE.id,
       team_id: 5,

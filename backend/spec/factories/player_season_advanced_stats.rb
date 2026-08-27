@@ -6,6 +6,7 @@ FactoryBot.define do
     team { as_of_game.home_team }
 
     strength_state { PlayerGameAdvancedStat::STRENGTH_STATES[:all] }
+    game_type { as_of_game.game_type }
     games_played { 1 }
     corsi_for { 12 }
     corsi_against { 8 }

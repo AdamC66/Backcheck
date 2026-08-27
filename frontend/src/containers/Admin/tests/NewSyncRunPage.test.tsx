@@ -30,7 +30,12 @@ describe("NewSyncRunPage", () => {
 
     renderWithProviders(<NewSyncRunPage />);
 
-    await userEvent.selectOptions(await screen.findByLabelText("What to sync"), "team_roster");
+    const kindSelect = await screen.findByLabelText("What to sync");
+    // The kinds query resolves after the select itself renders — wait for a real
+    // option before selecting it, not just the (initially placeholder-only) select.
+    await screen.findByRole("option", { name: "Team roster" });
+
+    await userEvent.selectOptions(kindSelect, "team_roster");
     await userEvent.selectOptions(screen.getByLabelText("League"), LEAGUE_WITH_TEAMS.slug);
 
     expect(await screen.findByLabelText("Team")).toBeInTheDocument();
@@ -62,12 +67,17 @@ describe("NewSyncRunPage", () => {
 
     renderWithProviders(<NewSyncRunPage />);
 
-    await userEvent.selectOptions(await screen.findByLabelText("What to sync"), "standings");
+    const kindSelect = await screen.findByLabelText("What to sync");
+    await screen.findByRole("option", { name: "Standings" });
+
+    await userEvent.selectOptions(kindSelect, "standings");
     await userEvent.selectOptions(screen.getByLabelText("League"), LEAGUE_WITH_TEAMS.slug);
     await userEvent.click(screen.getByRole("button", { name: "Aggressive" }));
     await userEvent.click(screen.getByRole("button", { name: "Start Sync" }));
 
-    expect(createSyncRun).toHaveBeenCalledWith({
+    // react-query's mutationFn is called with (variables, context) — only the first
+    // argument is this mutation's actual payload.
+    expect(vi.mocked(createSyncRun).mock.calls[0]?.[0]).toEqual({
       sync_kinds: ["standings"],
       league_id: LEAGUE_WITH_TEAMS.id,
       team_id: undefined,

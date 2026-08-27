@@ -13,10 +13,18 @@ module Api
 
         skaters = stats_for(SkaterSeasonStat, season, game_type)
         goalies = stats_for(GoalieSeasonStat, season, game_type)
+        player_advanced = LatestPlayerSeasonAdvancedStats.new(team: team, season: season, game_type: game_type).call
+        team_advanced = TeamSeasonAdvancedStat.where(team: team, season: season, game_type: game_type)
 
         render_data(
-          { skaters: skaters.map { |stat| SkaterSeasonStatSerializer.new(stat).as_json },
-            goalies: goalies.map { |stat| GoalieSeasonStatSerializer.new(stat).as_json } },
+          {
+            skaters: skaters.map { |stat| SkaterSeasonStatSerializer.new(stat).as_json },
+            goalies: goalies.map { |stat| GoalieSeasonStatSerializer.new(stat).as_json },
+            advanced: {
+              players: player_advanced.map { |stat| PlayerSeasonAdvancedStatSerializer.new(stat).as_json },
+              team: team_advanced.map { |stat| TeamSeasonAdvancedStatSerializer.new(stat).as_json }
+            }
+          },
           meta: { season: season.label, game_type: GAME_TYPE_NAMES.fetch(game_type).to_s,
                   skater_count: skaters.size, goalie_count: goalies.size }
         )

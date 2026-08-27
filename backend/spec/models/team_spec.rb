@@ -39,5 +39,14 @@ RSpec.describe Team, type: :model do
     it "is nil for a team with no stats on file" do
       expect(create(:team).current_stats_season).to be_nil
     end
+
+    it "picks a season with only advanced stats, since that's synced separately from basic stats" do
+      league = create(:league)
+      team = create(:team, league: league)
+      populated = create(:season, league: league, starts_on: 1.year.ago, ends_on: 1.year.ago + 6.months)
+      create(:team_season_advanced_stat, team: team, season: populated)
+
+      expect(team.current_stats_season).to eq(populated)
+    end
   end
 end

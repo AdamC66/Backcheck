@@ -825,7 +825,7 @@
     "title": "Extend TeamStatsPage with an advanced-stats view",
     "description": "TeamStatsPage already renders season skater/goalie basic stats. Add a view for team_season_advanced_stats (and, per player, player_season_advanced_stats) — strength_state/score_state as filters or tabs, matching the dimensions those tables already carry. The lower-lift half of the frontend work here, since the page and its data-fetching pattern already exist.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "low",
     "acceptance_criteria": [
       "Team stats page can show advanced-stats splits by strength_state/score_state alongside the existing basic stats, once real data exists"
