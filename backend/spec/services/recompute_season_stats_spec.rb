@@ -22,6 +22,16 @@ RSpec.describe RecomputeSeasonStats do
     expect(stat).to have_attributes(games_played: 2, goals: 4, assists: 2)
   end
 
+  it "sums a goalie's own goals/assists into the season rollup too" do
+    game = create(:game, season: season, home_team: team)
+    create(:goalie_game_stat, player: player, game: game, team: team, goals: 1, assists: 1)
+
+    recompute
+
+    stat = GoalieSeasonStat.find_by(player: player, team: team, season: season)
+    expect(stat).to have_attributes(goals: 1, assists: 1)
+  end
+
   it "clears a rollup row once its underlying games are gone" do
     game = create(:game, season: season, home_team: team)
     create(:skater_game_stat, player: player, game: game, team: team)

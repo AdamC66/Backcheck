@@ -1,13 +1,18 @@
 # team_id comes from which side of the boxscore a player is listed under, not from
 # roster_spots — a mid-season trade must never misattribute a game already played.
 class UpsertGameStats
-  # Unmatched playerIds skip their row rather than raising; callers report these so a
-  # partial sync can't pass for a clean one.
+  # Same NHL-API position codes SyncTeamRoster uses — duplicated rather than shared,
+  # same as NhlStatsClient/HockeyTechClient (see docs/DECISIONS.md).
+  POSITION_CODES = { "C" => :center, "L" => :left_wing, "R" => :right_wing, "D" => :defense, "G" => :goalie }.freeze
+
+  # A playerId only ends up here if NhlClient#player_landing itself couldn't resolve
+  # it (e.g. a 404); anyone self-healed via a live landing lookup doesn't count as missing.
   attr_reader :missing_players
 
-  def initialize(game:, payload:)
+  def initialize(game:, payload:, client:)
     @game = game
     @payload = payload
+    @client = client
     @missing_players = []
   end
 
@@ -24,10 +29,10 @@ class UpsertGameStats
 
   private
 
-  attr_reader :game, :payload
+  attr_reader :game, :payload, :client
 
   def upsert_skater(team, row)
-    player = player_for(row)
+    player = player_for(row, team)
     return if player.nil?
 
     stat = SkaterGameStat.find_or_initialize_by(player: player, game: game)
@@ -52,12 +57,15 @@ class UpsertGameStats
   end
 
   def upsert_goalie(team, row)
-    player = player_for(row)
+    player = player_for(row, team)
     return if player.nil?
 
     stat = GoalieGameStat.find_or_initialize_by(player: player, game: game)
+    points = GoalieGamePoints.new(game: game, player: player)
     stat.update!(
       team: team,
+      goals: points.goals,
+      assists: points.assists,
       even_strength_shots_against: shots_against(row["evenStrengthShotsAgainst"]),
       even_strength_goals_against: row.fetch("evenStrengthGoalsAgainst", 0),
       power_play_shots_against: shots_against(row["powerPlayShotsAgainst"]),
@@ -75,11 +83,44 @@ class UpsertGameStats
     stat
   end
 
-  def player_for(row)
+  def player_for(row, team)
     nhl_player_id = row.fetch("playerId")
-    player = Player.find_by(nhl_player_id: nhl_player_id)
-    missing_players << nhl_player_id if player.nil?
+    Player.find_by(nhl_player_id: nhl_player_id) || self_heal(nhl_player_id, team)
+  end
+
+  # A player who's since left every team's current roster (SyncTeamRoster only ever
+  # syncs the present-tense one) is otherwise permanently unmatchable — see TASK-56.
+  def self_heal(nhl_player_id, team)
+    player = upsert_player_from_landing(client.player_landing(nhl_player_id))
+    upsert_inferred_roster_spot(player, team)
     player
+  rescue NhlClient::NotFound
+    missing_players << nhl_player_id
+    nil
+  end
+
+  def upsert_player_from_landing(data)
+    player = Player.find_or_initialize_by(nhl_player_id: data.fetch("playerId"))
+    player.update!(
+      first_name: data.dig("firstName", "default"),
+      last_name: data.dig("lastName", "default"),
+      birth_date: data["birthDate"],
+      position: Player::POSITIONS.fetch(POSITION_CODES.fetch(data.fetch("position"))),
+      shoots_catches: data["shootsCatches"],
+      height_in_inches: data["heightInInches"],
+      weight_in_pounds: data["weightInPounds"],
+      birth_city: data.dig("birthCity", "default"),
+      birth_country: data["birthCountry"]
+    )
+    player
+  end
+
+  def upsert_inferred_roster_spot(player, team)
+    RosterSpot.find_or_initialize_by(player: player, team: team, season: game.season).update!(
+      contract_level: RosterSpot::CONTRACT_LEVELS[:unknown],
+      contract_level_inferred: true,
+      source: RosterSpot::SOURCES[:inferred_from_stats]
+    )
   end
 
   def parse_toi(value)

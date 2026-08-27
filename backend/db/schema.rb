@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_020001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_020002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -93,11 +93,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_020001) do
   end
 
   create_table "goalie_game_stats", force: :cascade do |t|
+    t.integer "assists", default: 0, null: false
     t.datetime "created_at", null: false
     t.string "decision"
     t.integer "even_strength_goals_against", default: 0, null: false
     t.integer "even_strength_shots_against", default: 0, null: false
     t.bigint "game_id", null: false
+    t.integer "goals", default: 0, null: false
     t.integer "goals_against", default: 0, null: false
     t.integer "pim", default: 0, null: false
     t.bigint "player_id", null: false
@@ -118,12 +120,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_020001) do
   end
 
   create_table "goalie_season_stats", force: :cascade do |t|
+    t.integer "assists", default: 0, null: false
     t.datetime "created_at", null: false
     t.integer "even_strength_goals_against", default: 0, null: false
     t.integer "even_strength_shots_against", default: 0, null: false
     t.integer "game_type", null: false
     t.integer "games_played", default: 0, null: false
     t.integer "games_started", default: 0, null: false
+    t.integer "goals", default: 0, null: false
     t.integer "goals_against", default: 0, null: false
     t.integer "losses", default: 0, null: false
     t.integer "ot_losses", default: 0, null: false

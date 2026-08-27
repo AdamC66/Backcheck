@@ -414,5 +414,27 @@ Extended `GET /api/v1/teams/:id/stats` with an `advanced` key (`players`, `team`
 
 This also surfaced that `TeamStatsPage` had no way to actually select preseason/playoffs at all — the page hardcoded a "regular season" label with no control, for basic stats too, not just advanced. Added a `GameType` `SegmentedControl` (preseason/regular season/playoffs) driving `useTeamStats`, which already accepted a `gameType` argument nothing was passing.
 
+### Self-healing player identity in UpsertGameStats (TASK-56)
+**Status:** Settled
+
+Real gap found running the admin sync console against live data: `SyncTeamRoster` only ever syncs a team's *current* roster (`/v1/roster/{team}/current`), so a player who's since left every team's current roster — a departed vet, a one-game call-up — has no path back to a `Player` row once he rolls off. `UpsertGameStats#player_for` would find no match and skip the stat row forever, not just until the season rolled over.
+
+**Fix:** on a miss, `UpsertGameStats` now calls `NhlClient#player_landing` (new client method, `/v1/player/{id}/landing`) to create a real, fully-populated `Player` on the spot — same field set `SyncTeamRoster#upsert_player` already populates (name, position, shoots_catches, height/weight, birth info), confirmed against a live response rather than assumed. It also upserts a `RosterSpot` for `(player, team, season)` using the team/season already known from the game context, tagged `contract_level: unknown` and `contract_level_inferred: true` so it reads as inferred rather than authoritative. `RosterSpot::SOURCES` gained `inferred_from_stats` — `nhl_api`/`hockeytech`/`manual` don't honestly describe "inferred from a stat line, not a roster feed."
+
+`UpsertGameStats` now takes a required `client:` (threaded through from `SyncGameStats`, which already had one for the boxscore fetch). `missing_players` now only reports an id when the landing lookup itself 404s — a real, resolvable player no longer counts as missing just because we hadn't seen them before.
+
+Deliberately out of scope (unchanged from the original task write-up): a full historical-roster backfill from `club-stats/{team}/{season}/{gameType}`, which would only additionally cover a player rostered all season but never dressed for a single game — self-healing can't catch that case either, since it never sees a boxscore row for him. Shelved unless zero-game roster completeness becomes a real product need.
+
+### Goalie goals/assists are structurally unrepresentable from the boxscore (TASK-57)
+**Status:** Settled
+
+The task as originally written assumed this was a schema gap plus a boxscore-field read, mirroring how skaters' goals/assists already work. Real data disproved that assumption: pulled the actual boxscore for Alex Nedeljkovic's Jan 17, 2025 game (`nhl_game_id 2024020720`, PIT @ BUF) — the first and only goalie in NHL history with both a goal and an assist in one game, so if the boxscore ever carries this, it would be there. It doesn't: his goalie row has no `goals`/`assists` keys at all, only shot/save/decision fields. This isn't a trimmed-fixture coincidence; the boxscore endpoint structurally never reports a goalie's own point production.
+
+**Where the data actually lives:** play-by-play already attributes arbitrary players to a `goal`-type `GameEvent`'s `primary_player`/`secondary_player`/`tertiary_player` — confirmed against the same real game, where Nedeljkovic's own goal has him as `primary_player` and his assist has him as `tertiary_player` (`assist2PlayerId`). New query object `GoalieGamePoints` counts these per (game, player).
+
+**This makes goalie goals/assists dependent on `advanced_stats` having synced, not just `game_stats`** — a real, unavoidable consequence of `game_stats`/`advanced_stats` being independent sync kinds (same fact already noted in TASK-79). Populated from both directions so either sync order ends up correct: `UpsertGameStats#upsert_goalie` derives from whatever `game_events` already exist (0 if `advanced_stats` hasn't run yet), and a new `RecomputeGoalieGamePoints` — called at the end of `SyncGameEvents` — re-derives goals/assists for every existing `GoalieGameStat` in the game and re-triggers `RecomputeSeasonStats` for each, so a `game_stats`-then-`advanced_stats` ordering self-corrects instead of staying stuck at 0. `goalie_game_stats`/`goalie_season_stats` gained `goals`/`assists` columns (default 0); `RecomputeSeasonStats#upsert_goalie` sums them the same way skater totals already are.
+
+Not yet exposed by any serializer (`GoalieGameStatSerializer`, `GoalieSeasonStatSerializer`, the player-detail equivalents) — the task's own scope was schema + ingestion + recompute, not the read side. A real, cheap follow-up once someone wants a goalie's point total visible anywhere.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

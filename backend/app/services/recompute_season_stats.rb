@@ -53,6 +53,8 @@ class RecomputeSeasonStats
     scope.first_or_initialize.update!(
       games_played: rows.count,
       games_started: rows.where(starter: true).count,
+      goals: rows.sum(:goals),
+      assists: rows.sum(:assists),
       wins: rows.where(decision: GoalieGameStat::DECISIONS[:win]).count,
       losses: rows.where(decision: GoalieGameStat::DECISIONS[:loss]).count,
       ot_losses: rows.where(decision: GoalieGameStat::DECISIONS[:ot_loss]).count,

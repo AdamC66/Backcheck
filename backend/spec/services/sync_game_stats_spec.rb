@@ -4,8 +4,9 @@ RSpec.describe SyncGameStats do
   let!(:game) { create(:game, nhl_game_id: 2024020204) }
 
   before do
-    create(:player, nhl_player_id: 8482705)
-    create(:player, nhl_player_id: 8477970)
+    [ 8482705, 8481161, 8480193, 8478007, 8484227, 8481567, 8478406, 8477970 ].each do |id|
+      create(:player, nhl_player_id: id)
+    end
     stub_nhl("/v1/gamecenter/2024020204/boxscore", fixture: "boxscore")
   end
 

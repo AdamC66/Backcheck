@@ -9,7 +9,7 @@ class SyncGameStats
 
   def call
     payload = client.boxscore(game.nhl_game_id)
-    upsert = UpsertGameStats.new(game: game, payload: payload)
+    upsert = UpsertGameStats.new(game: game, payload: payload, client: client)
     stats = upsert.call
     missing_players.concat(upsert.missing_players)
 

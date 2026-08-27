@@ -43,4 +43,12 @@ RSpec.describe NhlClient do
 
     expect(result["plays"].map { |play| play["typeDescKey"] }).to include("goal", "shot-on-goal")
   end
+
+  it "returns a player's landing profile" do
+    stub_nhl("/v1/player/8484158/landing", fixture: "player_landing")
+
+    result = unthrottled_client.player_landing(8484158)
+
+    expect(result.dig("lastName", "default")).to eq("Cowan")
+  end
 end

@@ -16,6 +16,7 @@ class SyncGameEvents
 
     ComputeGameAdvancedStats.new(game: game).call
     MarkGameForStatsRecompute.new(game: game).call
+    RecomputeGoalieGamePoints.new(game: game).call
 
     events + shifts
   end

@@ -1,0 +1,12 @@
+{
+  "playerId": 8484158,
+  "firstName": { "default": "Easton" },
+  "lastName": { "default": "Cowan" },
+  "position": "R",
+  "heightInInches": 72,
+  "weightInPounds": 190,
+  "birthDate": "2005-05-20",
+  "birthCity": { "default": "Mount Brydges" },
+  "birthCountry": "CAN",
+  "shootsCatches": "L"
+}
