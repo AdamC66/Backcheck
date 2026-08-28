@@ -981,5 +981,14 @@
     "type": "chore",
     "status": "done",
     "priority": "critical"
+  },
+  {
+    "id": "TASK-96",
+    "epic_id": "EPIC-17",
+    "title": "Resumed sync run's progress counter never resets, can show over 100%",
+    "description": "Confirmed live: sync run 23 (game_stats, 2023-24) finished showing current_step=2045 of total_steps=1420 (144%). Root cause: AdminSyncOrchestrator#advance_step! does a raw increment (current_step = current_step + 1), and TASK-84's resume design re-runs a not-yet-completed per-game item wholesale from its first game when a job restarts (safe for data — every upsert is idempotent — but the step counter has no concept of a restart). Run 23's job was interrupted and resumed twice in one session: once for real (Solid Queue's own crash recovery after the worker process died, exactly as TASK-84 intends) and once from a deliberate bin/jobs restart to deploy the TASK-95 fix. Each restart re-looped all 1420 games from game 1, and increments from every pass landed on the same never-reset counter — three partial/full passes summing to ~1.44x the true total. No data risk (re-syncing an already-correct game just re-writes the same values), purely a progress-display bug.\n\nFix direction: on resume, current_step should be recomputed from real progress (e.g. count of items actually status: completed, or for a per-game item, some notion of games actually done) rather than blindly trusting a raw incrementing column that survives across restarts with no reset point. Possibly ties into TASK-90/91's broader theme of sync run status/progress not accurately reflecting reality across partial failures and resumes.",
+    "type": "chore",
+    "status": "backlog",
+    "priority": "medium"
   }
 ]
