@@ -972,5 +972,14 @@
     "type": "chore",
     "status": "backlog",
     "priority": "critical"
+  },
+  {
+    "id": "TASK-95",
+    "epic_id": "EPIC-17",
+    "title": "RecomputeTeamSeasonAdvancedStats issues 11 separate aggregate queries per dimension instead of one",
+    "description": "Found live while diagnosing why run 24 (advanced_stats, 2023-24) was only managing ~1 game per 14-30 seconds despite TASK-93's fix already making the player-chain rebuild correctly O(1) per game. RecomputeTeamSeasonAdvancedStats#upsert — the team-level counterpart called once per game for both teams via RebuildAdvancedStatsForGame — is the exact TASK-86 bug pattern in a class TASK-86 never touched: one count plus ten separate sum/average queries per (strength_state, score_state, game_type) dimension, re-summed from scratch off the entire season's TeamGameAdvancedStat rows every single call (not incremental), so cost grows as the season fills in.\n\nFixed identically to TASK-86: base_rows loaded once via .to_a (with game preloaded for game_type), dimensions and per-dimension sums/averages computed in Ruby via sum_of/average_of helpers, average_of NULL-skipping to match SQL AVG. Query-count regression spec added, same style as RecomputeSeasonStats's. Verified live and correctly: the currently-running AdminSyncOrchestratorJob for run 24 had already been executing before this fix landed (one continuous per-game loop inside a single job, not separate per-game jobs, so it never hit a Rails reload checkpoint) — required manually restarting the bin/jobs worker process for the fix to actually take effect, which in turn required manually clearing a stale SolidQueue::Process registration (the killed process's heartbeat hadn't been pruned yet, leaving its claimed job stuck instead of released) — both confirmed as expected Solid Queue mechanics, not new bugs.",
+    "type": "chore",
+    "status": "done",
+    "priority": "critical"
   }
 ]

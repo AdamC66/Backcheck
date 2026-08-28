@@ -45,4 +45,21 @@ RSpec.describe RecomputeTeamSeasonAdvancedStats do
     expect(regular).to have_attributes(games_played: 1, corsi_for: 50)
     expect(preseason).to have_attributes(games_played: 1, corsi_for: 5)
   end
+
+  # Regression guard for TASK-95: this used to issue 11 separate aggregate queries
+  # per dimension (count plus ten sum/average) instead of aggregating once in Ruby.
+  it "computes a team's season totals in a handful of queries, not 11 per dimension" do
+    create(:team_game_advanced_stat, team: team, game: create(:game, season: season, home_team: team))
+
+    query_count = 0
+    counter = lambda do |*, payload|
+      query_count += 1 unless payload[:name] == "SCHEMA" || payload[:sql] =~ /\A(BEGIN|COMMIT|SAVEPOINT|RELEASE)/i
+    end
+
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { recompute }
+
+    # One dimension here: ~4 today (base_rows load, existing_season_rows pluck,
+    # upsert lookup/write) — nowhere near the 11+ a reintroduced per-column query would add.
+    expect(query_count).to be <= 8
+  end
 end
