@@ -5,6 +5,7 @@ import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
 import {
   SYNC_KIND_LABELS,
+  type FailedGame,
   type SyncRunActivityLogEntry,
   type SyncRunItemPayload,
 } from "@/models/adminSync";
@@ -21,14 +22,34 @@ function ProgressBar({ percent }: { percent: number }) {
   );
 }
 
+// Surfaces every failed game directly, not just the last one — activity_log is
+// capped and can lose a failure that happened earlier in a long run (TASK-90).
+function FailedGamesList({ games }: { games: FailedGame[] }) {
+  return (
+    <Stack gap="xs" className="mt-1 border-l-2 border-red-200 pl-3">
+      <Text variant="caption" tone="danger">
+        {games.length} game{games.length === 1 ? "" : "s"} failed:
+      </Text>
+      {games.map((game) => (
+        <Text key={game.nhl_game_id} variant="caption" tone="muted" className="font-mono">
+          {game.label}: {game.error}
+        </Text>
+      ))}
+    </Stack>
+  );
+}
+
 function ItemRow({ item }: { item: SyncRunItemPayload }) {
   return (
-    <Row justify="between" className="border-b border-slate-100 py-2 last:border-b-0">
-      <Text variant="label">{item.team_name ?? SYNC_KIND_LABELS[item.kind]}</Text>
-      <Text variant="caption" className="font-semibold tracking-wide uppercase">
-        {item.status}
-      </Text>
-    </Row>
+    <Stack gap="none" className="border-b border-slate-100 py-2 last:border-b-0">
+      <Row justify="between">
+        <Text variant="label">{item.team_name ?? SYNC_KIND_LABELS[item.kind]}</Text>
+        <Text variant="caption" className="font-semibold tracking-wide uppercase">
+          {item.status}
+        </Text>
+      </Row>
+      {item.failed_games.length > 0 ? <FailedGamesList games={item.failed_games} /> : null}
+    </Stack>
   );
 }
 

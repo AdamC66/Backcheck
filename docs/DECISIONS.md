@@ -468,5 +468,12 @@ A team-scoped run's game boxscores also upsert the *opponent's* players (pre-exi
 
 Verified against real data, not just specs: a rolled-back live transaction against EDM's full 2023-24 regular season (79 games) measured 3,156 old-style calls down to 771 (4.1x for one team's own season — lower than the original whole-league estimate, which counted a shared game's redundant reprocessing from every other team's item too; different scope, not a discrepancy). McDavid's regular-season line (74 GP, 32G/98A/130P) matched byte-for-byte before the run, in-transaction after the batched recompute, and after rollback.
 
+### Surface every failed game on a sync run item, not just the last one (TASK-90)
+**Status:** Settled
+
+Found while investigating a real run (sync run 20, whole-league `game_stats`, 1,420 games) that completed 1419/1420 games successfully but still reported `status: failed` with no visible reason — a transient `Socket::ResolutionError` on one boxscore request. Root cause was two-fold: `run_per_game_item` overwrote `item.error_message` on every failure (so only the last one survived), and `SyncRun#log`'s capped `activity_log` had already pushed the one "Failed ..." line out under ~1,400 later "Completed ..." lines.
+
+Fixed the visibility gap, deliberately left the status semantics alone: `sync_run_items` gained a `failed_games` jsonb column; `run_per_game_item` now accumulates every failure in memory (`nhl_game_id`, matchup label, error) and writes once at the end (or on cancel), instead of one write per failure. Serializer and `SyncRunDetailPage` surface the full list under a failed item. Item status is still binary (`failed` if any game failed, `completed` otherwise) — a "some games failed" vs "all games failed" distinction would need a new `SyncRun::STATUSES` value rippling through the frontend's status types and badges, a bigger call left for a deliberate follow-up (TASK-91) rather than folded in here.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

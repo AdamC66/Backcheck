@@ -99,7 +99,10 @@ class AdminSyncOrchestrator
   # check and a step advance per game rather than per item.
   def run_per_game_item(item)
     games = games_for(item.team).to_a
-    failed = false
+    # Collected in memory and written once at the end (here and on cancel/error below)
+    # rather than per-failure — one flaky game shouldn't cost a write on top of the
+    # error itself, and TASK-90 needs every failure, not just whichever wrote last.
+    failed_games = []
     # game_stats batches its season-stat recompute once per distinct player/team across
     # the whole item instead of once per game (TASK-88); advanced_stats' per-game
     # recompute is load-bearing (its rollups are a snapshot chain), so it stays as-is.
@@ -107,7 +110,7 @@ class AdminSyncOrchestrator
 
     games.each_with_index do |game, index|
       if cancelled?
-        item.update!(status: SyncRun::STATUSES[:cancelled], finished_at: Time.current)
+        item.update!(status: SyncRun::STATUSES[:cancelled], finished_at: Time.current, failed_games: failed_games)
         return
       end
 
@@ -119,16 +122,15 @@ class AdminSyncOrchestrator
         result.each { |stat| recompute_batch.track(stat, game.game_type) } if recompute_batch
         sync_run.log("Completed #{label}")
       rescue StandardError => e
-        failed = true
-        item.update!(error_message: e.message)
+        failed_games << { "nhl_game_id" => game.nhl_game_id, "label" => matchup_label(game), "error" => e.message }
         sync_run.log("Failed #{label}: #{e.message}")
       end
 
       advance_step!
     end
 
-    item.update!(status: failed ? SyncRun::STATUSES[:failed] : SyncRun::STATUSES[:completed],
-                 finished_at: Time.current)
+    item.update!(status: failed_games.empty? ? SyncRun::STATUSES[:completed] : SyncRun::STATUSES[:failed],
+                 finished_at: Time.current, failed_games: failed_games)
   ensure
     # In an ensure so a cancelled run still recomputes whatever it already touched,
     # not just a clean completion.

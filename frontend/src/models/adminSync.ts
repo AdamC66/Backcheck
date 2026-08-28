@@ -77,6 +77,12 @@ export function createSyncRun(payload: CreateSyncRunPayload): Promise<SyncRun> {
   });
 }
 
+export interface FailedGame {
+  nhl_game_id: number;
+  label: string;
+  error: string;
+}
+
 export interface SyncRunItemPayload {
   id: number;
   kind: SyncKind;
@@ -86,6 +92,7 @@ export interface SyncRunItemPayload {
   started_at: string | null;
   finished_at: string | null;
   error_message: string | null;
+  failed_games: FailedGame[];
 }
 
 export interface SyncRunActivityLogEntry {

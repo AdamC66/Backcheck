@@ -934,7 +934,16 @@
     "title": "One flaky per-game request fails the whole sync run, and the failure line can vanish from the log",
     "description": "Confirmed against a real run (sync run 20, whole-league game_stats, 1420 games): a single Socket::ResolutionError on one boxscore request (game 2023020528, a transient DNS blip) left the run reporting status: failed even though 1419/1420 games synced correctly and progress reached 1420/1420. Root cause in AdminSyncOrchestrator#run_per_game_item: the per-game rescue already does the right thing operationally — it logs the error and keeps iterating instead of aborting the run — but it also sets item failed = true unconditionally on any error, with no distinction between one flaky game and a systemic failure. #finalize! then treats any failed item as the whole run being failed, so a 1-in-1420 transient error and a run where every game failed look identical in sync_run.status. Compounding it: SyncRun#log caps activity_log to the last ACTIVITY_LOG_LIMIT entries, so the one 'Failed ...' line got pushed out by the ~1400 'Completed ...' lines that followed it — the item's error_message column was the only surviving trace, and nothing in the admin UI surfaces that column today. Net effect: a run can complete essentially cleanly and still alarm as failed, with no visible reason why. Two independent fixes, likely worth splitting: (1) give run_per_game_item real success/failure accounting — e.g. track failed game count vs total and only fail the item past some threshold, or always complete the item but record which specific games errored so they can be identified and retried individually; (2) either raise or remove ACTIVITY_LOG_LIMIT, or stop relying on activity_log for failure visibility at all and surface each item's error_message (and ideally which specific games failed, not just the last error) directly in the admin sync run view.",
     "type": "chore",
-    "status": "backlog",
+    "status": "done",
     "priority": "high"
+  },
+  {
+    "id": "TASK-91",
+    "epic_id": "EPIC-17",
+    "title": "Distinguish partial failure from total failure in sync run/item status",
+    "description": "Deliberately deferred out of TASK-90: a per-game item's status is still binary — status: failed the moment any single game errors, whether it's 1 flaky game out of 1420 or every game failing outright. TASK-90 fixed the bigger problem (which games failed and why is now fully visible via failed_games), but the top-level status still can't tell those two situations apart at a glance. Fix would add a distinct status (e.g. completed_with_errors) or a threshold (e.g. fail the item only past some % of games erroring) — either way it's a new SyncRun::STATUSES value, which ripples into the frontend's SyncRunStatus type, badge rendering (SyncRunDetailPage, SyncDashboardPage), and any status-based filtering, so it's a real cross-stack change, not a quick add. Worth scoping properly (which of the two designs, where the threshold lives if any) rather than deciding inline.",
+    "type": "chore",
+    "status": "backlog",
+    "priority": "low"
   }
 ]

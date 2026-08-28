@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_020002) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_122414) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -413,6 +413,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_020002) do
   create_table "sync_run_items", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "error_message"
+    t.jsonb "failed_games", default: [], null: false
     t.datetime "finished_at"
     t.integer "kind", null: false
     t.datetime "started_at"

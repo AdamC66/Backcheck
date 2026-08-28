@@ -37,6 +37,7 @@ function runDetailFor(overrides: Partial<SyncRunDetail> = {}): SyncRunDetail {
         started_at: "2026-08-25T12:00:00Z",
         finished_at: "2026-08-25T12:00:05Z",
         error_message: null,
+        failed_games: [],
       },
     ],
     activity_log: [{ at: "2026-08-25T12:00:00Z", message: "Run started (2 step(s))" }],
@@ -88,5 +89,35 @@ describe("SyncRunDetailPage", () => {
     await screen.findByText("San Jose Sharks");
 
     expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+  });
+
+  it("lists every failed game on an item, not just a generic failed status", async () => {
+    vi.mocked(fetchSyncRun).mockResolvedValue(
+      runDetailFor({
+        status: "failed",
+        items: [
+          {
+            id: 10,
+            kind: "game_stats",
+            team_id: null,
+            team_name: null,
+            status: "failed",
+            started_at: "2026-08-25T12:00:00Z",
+            finished_at: "2026-08-25T12:00:05Z",
+            error_message: null,
+            failed_games: [
+              { nhl_game_id: 1, label: "ANA @ SJS", error: "Socket::ResolutionError" },
+              { nhl_game_id: 2, label: "SJS @ LAK", error: "boom" },
+            ],
+          },
+        ],
+      }),
+    );
+
+    renderDetail();
+
+    expect(await screen.findByText("2 games failed:")).toBeInTheDocument();
+    expect(screen.getByText("ANA @ SJS: Socket::ResolutionError")).toBeInTheDocument();
+    expect(screen.getByText("SJS @ LAK: boom")).toBeInTheDocument();
   });
 });

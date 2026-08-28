@@ -14,7 +14,8 @@ class SyncRunItemSerializer
       status: STATUS_NAMES.fetch(item.status).to_s,
       started_at: item.started_at,
       finished_at: item.finished_at,
-      error_message: item.error_message
+      error_message: item.error_message,
+      failed_games: item.failed_games
     }
   end
 

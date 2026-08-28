@@ -169,6 +169,35 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.status).to eq(SyncRun::STATUSES[:cancelled])
   end
 
+  # Regression guard for TASK-90: one flaky game shouldn't look identical to every
+  # game failing — every failed game gets recorded, not just the last one.
+  it "keeps going past a failed game and records every failure, not just the last" do
+    season = create(:season, league: league)
+    games = Array.new(3) do |n|
+      create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+             starts_at: Time.utc(2025, 10, 8 + n))
+    end
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:game_stats] ])
+    allow(SyncGameStats).to receive(:new) do |game:, **|
+      if game == games[0]
+        instance_double(SyncGameStats, call: []).tap { |d| allow(d).to receive(:call).and_raise("network blip") }
+      elsif game == games[2]
+        instance_double(SyncGameStats, call: []).tap { |d| allow(d).to receive(:call).and_raise("boom") }
+      else
+        instance_double(SyncGameStats, call: [])
+      end
+    end
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    item = run.sync_run_items.first
+    expect(item.status).to eq(SyncRun::STATUSES[:failed])
+    expect(item.failed_games.size).to eq(2)
+    expect(item.failed_games.map { |g| g["error"] }).to contain_exactly("network blip", "boom")
+    expect(run.current_step).to eq(3) # all 3 games still processed, not aborted after the first failure
+  end
+
   it "stops before its next item once the run is cancelled mid-loop" do
     create(:team, league: league, name: "Team A")
     create(:team, league: league, name: "Team B")
