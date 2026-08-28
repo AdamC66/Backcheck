@@ -11,7 +11,7 @@ class HockeyTechClient
   # lscluster.hockeytech.com/statview-1.4.1/js/client/{code}/base.r3.js
   KEYS = { "ahl" => "ccb91f29d6744675", "echl" => "2c2b89ea7345cae8" }.freeze
 
-  DEFAULT_MIN_INTERVAL = 1.0
+  DEFAULT_MIN_INTERVAL = 0.5
   MAX_ATTEMPTS = 3
   OPEN_TIMEOUT = 5
   READ_TIMEOUT = 15

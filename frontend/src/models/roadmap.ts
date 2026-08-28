@@ -1,7 +1,7 @@
 import { request } from "@/lib/apiClient";
 
 export type WorkflowStatus = "backlog" | "todo" | "in_progress" | "blocked" | "done";
-export type Priority = "low" | "medium" | "high";
+export type Priority = "low" | "medium" | "high" | "critical";
 export type TaskType = "feature" | "chore" | "spike" | "bug";
 
 export interface Epic {

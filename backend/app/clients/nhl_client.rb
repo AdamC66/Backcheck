@@ -6,7 +6,7 @@ class NhlClient
   BASE_URL = "https://api-web.nhle.com".freeze
   USER_AGENT = "Backcheck/1.0 (hockey analytics dashboard; contact via repository)".freeze
 
-  DEFAULT_MIN_INTERVAL = 1.0
+  DEFAULT_MIN_INTERVAL = 0.5
   MAX_ATTEMPTS = 3
   MAX_REDIRECTS = 3
   OPEN_TIMEOUT = 5

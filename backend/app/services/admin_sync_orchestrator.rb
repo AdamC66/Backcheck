@@ -45,11 +45,18 @@ class AdminSyncOrchestrator
     end
   end
 
+  # nil means every game in the season, not "no games" — Game.for_team(nil) would
+  # match nothing, so the team filter only applies when one was actually given.
   def games_for(team)
-    Game.for_team(team).for_season(sync_run.season).finished.chronological
+    scope = Game.for_season(sync_run.season).finished.chronological
+    team ? scope.for_team(team) : scope
   end
 
+  # A per-game kind gets exactly one item regardless of scope — games_for(team) is
+  # already the whole season filtered down to one team when there is one, so fanning
+  # out into one item per team would just process every shared game twice over.
   def teams_for(kind)
+    return [ sync_run.team ] if PER_GAME_KINDS.include?(SyncKindRegistry.normalize(kind))
     return [ nil ] unless SyncKindRegistry.scope_axes(kind).include?(:team)
     return [ sync_run.team ] if sync_run.team
 
@@ -88,8 +95,8 @@ class AdminSyncOrchestrator
     advance_step!
   end
 
-  # One item can mean 82 games, so it gets its own cancellation check and a step
-  # advance per game — the same "X/Y" progress the other kinds get per team.
+  # One item can mean every game in the season, so it gets its own cancellation
+  # check and a step advance per game rather than per item.
   def run_per_game_item(item)
     games = games_for(item.team).to_a
     failed = false
@@ -100,7 +107,7 @@ class AdminSyncOrchestrator
         return
       end
 
-      label = "#{item.kind_name.to_s.tr('_', ' ')} — #{item.team.name} (#{index + 1}/#{games.size})"
+      label = "#{item.kind_name.to_s.tr('_', ' ')} — #{matchup_label(game)} (#{index + 1}/#{games.size})"
       sync_run.update!(current_step_label: label)
 
       begin
@@ -117,6 +124,10 @@ class AdminSyncOrchestrator
 
     item.update!(status: failed ? SyncRun::STATUSES[:failed] : SyncRun::STATUSES[:completed],
                  finished_at: Time.current)
+  end
+
+  def matchup_label(game)
+    "#{game.away_team.abbreviation} @ #{game.home_team.abbreviation}"
   end
 
   def call_per_game_service(kind_name, game)

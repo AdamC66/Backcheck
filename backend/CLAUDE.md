@@ -26,6 +26,7 @@ Developer is new to Rails. Prefer idiomatic, conventional patterns over clever o
 - PostgreSQL. Every migration is reversible (`change`, or explicit `up`/`down` when `change` can't infer it).
 - No raw SQL string interpolation — parameterize or use AR query methods.
 - Watch for N+1s: `includes`/`preload` when serializing associations. If unsure, check the query log, don't guess.
+- Same rule applies to computing several values off one relation: don't call `.sum`/`.count`/`.average` separately per column — each is its own round trip over the same rows. Load the relation once (`.to_a`) and aggregate in Ruby, or do it in one query. `RecomputeSeasonStats` shipped with 14-19 separate aggregate queries per player, invoked per player per game — hundreds of thousands of round trips across a real sync (TASK-86). Before writing a method that derives multiple stats from one scope, count how many queries it actually issues.
 
 ## Auth & authorization
 

@@ -436,5 +436,12 @@ The task as originally written assumed this was a schema gap plus a boxscore-fie
 
 Not yet exposed by any serializer (`GoalieGameStatSerializer`, `GoalieSeasonStatSerializer`, the player-detail equivalents) — the task's own scope was schema + ingestion + recompute, not the read side. A real, cheap follow-up once someone wants a goalie's point total visible anywhere.
 
+### Per-game sync kinds run off the season's game list, not one item per team (TASK-85)
+**Status:** Settled
+
+Found running a real whole-league `advanced_stats` pull: `AdminSyncOrchestrator` fanned `game_stats`/`advanced_stats` out into one `sync_run_item` per team, and each item's `games_for(team)` matched home-or-away — so any shared game (e.g. ANA @ COL) got fully reprocessed a second time once the later team's item came up: a second network fetch, and for `advanced_stats`, a second full `RebuildAdvancedStatsForGame` pass rebuilding both teams' player chains and season rollups again. Beyond the wasted work, the second pass over an already-built chain was also the specific trigger behind real `PG::TRDeadlockDetected` failures climbing the deeper a whole-league run went (concurrent `RebuildAdvancedStatsJob`s racing on the same `player_season_advanced_stats` rows — the underlying `:async`-adapter concurrency gap is tracked separately as TASK-84).
+
+Fixed at the root instead of patched: `SyncRunItem.team` was already optional (`standings`/`daily_scores` already run as a single `team: nil` item), and `games_for(team)` was already just a filter — `Game.for_team(team)` on top of `Game.for_season(season).finished.chronological`. So `teams_for` no longer fans `game_stats`/`advanced_stats` out per team at all; it builds exactly one item, scoped to `sync_run.team` (nil for a whole-league run). A shared game physically cannot be visited twice in one run — nothing to track or skip. `compute_total_steps` stops double-counting shared games as a side effect. The one wrinkle: the per-step progress label named the team whose "turn" it was, which breaks when `item.team` is nil — switched to naming the actual matchup (`"ANA @ COL"`) instead, for both team-scoped and whole-league runs alike, since that's more informative regardless of scope.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

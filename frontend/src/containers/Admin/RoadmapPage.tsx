@@ -24,6 +24,7 @@ const PRIORITY_LABELS: Record<Priority, string> = {
   low: "Low",
   medium: "Medium",
   high: "High",
+  critical: "Critical",
 };
 
 function epicNumber(id: string) {

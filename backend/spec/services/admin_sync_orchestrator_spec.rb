@@ -76,9 +76,31 @@ RSpec.describe AdminSyncOrchestrator do
     run.reload
     expect(run.total_steps).to eq(games.size)
     expect(run.current_step).to eq(games.size)
-    expect(run.current_step_label).to eq("game stats — Test Team (3/3)")
+    expect(run.current_step_label).to eq("game stats — #{games.last.away_team.abbreviation} @ #{team.abbreviation} (3/3)")
     expect(run.sync_run_items.count).to eq(1)
     expect(run.sync_run_items.first.status).to eq(SyncRun::STATUSES[:completed])
+  end
+
+  it "syncs a whole-league game_stats run as one item over the season, not one item per team" do
+    season = create(:season, league: league)
+    team_a = create(:team, league: league, name: "Team A")
+    team_b = create(:team, league: league, name: "Team B")
+    shared_game = create(:game, season: season, home_team: team_a, away_team: team_b,
+                        starts_at: Time.utc(2025, 10, 8))
+    run = create(:sync_run, league: league, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:game_stats] ])
+    synced_games = []
+    allow(SyncGameStats).to receive(:new) do |game:, **|
+      synced_games << game
+      instance_double(SyncGameStats, call: [])
+    end
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    expect(run.sync_run_items.count).to eq(1)
+    expect(run.sync_run_items.first.team_id).to be_nil
+    expect(synced_games).to eq([ shared_game ])
+    expect(run.total_steps).to eq(1)
   end
 
   it "ingests real events/shifts and recomputes for an advanced_stats item" do
@@ -100,6 +122,28 @@ RSpec.describe AdminSyncOrchestrator do
     expect(recomputed_games).to match_array(games)
     expect(run.total_steps).to eq(games.size)
     expect(run.status).to eq(SyncRun::STATUSES[:completed])
+  end
+
+  it "syncs a whole-league advanced_stats run as one item over the season, not one item per team" do
+    season = create(:season, league: league)
+    team_a = create(:team, league: league, name: "Team A")
+    team_b = create(:team, league: league, name: "Team B")
+    shared_game = create(:game, season: season, home_team: team_a, away_team: team_b,
+                        starts_at: Time.utc(2025, 10, 8))
+    run = create(:sync_run, league: league, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:advanced_stats] ])
+    recomputed_games = []
+    allow(SyncGameEvents).to receive(:new) do |game:, **|
+      recomputed_games << game
+      instance_double(SyncGameEvents, call: [])
+    end
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    expect(run.sync_run_items.count).to eq(1)
+    expect(run.sync_run_items.first.team_id).to be_nil
+    expect(recomputed_games).to eq([ shared_game ])
+    expect(run.total_steps).to eq(1)
   end
 
   it "checks for cancellation between games within a single game_stats item" do

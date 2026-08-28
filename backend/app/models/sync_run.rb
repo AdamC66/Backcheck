@@ -20,11 +20,11 @@ class SyncRun < ApplicationRecord
     cancelled: 4
   }.freeze
 
-  # Matches NhlClient/HockeyTechClient's own DEFAULT_MIN_INTERVAL (1.0) as "normal".
+  # Matches NhlClient/HockeyTechClient's own DEFAULT_MIN_INTERVAL (0.5) as "normal".
   MIN_INTERVAL_PRESETS = {
-    conservative: 2.0,
-    normal: 1.0,
-    aggressive: 0.5
+    conservative: 1.0,
+    normal: 0.5,
+    aggressive: 0.25
   }.freeze
 
   ACTIVITY_LOG_LIMIT = 200
