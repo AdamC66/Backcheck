@@ -3,10 +3,12 @@
 class SyncGameEvents
   attr_reader :missing_players
 
-  def initialize(game:, client: NhlClient.new, stats_client: NhlStatsClient.new)
+  # recompute_inline: true for a bulk sync — see MarkGameForStatsRecompute (TASK-93).
+  def initialize(game:, client: NhlClient.new, stats_client: NhlStatsClient.new, recompute_inline: false)
     @game = game
     @client = client
     @stats_client = stats_client
+    @recompute_inline = recompute_inline
     @missing_players = []
   end
 
@@ -15,7 +17,7 @@ class SyncGameEvents
     shifts = upsert_shifts
 
     ComputeGameAdvancedStats.new(game: game).call
-    MarkGameForStatsRecompute.new(game: game).call
+    MarkGameForStatsRecompute.new(game: game, inline: recompute_inline).call
     RecomputeGoalieGamePoints.new(game: game).call
 
     events + shifts
@@ -23,7 +25,7 @@ class SyncGameEvents
 
   private
 
-  attr_reader :game, :client, :stats_client
+  attr_reader :game, :client, :stats_client, :recompute_inline
 
   def upsert_events
     payload = client.play_by_play(game.nhl_game_id)

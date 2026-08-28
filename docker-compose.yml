@@ -37,11 +37,14 @@ services:
   # Separate process, not the SOLID_QUEUE_IN_PUMA plugin — a job sharing Puma's own
   # process/GVL would still block web requests. Backend's own command runs
   # db:prepare, so this retries until that's actually done (TASK-84).
+  # --mode=async: matches Makefile's native start — no functional need for it on
+  # Linux (the fork crash this works around is macOS-only), kept for one consistent
+  # command across both dev flows rather than two that happen to behave the same.
   worker:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    command: bin/jobs
+    command: bin/jobs start --mode=async
     volumes:
       - ./backend:/app
       - bundle_cache:/usr/local/bundle

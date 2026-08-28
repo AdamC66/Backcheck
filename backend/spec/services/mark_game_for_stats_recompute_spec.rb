@@ -25,4 +25,14 @@ RSpec.describe MarkGameForStatsRecompute do
     expect(PlayerSeasonAdvancedStat.find_by(as_of_game: earlier_game).stale).to be false
     expect(PlayerSeasonAdvancedStat.find_by(as_of_game: later_game).stale).to be true
   end
+
+  # Regression guard for TASK-93: a bulk sync runs the rebuild in-process instead of
+  # enqueueing it, so ingestion can never race ahead of a lagging async consumer.
+  it "runs the rebuild in-process and clears stats_syncing when inline: true" do
+    expect {
+      described_class.new(game: game, inline: true).call
+    }.not_to have_enqueued_job(RebuildAdvancedStatsJob)
+
+    expect(game.reload.stats_syncing).to be false
+  end
 end

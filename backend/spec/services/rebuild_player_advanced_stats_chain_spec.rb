@@ -75,4 +75,22 @@ RSpec.describe RebuildPlayerAdvancedStatsChain do
     regular_season_final = PlayerSeasonAdvancedStat.find_by(player: player, as_of_game: game3)
     expect(regular_season_final).to have_attributes(games_played: 3, corsi_for: 30)
   end
+
+  # Regression guard for TASK-93: backfilling an older season after a newer one is
+  # already ingested (the same player has rows in both) used to pull the newer
+  # season's games into the chain via a from_game.game_type-only filter, then fail
+  # PlayerSeasonAdvancedStat's season/as_of_game validation trying to save them.
+  it "never mixes another season's games into the chain, even sharing the same game_type" do
+    later_season = create(:season, league: season.league, starts_on: season.ends_on + 1.day,
+                          ends_on: season.ends_on + 200.days)
+    later_game = create(:game, season: later_season, home_team: team_a, away_team: opponent,
+                        starts_at: season.ends_on + 10.days)
+    create(:player_game_advanced_stat, game: later_game, player: player, team: team_a, xg_model: xg_model,
+           corsi_for: 5)
+
+    expect { rebuild_from(game1) }.not_to raise_error
+
+    expect(PlayerSeasonAdvancedStat.where(player: player, season: season).count).to eq(3)
+    expect(PlayerSeasonAdvancedStat.where(player: player, season: later_season)).to be_none
+  end
 end

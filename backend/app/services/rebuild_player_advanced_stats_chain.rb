@@ -28,10 +28,13 @@ class RebuildPlayerAdvancedStatsChain
   end
 
   # A player's actual games in order, not the team's schedule (a call-up skips games).
-  # Scoped to from_game's game_type: a playoff correction never touches the regular chain.
+  # Scoped to from_game's game_type (a playoff correction never touches the regular
+  # chain) and season — without the season filter, a player with rows in multiple
+  # seasons pulls every season's games sharing that game_type into one chain, and
+  # PlayerSeasonAdvancedStat#create! rejects the season/as_of_game mismatch.
   def ordered_rows(strength_state, score_state)
     PlayerGameAdvancedStat.where(player: player, strength_state: strength_state, score_state: score_state)
-                           .joins(:game).where(games: { game_type: from_game.game_type })
+                           .joins(:game).where(games: { game_type: from_game.game_type, season_id: season.id })
                            .order("games.starts_at ASC").to_a
   end
 

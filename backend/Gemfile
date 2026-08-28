@@ -19,6 +19,12 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
 gem "solid_cache"
 gem "solid_queue"
+# Web dashboard for Solid Queue — queues, ready/claimed/failed jobs, retry —
+# so backlog state is visible without a DB query (TASK-84 follow-up).
+gem "mission_control-jobs"
+# Mission Control ships its own JS/CSS; API-only apps need a real asset pipeline
+# to serve them (config.api_only skips Sprockets/Propshaft entirely otherwise).
+gem "propshaft"
 gem "solid_cable"
 
 # Reduces boot times through caching; required in config/boot.rb

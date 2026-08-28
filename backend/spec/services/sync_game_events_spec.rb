@@ -44,4 +44,14 @@ RSpec.describe SyncGameEvents do
     expect(GameEvent.where(game: game).count).to eq(7)
     expect(Shift.where(game: game).count).to eq(11)
   end
+
+  # Regression guard for TASK-93: a bulk caller runs the advanced-stats rebuild
+  # in-process instead of enqueuing it, so it can't fall behind a lagging queue.
+  it "rebuilds advanced stats in-process, without enqueuing a job, when recompute_inline: true" do
+    expect {
+      described_class.new(game: game, client: client, stats_client: stats_client, recompute_inline: true).call
+    }.not_to have_enqueued_job(RebuildAdvancedStatsJob)
+
+    expect(game.reload.stats_syncing).to be false
+  end
 end

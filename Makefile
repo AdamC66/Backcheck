@@ -43,10 +43,14 @@ init: db-up
 # bin/jobs is a real separate process (not the SOLID_QUEUE_IN_PUMA plugin, which
 # would share Puma's own GVL) — makes queue.yml's single-consumer ingest queue
 # actually serialize NHL syncs, and lets a sync run survive a Rails restart (TASK-84).
+# --mode=async: Solid Queue's own fork-per-role mode crashes on this machine (a
+# macOS fork()-then-syscall bug, see docs/DECISIONS.md) — async runs the
+# dispatcher/worker in bin/jobs's own process instead of forking children, so it
+# never hits fork() at all, while still being its own OS process, separate from Puma.
 start: db-up
 	@trap 'kill 0' EXIT INT TERM; \
 	(cd backend && $(DB_ENV) bin/rails server -p 3000) & \
-	(cd backend && $(DB_ENV) bin/jobs) & \
+	(cd backend && $(DB_ENV) bin/jobs start --mode=async) & \
 	(cd frontend && npm run dev) & \
 	wait
 

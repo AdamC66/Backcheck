@@ -152,7 +152,7 @@ class AdminSyncOrchestrator
     when :game_stats
       SyncGameStats.new(game: game, client: nhl_client, recompute: false).call
     when :advanced_stats
-      SyncGameEvents.new(game: game, client: nhl_client, stats_client: nhl_stats_client).call
+      SyncGameEvents.new(game: game, client: nhl_client, stats_client: nhl_stats_client, recompute_inline: true).call
     end
   end
 
