@@ -49,4 +49,25 @@ RSpec.describe UpsertShifts do
 
     expect(Shift.where(game: game).count).to eq(11)
   end
+
+  # Regression guard for TASK-89: player_for/team_for used to re-query per row with
+  # no caching, even when the same player/team appears across many shift rows.
+  it "looks up each distinct player/team once per game, not once per shift row" do
+    rows = 5.times.map do |i|
+      { "id" => 9000 + i, "typeCode" => UpsertShifts::REAL_SHIFT_TYPE_CODE, "playerId" => 8482144,
+        "teamId" => 28, "period" => 1, "startTime" => "00:00", "endTime" => "01:00" }
+    end
+    game # force lazy team/game factory creation before counting queries
+
+    query_count = 0
+    counter = lambda do |*, payload|
+      query_count += 1 if payload[:sql] =~ /FROM "(players|teams)"/
+    end
+
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+      described_class.new(game: game, payload: rows).call
+    end
+
+    expect(query_count).to eq(2) # 1 distinct player + 1 distinct team, not 10 (5 rows × 2 lookups)
+  end
 end

@@ -63,4 +63,30 @@ RSpec.describe UpsertGameEvents do
 
     expect(GameEvent.where(game: game).count).to eq(7)
   end
+
+  # Regression guard for TASK-89: player_for/team_for used to re-query per row with
+  # no caching, even when the same player/team appears across many plays.
+  it "looks up each distinct player/team once per game, not once per play" do
+    faceoffs = 5.times.map do |i|
+      {
+        "eventId" => 9000 + i, "typeDescKey" => "faceoff",
+        "periodDescriptor" => { "number" => 1 }, "timeInPeriod" => "01:00",
+        "situationCode" => "1551",
+        "details" => { "winningPlayerId" => 8482144, "losingPlayerId" => 8484227, "eventOwnerTeamId" => 28 }
+      }
+    end
+    repeated_payload = { "plays" => faceoffs }
+    game # force lazy team/game factory creation before counting queries
+
+    query_count = 0
+    counter = lambda do |*, payload|
+      query_count += 1 if payload[:sql] =~ /FROM "(players|teams)"/
+    end
+
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+      described_class.new(game: game, payload: repeated_payload).call
+    end
+
+    expect(query_count).to eq(3) # 2 distinct players + 1 distinct team, not 15 (5 plays × 3 lookups)
+  end
 end

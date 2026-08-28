@@ -11,6 +11,8 @@ class UpsertShifts
     @game = game
     @payload = payload
     @missing_players = []
+    @players = {}
+    @teams = {}
   end
 
   def call
@@ -25,7 +27,7 @@ class UpsertShifts
     player = player_for(row.fetch("playerId"))
     return if player.nil?
 
-    team = Team.find_by(nhl_team_id: row.fetch("teamId"))
+    team = team_for(row.fetch("teamId"))
     return if team.nil?
 
     shift = Shift.find_or_initialize_by(game: game, nhl_shift_id: row.fetch("id"))
@@ -39,10 +41,20 @@ class UpsertShifts
     shift
   end
 
+  # Memoized per game — a game's ~1,300 shift rows only touch ~40 players/2 teams
+  # (TASK-89), so re-querying per row was the sync pipeline's biggest single cost.
   def player_for(nhl_player_id)
+    return @players[nhl_player_id] if @players.key?(nhl_player_id)
+
     player = Player.find_by(nhl_player_id: nhl_player_id)
     missing_players << nhl_player_id if player.nil?
-    player
+    @players[nhl_player_id] = player
+  end
+
+  def team_for(nhl_team_id)
+    return @teams[nhl_team_id] if @teams.key?(nhl_team_id)
+
+    @teams[nhl_team_id] = Team.find_by(nhl_team_id: nhl_team_id)
   end
 
   def parse_time(value)

@@ -126,5 +126,13 @@
     "description": "A super-admin-only page rendering every reusable presentational component from frontend/src/components (Text, Row, Stack, SegmentedControl, DataTable, Card, badges, etc.) with its variants/props side by side — a living style guide inside the app itself, not a separate Storybook.js build. Lets a dev sanity-check a shared component's look across every variant in one place instead of hunting through real pages, and doubles as a running check that TeamTheme/dashboard-redesign tokens stay consistent as new components are added.",
     "status": "backlog",
     "priority": "low"
+  },
+  {
+    "id": "EPIC-17",
+    "project_id": "backcheck",
+    "title": "Sync/ingestion efficiency",
+    "description": "Redundant-work and reliability findings surfaced by actually running full historical NHL backfills against the real API for the first time, not by inspection — each confirmed against real dev data before being scoped. TASK-85 (done): whole-league per-game sync kinds were fanning out one item per team over the same shared game list, double-processing every game; restructured to run off the season's game list once. TASK-86 (done): RecomputeSeasonStats issued 14-19 separate aggregate queries per player instead of loading its rows once and summing in Ruby. TASK-88: SyncGameStats recomputes a player's season stats once per game-stat row in a bulk sync instead of once per player, ~46x more calls than needed. TASK-89: UpsertGameEvents/UpsertShifts re-query Player/Team per row with no memoization, ~4,600 avoidable queries per game. TASK-84: dev has no persisted job queue, so an interrupted run can't resume, a retried run blindly redoes finished work, and concurrent async jobs deadlock each other on shared rows — plus GVL contention blocks the dashboard mid-sync. TASK-90: one flaky per-game request fails the whole run's status even when almost every game succeeded, and the activity log's fixed cap can hide the one line that explains why. Theme: bulk/historical syncs were built by extending the daily-sync code path without accounting for how differently its costs, concurrency, and failure modes scale at full-season volume.",
+    "status": "in_progress",
+    "priority": "critical"
   }
 ]

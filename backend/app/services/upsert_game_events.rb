@@ -50,6 +50,8 @@ class UpsertGameEvents
     @game = game
     @payload = payload
     @missing_players = []
+    @players = {}
+    @teams = {}
   end
 
   def call
@@ -70,7 +72,7 @@ class UpsertGameEvents
     primary_player = player_for(primary_id)
     return if primary_player.nil?
 
-    team = Team.find_by(nhl_team_id: details["eventOwnerTeamId"])
+    team = team_for(details["eventOwnerTeamId"])
 
     event = GameEvent.find_or_initialize_by(game: game, nhl_event_id: play.fetch("eventId"))
     event.update!(
@@ -91,12 +93,22 @@ class UpsertGameEvents
     event
   end
 
+  # Memoized per game — a game touches ~40 players/2 teams across hundreds of rows
+  # (TASK-89), so re-querying per row was the sync pipeline's biggest single cost.
   def player_for(nhl_player_id)
     return nil if nhl_player_id.nil?
+    return @players[nhl_player_id] if @players.key?(nhl_player_id)
 
     player = Player.find_by(nhl_player_id: nhl_player_id)
     missing_players << nhl_player_id if player.nil?
-    player
+    @players[nhl_player_id] = player
+  end
+
+  def team_for(nhl_team_id)
+    return nil if nhl_team_id.nil?
+    return @teams[nhl_team_id] if @teams.key?(nhl_team_id)
+
+    @teams[nhl_team_id] = Team.find_by(nhl_team_id: nhl_team_id)
   end
 
   # situationCode is [awayGoalieInNet][awaySkaters][homeSkaters][homeGoalieInNet] — the

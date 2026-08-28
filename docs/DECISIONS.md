@@ -443,5 +443,19 @@ Found running a real whole-league `advanced_stats` pull: `AdminSyncOrchestrator`
 
 Fixed at the root instead of patched: `SyncRunItem.team` was already optional (`standings`/`daily_scores` already run as a single `team: nil` item), and `games_for(team)` was already just a filter — `Game.for_team(team)` on top of `Game.for_season(season).finished.chronological`. So `teams_for` no longer fans `game_stats`/`advanced_stats` out per team at all; it builds exactly one item, scoped to `sync_run.team` (nil for a whole-league run). A shared game physically cannot be visited twice in one run — nothing to track or skip. `compute_total_steps` stops double-counting shared games as a side effect. The one wrinkle: the per-step progress label named the team whose "turn" it was, which breaks when `item.team` is nil — switched to naming the actual matchup (`"ANA @ COL"`) instead, for both team-scoped and whole-league runs alike, since that's more informative regardless of scope.
 
+### RecomputeSeasonStats: one query per player instead of one per column (TASK-86)
+**Status:** Settled
+
+Confirmed live in the dev log during the first real full-season sync: `#upsert_skater` issued `rows.count` plus 13 separate `.sum`/`.average` calls — 14 round trips to Postgres over the exact same row set — and `#upsert_goalie` issued 19. Called once per player per game, so a single game cost roughly 40 players × ~15 queries ≈ 600 round trips for this step alone; across a season that's hundreds of thousands of tiny queries, a real and measurable share of why the sync was slow (see the new rule in `backend/CLAUDE.md`).
+
+Fixed by loading each `*_game_stats` relation once (`.to_a`) and aggregating in plain Ruby instead of issuing a separate SQL aggregate per column — `sum_of`/`average_of` helpers shared by both methods. `average_of` replicates SQL `AVG`'s NULL-skipping via `filter_map` rather than treating a missing `faceoff_winning_pctg` as 0. Verified against real dev data, not just specs: re-ran the new code against an already-computed real skater and goalie season row and confirmed byte-for-byte identical output to what the old per-column SQL had produced. A query-count regression spec (`sql.active_record` notification subscriber, bounded well under where the old per-column pattern would land) guards against this creeping back.
+
+### Memoize Player/Team lookups in UpsertGameEvents and UpsertShifts (TASK-89)
+**Status:** Settled
+
+Confirmed against real game 1947 (552 plays, 1,363 real shift rows) before touching code: only 38 distinct players and 2 distinct teams are ever involved, but `player_for`/`team_for` issued a fresh `find_by` per row with no caching — up to ~1,500 queries for events, 1,363+ for shifts, all for data that only takes 40 distinct lookups to fully resolve.
+
+Fixed with a plain instance-level hash cache in both classes (`@players`, `@teams`), keyed on the nhl id, including caching the "not found" case (`nil`) so a persistently-unmatched id doesn't get re-queried every row either — both classes are already instantiated fresh per game, so no cross-game staleness risk. Verified two ways: a query-count regression spec in each file (`sql.active_record` subscriber, synthetic payload with a repeated player/team), and a real-data dry run against game 1947 wrapped in a rolled-back transaction — confirmed 40 `players`/`teams` queries total for each class, matching distinct-id count exactly, with the DB left unchanged after rollback.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

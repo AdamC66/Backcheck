@@ -32,6 +32,24 @@ RSpec.describe RecomputeSeasonStats do
     expect(stat).to have_attributes(goals: 1, assists: 1)
   end
 
+  # Regression guard for TASK-86: this used to issue a separate SUM/AVG/COUNT query per
+  # column (14-19 round trips per player) instead of aggregating the rows once in Ruby.
+  it "computes a skater's season totals in a handful of queries, not one per column" do
+    game = create(:game, season: season, home_team: team)
+    create(:skater_game_stat, player: player, game: game, team: team, goals: 2, assists: 1)
+
+    query_count = 0
+    counter = lambda do |*, payload|
+      query_count += 1 unless payload[:name] == "SCHEMA" || payload[:sql] =~ /\A(BEGIN|COMMIT|SAVEPOINT|RELEASE)/i
+    end
+
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { recompute }
+
+    # ~9 today: one load per *_game_stats relation, validation/lookup overhead for the
+    # upsert itself — nowhere near the 14+ a reintroduced per-column query would add.
+    expect(query_count).to be <= 12
+  end
+
   it "clears a rollup row once its underlying games are gone" do
     game = create(:game, season: season, home_team: team)
     create(:skater_game_stat, player: player, game: game, team: team)
