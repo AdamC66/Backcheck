@@ -457,5 +457,16 @@ Confirmed against real game 1947 (552 plays, 1,363 real shift rows) before touch
 
 Fixed with a plain instance-level hash cache in both classes (`@players`, `@teams`), keyed on the nhl id, including caching the "not found" case (`nil`) so a persistently-unmatched id doesn't get re-queried every row either — both classes are already instantiated fresh per game, so no cross-game staleness risk. Verified two ways: a query-count regression spec in each file (`sql.active_record` subscriber, synthetic payload with a repeated player/team), and a real-data dry run against game 1947 wrapped in a rolled-back transaction — confirmed 40 `players`/`teams` queries total for each class, matching distinct-id count exactly, with the DB left unchanged after rollback.
 
+### Batch RecomputeSeasonStats once per distinct player/team/game_type in bulk game_stats syncs (TASK-88)
+**Status:** Settled
+
+Confirmed against the real 2025-26 season: `SyncGameStats#call` recomputed every touched player's season stats after every single game, so a bulk sync issued one `RecomputeSeasonStats` call per game-stat row rather than once per player — 52,478 calls where ~1,148 distinct combos actually needed one each. Doesn't apply to `advanced_stats` — its per-game rollup is a load-bearing snapshot chain, not redundant work — so this is `game_stats` only, and doesn't matter for a daily sync where each player is only touched once anyway.
+
+`SyncGameStats` gained a `recompute: true` kwarg (the single-game daily job leaves it `true`, unchanged) instead of bypassing it entirely in the two bulk callers as the task write-up first proposed — avoids duplicating its boxscore-fetch/upsert/`missing_players` wiring across three call sites for the same effect. New `RecomputeTouchedSeasonStats` accumulates `(player, team, game_type)` triples via `#track` and flushes once per distinct combo via `#call`, with a single batched `Player`/`Team` preload rather than one `find` per combo. Wired into both bulk callers — `AdminSyncOrchestrator#run_per_game_item` (flushed in an `ensure`, so a cancelled run still recomputes whatever it touched) and `nhl:backfill_game_stats` (flushed after the game loop).
+
+A team-scoped run's game boxscores also upsert the *opponent's* players (pre-existing `UpsertGameStats` behavior, not new) — the batch tracks and recomputes those too, deduped the same way, correctly re-deriving from whatever's actually on file rather than just the games touched this run.
+
+Verified against real data, not just specs: a rolled-back live transaction against EDM's full 2023-24 regular season (79 games) measured 3,156 old-style calls down to 771 (4.1x for one team's own season — lower than the original whole-league estimate, which counted a shared game's redundant reprocessing from every other team's item too; different scope, not a discrepancy). McDavid's regular-season line (74 GP, 32G/98A/130P) matched byte-for-byte before the run, in-transaction after the batched recompute, and after rollback.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.

@@ -22,4 +22,14 @@ RSpec.describe SyncGameStats do
     expect(SkaterSeasonStat.find_by(player: player, team: game.away_team, season: game.season))
       .to have_attributes(games_played: 1, goals: 0)
   end
+
+  # Regression guard for TASK-88: a bulk caller passes recompute: false and batches
+  # the season-stat recompute itself instead of it happening once per game here.
+  it "skips the season-stat recompute when recompute: false" do
+    described_class.new(game: game, client: unthrottled_client, recompute: false).call
+
+    player = Player.find_by(nhl_player_id: 8482705)
+    expect(SkaterGameStat.find_by(player: player, game: game)).to be_present
+    expect(SkaterSeasonStat.find_by(player: player, team: game.away_team, season: game.season)).to be_nil
+  end
 end

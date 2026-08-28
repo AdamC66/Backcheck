@@ -55,15 +55,20 @@ namespace :nhl do
     puts "#{team.abbreviation} #{season.label}: #{games.size} finished games"
 
     missing_players = []
+    # Batches season-stat recompute once per distinct player/team across the whole
+    # backfill instead of once per game (TASK-88).
+    recompute_batch = RecomputeTouchedSeasonStats.new(season: season)
     games.each do |game|
-      sync = SyncGameStats.new(game: game)
-      sync.call
+      sync = SyncGameStats.new(game: game, recompute: false)
+      stats = sync.call
+      stats.each { |stat| recompute_batch.track(stat, game.game_type) }
       missing_players.concat(sync.missing_players)
       print "."
     rescue NhlClient::Error => e
       warn "\n  #{game.nhl_game_id} (#{game.game_date}) failed: #{e.message}"
     end
     puts
+    recompute_batch.call
 
     warn("  no player for #{missing_players.uniq.sort.join(', ')}") if missing_players.any?
     puts "Done. #{SkaterGameStat.joins(:game).merge(games).count} skater rows, " \

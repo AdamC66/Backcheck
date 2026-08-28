@@ -100,6 +100,10 @@ class AdminSyncOrchestrator
   def run_per_game_item(item)
     games = games_for(item.team).to_a
     failed = false
+    # game_stats batches its season-stat recompute once per distinct player/team across
+    # the whole item instead of once per game (TASK-88); advanced_stats' per-game
+    # recompute is load-bearing (its rollups are a snapshot chain), so it stays as-is.
+    recompute_batch = RecomputeTouchedSeasonStats.new(season: sync_run.season) if item.kind_name == :game_stats
 
     games.each_with_index do |game, index|
       if cancelled?
@@ -111,7 +115,8 @@ class AdminSyncOrchestrator
       sync_run.update!(current_step_label: label)
 
       begin
-        call_per_game_service(item.kind_name, game)
+        result = call_per_game_service(item.kind_name, game)
+        result.each { |stat| recompute_batch.track(stat, game.game_type) } if recompute_batch
         sync_run.log("Completed #{label}")
       rescue StandardError => e
         failed = true
@@ -124,6 +129,10 @@ class AdminSyncOrchestrator
 
     item.update!(status: failed ? SyncRun::STATUSES[:failed] : SyncRun::STATUSES[:completed],
                  finished_at: Time.current)
+  ensure
+    # In an ensure so a cancelled run still recomputes whatever it already touched,
+    # not just a clean completion.
+    recompute_batch&.call
   end
 
   def matchup_label(game)
@@ -133,7 +142,7 @@ class AdminSyncOrchestrator
   def call_per_game_service(kind_name, game)
     case kind_name
     when :game_stats
-      SyncGameStats.new(game: game, client: nhl_client).call
+      SyncGameStats.new(game: game, client: nhl_client, recompute: false).call
     when :advanced_stats
       SyncGameEvents.new(game: game, client: nhl_client, stats_client: nhl_stats_client).call
     end

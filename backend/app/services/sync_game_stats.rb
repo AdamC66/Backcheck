@@ -1,9 +1,13 @@
 class SyncGameStats
   attr_reader :missing_players
 
-  def initialize(game:, client: NhlClient.new)
+  # recompute: false lets a bulk caller (AdminSyncOrchestrator, nhl:backfill_game_stats)
+  # batch RecomputeSeasonStats once per distinct player/team instead of once per game
+  # (TASK-88, via RecomputeTouchedSeasonStats) — the single-game job leaves it true.
+  def initialize(game:, client: NhlClient.new, recompute: true)
     @game = game
     @client = client
+    @recompute = recompute
     @missing_players = []
   end
 
@@ -13,15 +17,15 @@ class SyncGameStats
     stats = upsert.call
     missing_players.concat(upsert.missing_players)
 
-    stats.each { |stat| recompute(stat) }
+    stats.each { |stat| recompute_stat(stat) } if recompute
     stats
   end
 
   private
 
-  attr_reader :game, :client
+  attr_reader :game, :client, :recompute
 
-  def recompute(stat)
+  def recompute_stat(stat)
     RecomputeSeasonStats.new(player: stat.player, team: stat.team, season: game.season,
                               game_type: game.game_type).call
   end
