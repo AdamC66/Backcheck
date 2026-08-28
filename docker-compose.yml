@@ -34,6 +34,27 @@ services:
     depends_on:
       - db
 
+  # Separate process, not the SOLID_QUEUE_IN_PUMA plugin — a job sharing Puma's own
+  # process/GVL would still block web requests. Backend's own command runs
+  # db:prepare, so this retries until that's actually done (TASK-84).
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    command: bin/jobs
+    volumes:
+      - ./backend:/app
+      - bundle_cache:/usr/local/bundle
+    environment:
+      DATABASE_HOST: db
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      RAILS_ENV: development
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+    depends_on:
+      - db
+    restart: on-failure
+
 volumes:
   db_data:
   bundle_cache:

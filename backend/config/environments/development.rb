@@ -53,6 +53,13 @@ Rails.application.configure do
   # Highlight code that enqueued background job in logs.
   config.active_job.verbose_enqueue_logs = true
 
+  # Without this, ActiveJob falls back to :async (in-process, no persistence, no
+  # per-queue concurrency limit) — matches production, and makes queue.yml's
+  # single-consumer ingest queue actually take effect (TASK-84). Needs bin/jobs
+  # running as its own process; see Makefile.
+  config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.connects_to = { database: { writing: :queue } }
+
   # Highlight code that triggered redirect in logs.
   config.action_dispatch.verbose_redirect_logs = true
 

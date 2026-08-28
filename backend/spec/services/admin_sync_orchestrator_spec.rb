@@ -146,6 +146,54 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.total_steps).to eq(1)
   end
 
+  # Regression guard for TASK-84: a resumed job (Solid Queue re-running a job whose
+  # worker died mid-run) must not redo already-completed items from scratch.
+  it "skips already-completed items on a resumed run, and re-runs the rest" do
+    create(:team, league: league, name: "Team A")
+    create(:team, league: league, name: "Team B")
+    run = sync_run_for(SyncRun::SYNC_KINDS[:team_roster], league: league)
+    calls = 0
+    allow(SyncTeamRoster).to receive(:new) do |**|
+      calls += 1
+      instance_double(SyncTeamRoster, call: [])
+    end
+
+    described_class.new(sync_run: run).call
+    expect(calls).to eq(2)
+
+    # Same sync_run row, new orchestrator instance — simulates the job being
+    # re-run rather than the process resuming its own in-memory loop.
+    described_class.new(sync_run: run).call
+
+    expect(calls).to eq(2)
+    run.reload
+    expect(run.status).to eq(SyncRun::STATUSES[:completed])
+    expect(run.activity_log.map { |e| e["message"] }).to include("Run resumed (2 step(s))")
+  end
+
+  it "fully re-runs an item that was still running when the job died, not just skips it" do
+    season = create(:season, league: league)
+    games = Array.new(2) do |n|
+      create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+             starts_at: Time.utc(2025, 10, 8 + n))
+    end
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:game_stats] ],
+                 total_steps: games.size)
+    # Simulates a crash mid-item: build_items already ran once, this item never finished.
+    run.sync_run_items.create!(kind: SyncRun::SYNC_KINDS[:game_stats], team: team,
+                                status: SyncRun::STATUSES[:running])
+    calls = 0
+    allow(SyncGameStats).to receive(:new) do |**|
+      calls += 1
+      instance_double(SyncGameStats, call: [])
+    end
+
+    described_class.new(sync_run: run).call
+
+    expect(calls).to eq(games.size)
+    expect(run.reload.sync_run_items.sole.status).to eq(SyncRun::STATUSES[:completed])
+  end
+
   it "checks for cancellation between games within a single game_stats item" do
     season = create(:season, league: league)
     create(:game, season: season, home_team: team, away_team: create(:team, league: league),

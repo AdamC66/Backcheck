@@ -7,15 +7,21 @@ class AdminSyncOrchestrator
   end
 
   def call
+    # A dead worker process's claimed job gets released and re-run by Solid Queue's
+    # own supervisor (TASK-84) — build_items already no-ops once items exist, so the
+    # only other thing a resumed run needs is to not redo work already marked done.
+    resuming = sync_run.sync_run_items.exists?
     build_items
     sync_run.update!(status: SyncRun::STATUSES[:running], started_at: Time.current)
-    sync_run.log("Run started (#{sync_run.total_steps} step(s))")
+    sync_run.log(resuming ? "Run resumed (#{sync_run.total_steps} step(s))" : "Run started (#{sync_run.total_steps} step(s))")
 
     sync_run.sync_run_items.order(:id).each do |item|
       if cancelled?
         sync_run.log("Run cancelled")
         break
       end
+
+      next if item.status == SyncRun::STATUSES[:completed]
 
       run_item(item)
     end
