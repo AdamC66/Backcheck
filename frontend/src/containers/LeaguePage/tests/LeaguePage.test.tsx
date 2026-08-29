@@ -10,16 +10,25 @@ import { TOKEN_KEY } from "@/lib/tokenStorage";
 import { LEAGUE_GAMES, LEAGUE_WITH_TEAMS, STANDINGS, SUPER_ADMIN } from "@/test-mocks";
 import { renderWithProviders, screen } from "@/test-utils";
 import { LeaguePage } from "../LeaguePage";
+import { LeagueOverviewPage } from "../LeagueOverviewPage";
+import { LeagueStandingsPage } from "../LeagueStandingsPage";
+import { LeagueStatsPage } from "../LeagueStatsPage";
 
 vi.mock("@/models/auth");
 vi.mock("@/models/games");
 vi.mock("@/models/leagues");
 vi.mock("@/models/standings");
+vi.mock("@/models/tableSchema");
+vi.mock("@/models/serverTable");
 
 function renderAtSlug(slug: string) {
   renderWithProviders(
     <Routes>
-      <Route path="/leagues/:slug" element={<LeaguePage />} />
+      <Route path="/leagues/:slug" element={<LeaguePage />}>
+        <Route index element={<LeagueOverviewPage />} />
+        <Route path="standings" element={<LeagueStandingsPage />} />
+        <Route path="stats" element={<LeagueStatsPage />} />
+      </Route>
     </Routes>,
     { route: `/leagues/${slug}` },
   );
@@ -36,23 +45,19 @@ describe("LeaguePage", () => {
     vi.mocked(fetchLeagueGames).mockResolvedValue(LEAGUE_GAMES);
   });
 
-  it("lists the league's teams", async () => {
+  it("shows the three sections in the sidebar and navigates between them", async () => {
     renderAtSlug("nhl");
 
-    expect(await screen.findByRole("heading", { name: "Teams" })).toBeInTheDocument();
-    expect(await screen.findAllByText("Boston Bruins")).not.toHaveLength(0);
-    expect(fetchLeague).toHaveBeenCalledWith("nhl");
-  });
-
-  it("groups by the view named in the URL", async () => {
-    renderAtSlug("nhl?view=division");
-
-    expect(await screen.findByRole("button", { name: "Division" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
+    expect(await screen.findByRole("link", { name: "Overview" })).toHaveAttribute(
+      "aria-current",
+      "page",
     );
-    // The fixture's two teams share a division, so grouping puts them under its heading.
-    expect(screen.getByText("Central")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("link", { name: "Standings" }));
+    expect(await screen.findByRole("heading", { name: "Standings" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("link", { name: "Stats" }));
+    expect(await screen.findByRole("heading", { name: "Stats" })).toBeInTheDocument();
   });
 
   it("surfaces a league the user can't see", async () => {
@@ -61,21 +66,5 @@ describe("LeaguePage", () => {
     renderAtSlug("nhl");
 
     expect(await screen.findByText("Could not load this league.")).toBeInTheDocument();
-  });
-
-  it("pages the ticker backwards without disturbing the standings view", async () => {
-    renderAtSlug("nhl?view=wildcard");
-    await screen.findByText("Apr 15");
-
-    await userEvent.click(screen.getByRole("button", { name: /earlier games/i }));
-
-    expect(fetchLeagueGames).toHaveBeenLastCalledWith("nhl", {
-      date: "2026-04-14",
-      direction: "backward",
-    });
-    expect(screen.getByRole("button", { name: "Wild Card" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
   });
 });

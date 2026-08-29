@@ -108,7 +108,7 @@
     "project_id": "backcheck",
     "title": "League-wide player search & stats table",
     "description": "A single searchable, filterable, sortable, paginated player list \u2014 backend-driven, not the client-side sort-only wiring DataTable has today. This is the actual trigger for TanStack Table's pagination/filtering row models, deliberately deferred until now (see docs/DECISIONS.md's DataTable entry: 'not built speculatively now'). Waited on EPIC-13 deliberately: sortable/filterable columns span both basic totals (skater_season_stats/goalie_season_stats) and advanced ones (Corsi/Fenwick/xG from player_season_advanced_stats), so this couldn't be scoped correctly before that data existed. Skaters and goalies stay separate views, not merged into one table \u2014 same reasoning already applied everywhere else in this schema (a combined skater+goalie shape was the prior attempt's mistake, per DECISIONS.md).",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium"
   },
   {

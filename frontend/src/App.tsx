@@ -5,7 +5,10 @@ import { RequireAuth } from "@/auth/RequireAuth";
 import { RequireSuperAdmin } from "@/auth/RequireSuperAdmin";
 import { DashboardPage } from "@/containers/DashboardPage";
 import { GamePage } from "@/containers/GamePage";
-import { LeaguePage } from "@/containers/LeaguePage";
+import { LeaguePage } from "@/containers/LeaguePage/LeaguePage";
+import { LeagueOverviewPage } from "@/containers/LeaguePage/LeagueOverviewPage";
+import { LeagueStandingsPage } from "@/containers/LeaguePage/LeagueStandingsPage";
+import { LeagueStatsPage } from "@/containers/LeaguePage/LeagueStatsPage";
 import { PlayerPage } from "@/containers/PlayerPage";
 import { TeamPage } from "@/containers/TeamPage/TeamPage";
 import { TeamOverviewPage } from "@/containers/TeamPage/TeamOverviewPage";
@@ -46,7 +49,11 @@ export function App() {
             <LeaguePage />
           </RequireAuth>
         }
-      />
+      >
+        <Route index element={<LeagueOverviewPage />} />
+        <Route path="standings" element={<LeagueStandingsPage />} />
+        <Route path="stats" element={<LeagueStatsPage />} />
+      </Route>
       <Route
         path="/games/:id"
         element={

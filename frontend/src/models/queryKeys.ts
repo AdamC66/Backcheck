@@ -45,6 +45,12 @@ export const coverageKey = (leagueId: number) => ["coverage", leagueId] as const
 export const coverageGapsKey = (seasonId: number, kind: string) =>
   ["coverage-gaps", seasonId, kind] as const;
 
+export const tableSchemaKey = (resource: string, league: string) =>
+  ["table-schema", resource, league] as const;
+
+export const tableRowsKey = (resource: string, query: string) =>
+  ["table-rows", resource, query] as const;
+
 export const gameDetailKey = (gameId: number) => ["game-detail", gameId] as const;
 
 export const playerDetailKey = (playerId: number, gameType?: string) =>

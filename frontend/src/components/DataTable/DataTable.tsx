@@ -5,6 +5,7 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type OnChangeFn,
   type SortingState,
 } from "@tanstack/react-table";
 
@@ -28,6 +29,10 @@ export interface DataTableProps<Row> {
   data: Row[];
   initialSorting?: SortingState;
   getRowId?: (row: Row) => string;
+  // Server-driven mode: the parent owns sort state (and re-fetches on change), so the
+  // table shows the backend's order as-is instead of re-sorting the current page.
+  sorting?: SortingState;
+  onSortingChange?: OnChangeFn<SortingState>;
 }
 
 const HEADER_CELL = "px-3 py-2 font-medium whitespace-nowrap";
@@ -38,14 +43,19 @@ export function DataTable<Row>({
   data,
   initialSorting = [],
   getRowId,
+  sorting: controlledSorting,
+  onSortingChange,
 }: DataTableProps<Row>) {
-  const [sorting, setSorting] = useState<SortingState>(initialSorting);
+  const [internalSorting, setInternalSorting] = useState<SortingState>(initialSorting);
+  const isServerDriven = controlledSorting !== undefined;
+  const sorting = controlledSorting ?? internalSorting;
 
   const table = useReactTable({
     data,
     columns,
     state: { sorting },
-    onSortingChange: setSorting,
+    onSortingChange: onSortingChange ?? setInternalSorting,
+    manualSorting: isServerDriven,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId,

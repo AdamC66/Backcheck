@@ -22,6 +22,13 @@ Rails.application.routes.draw do
 
       resources :players, only: [ :show ]
 
+      resources :league_skaters, only: [ :index ] do
+        get :schema, on: :collection
+      end
+      resources :league_goalies, only: [ :index ] do
+        get :schema, on: :collection
+      end
+
       resources :teams, only: [ :show ] do
         resources :games, only: [ :index ], controller: "team_games"
         resource :roster, only: [ :show ], controller: "team_roster"

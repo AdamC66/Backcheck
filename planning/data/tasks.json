@@ -682,9 +682,9 @@
     "id": "TASK-68",
     "epic_id": "EPIC-14",
     "title": "Query objects for league-wide skater/goalie search, filter, sort, pagination",
-    "description": "New app/queries/ objects (matching RosterStatusPage/GameDatePage's existing hand-rolled offset-pagination style, not a pagination gem) building the read for a league-wide (or per-league) player list: name search (ilike), filters (league, team, position, season, game_type), sort on any column from a fixed allowlist spanning both skater_season_stats/goalie_season_stats and player_season_advanced_stats (TASK-61) \u2014 never an arbitrary client-supplied column/direction string, same discipline as never interpolating raw SQL. Skaters and goalies get separate query objects, not one merged query \u2014 matches the rest of this schema's skater/goalie separation. Depends on EPIC-13 (player_season_advanced_stats) for the advanced-stat columns.",
+    "description": "New app/queries/ objects (matching RosterStatusPage/GameDatePage's existing hand-rolled offset-pagination style, not a pagination gem) building the read for a league-wide (or per-league) player list: name search (ilike), filters (league, team, position, season, game_type), sort on any column from a fixed allowlist spanning both skater_season_stats/goalie_season_stats and player_season_advanced_stats (TASK-61) \u2014 never an arbitrary client-supplied column/direction string, same discipline as never interpolating raw SQL. Skaters and goalies get separate query objects, not one merged query \u2014 matches the rest of this schema's skater/goalie separation. Depends on EPIC-13 (player_season_advanced_stats) for the advanced-stat columns.\n\nDone: app/queries/concerns/ mixins (Paginated, Searchable, Filterable, Sortable, Columned) + PlayerStatSearch domain module + LeagueSkaterSearch / LeagueGoalieSearch. One row per player, summed across team stints via a GROUP BY player_id subquery in FROM(...); traded player serializes team \"TOT\". Advanced columns LEFT JOIN each player's latest player_season_advanced_stats snapshot (DISTINCT ON, ordered by games_played DESC) for the chosen strength/score split. Sort keys validated against an allowlist mapping to SQL expressions we control (unknown -> Sortable::InvalidSort). Verified against real 2023-24 data.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "high",
     "acceptance_criteria": [
       "Sort column/direction are validated against a fixed allowlist \u2014 an unrecognized column is rejected, not silently interpolated into ORDER BY",
@@ -695,9 +695,9 @@
     "id": "TASK-69",
     "epic_id": "EPIC-14",
     "title": "GET endpoints for league-wide skater/goalie search",
-    "description": "Controllers wiring TASK-68's query objects to routes, request params validated against the same allowlists, response following the existing { data, meta } envelope. Each row serializes both basic and advanced stat columns. Depends on TASK-68.",
+    "description": "Controllers wiring TASK-68's query objects to routes, request params validated against the same allowlists, response following the existing { data, meta } envelope. Each row serializes both basic and advanced stat columns. Depends on TASK-68.\n\nDone: TableEndpoint controller concern (render_table / render_schema, typed errors -> 422/404); LeagueSkatersController / LeagueGoaliesController (two one-line actions each); routes GET /api/v1/league_{skaters,goalies} and .../schema. league defaults to nhl, season resolves through the league to its current. In-process HTTP smoke confirmed rows+meta, invalid sort -> 422, schema payload.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "high",
     "acceptance_criteria": [
       "Request specs cover search, at least one filter, sort (including an invalid-column 422), and pagination"
@@ -707,9 +707,9 @@
     "id": "TASK-70",
     "epic_id": "EPIC-14",
     "title": "Extend DataTable with server-side pagination and filtering row models",
-    "description": "TanStack Table's pagination and filtering row models \u2014 explicitly deferred at DataTable's original build (docs/DECISIONS.md) for exactly this use case. DataTable needs a server-driven mode: pagination state comes from the backend's page/per_page/meta (TASK-69), not a client-side row model operating over an already-fetched full array, since a league-wide list is hundreds of rows and can't be fetched whole up front. Existing SkaterStatsTable/GoalieStatsTable usages (team-scoped, small row counts, client-side sort) must keep working unchanged \u2014 this is an added mode, not a rewrite of the existing one. Depends on TASK-69.",
+    "description": "TanStack Table's pagination and filtering row models \u2014 explicitly deferred at DataTable's original build (docs/DECISIONS.md) for exactly this use case. DataTable needs a server-driven mode: pagination state comes from the backend's page/per_page/meta (TASK-69), not a client-side row model operating over an already-fetched full array, since a league-wide list is hundreds of rows and can't be fetched whole up front. Existing SkaterStatsTable/GoalieStatsTable usages (team-scoped, small row counts, client-side sort) must keep working unchanged \u2014 this is an added mode, not a rewrite of the existing one. Depends on TASK-69.\n\nDone: DataTable gained opt-in server-driven mode (sorting + onSortingChange props -> manualSorting); existing team-scoped callers unchanged. New frontend primitives: lib/columnFormatters.ts (format-token registry), models/tableSchema.ts + serverTable.ts + useTableSchema/useServerTable (URL-synced state via useSearchParams), hooks/useDebouncedCallback, components/ServerDataTable (builds columns from schema, renders filters + search + pager).",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "high",
     "acceptance_criteria": [
       "Existing team-scoped DataTable usages (SkaterStatsTable/GoalieStatsTable) are unaffected \u2014 same client-side sort behavior as today",
@@ -720,9 +720,9 @@
     "id": "TASK-71",
     "epic_id": "EPIC-14",
     "title": "League-wide player search page",
-    "description": "New page wiring TASK-69's endpoints through TASK-70's extended DataTable: a search input, filter controls (league/team/position/season), sortable columns spanning basic and advanced stats, and pagination controls. Separate skater/goalie views (tabs or separate routes), not a merged table. Depends on TASK-70.",
+    "description": "New page wiring TASK-69's endpoints through TASK-70's extended DataTable: a search input, filter controls (league/team/position/season), sortable columns spanning basic and advanced stats, and pagination controls. Separate skater/goalie views (tabs or separate routes), not a merged table. Depends on TASK-70.\n\nDone: containers/LeaguePlayersPage at /players with a skaters/goalies SegmentedControl (view in URL; carries league/season/team/q across the switch, drops sort/splits). Body is <ServerDataTable resource=... cellRenderers={player,team}/>. Discovery link on the dashboard.",
     "type": "feature",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium"
   },
   {

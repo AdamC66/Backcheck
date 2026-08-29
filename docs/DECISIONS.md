@@ -4,6 +4,44 @@ Newest first. One entry per decision: what, why, alternatives considered.
 
 ---
 
+### Searchable-table standard: backend-owned schema, composable query concerns (EPIC-14)
+**Status:** Settled
+The league-wide player table (EPIC-14) is the first backend-driven searchable/filterable/sortable/
+paginated list — the trigger `DataTable` deferred its pagination/filtering row models for. Rather
+than wire it one-off, it establishes the pattern for every such table after it.
+
+- **Hybrid schema endpoint.** Each table resource serves `GET /<resource>/schema` →
+  `{ columns, filters, search, sort }`. The backend owns which columns exist (key, label, tooltip,
+  `format` token, sortable, group), every filter definition and its live option list (team list,
+  seasons — league-dependent, so the schema refetches when `league` changes), the sort allowlist,
+  and the default sort. The frontend owns only `lib/columnFormatters.ts` — a registry keyed by the
+  `format` token (`int`, `decimal1/2`, `pct1/3`, `toi`, `plus_minus`, `text`). No per-page column
+  hardcoding; the two sides can't drift, same reasoning as the `sync_kinds` endpoint. Rejected:
+  fully-dynamic schema (format strings encode all rendering, frontend loses column types) and
+  no-schema (frontend hardcodes, allowlists drift).
+- **Composable query concerns, not a base class** (`app/queries/concerns/`): `Paginated`
+  (offset pagination, grouped-count aware), `Searchable` (a `q` block + schema slice), `Filterable`
+  (declared params, validated against an allowlist → 422 `InvalidFilter`, options for the schema),
+  `Sortable` (public key → SQL expression map we control → 422 `InvalidSort`), `Columned` (the
+  column list, which also derives the `Sortable` map so the two can't disagree). A query class
+  `include`s the ones it needs. `PlayerStatSearch` is the EPIC-14
+  domain module composing all five plus the skater/goalie aggregation; `LeagueSkaterSearch` /
+  `LeagueGoalieSearch` are thin config. Controllers use the `TableEndpoint` concern
+  (`render_table` / `render_schema`, two one-line actions, typed errors → 422/404).
+- **One row per player, summed across team stints** in the league+season (leaderboard semantics).
+  Done as a `GROUP BY player_id` aggregate subquery in `FROM (…) stats`, joined to `players` and
+  LEFT-joined to the advanced-stat snapshot — so the outer relation stays group-free and
+  pagination/sort/filter compose normally on top. A multi-team player serializes `team: "TOT"`.
+- **Advanced columns join the latest `player_season_advanced_stats` snapshot** for the chosen
+  strength/score split (default `all`/`all`), picked by `DISTINCT ON (player_id) … ORDER BY
+  player_id, games_played DESC` — running totals only grow, so max `games_played` is the latest
+  snapshot without needing to join `games` for `starts_at`. Null for non-NHL leagues. Skater
+  table only; goalies have no Corsi-family stats computed.
+- **All table state lives in the URL** (`useServerTable` + `useSearchParams`) — sort, dir, page,
+  `q`, every filter — so a view is shareable and the back button works, the pattern `TeamStatsPage`
+  already uses. `DataTable` gained an opt-in server-driven mode (`sorting` + `onSortingChange`
+  props → `manualSorting`); existing team-scoped callers pass neither and are unchanged.
+
 ### Data tab: coverage computed live from the data tables, not from SyncRun (TASK-92)
 **Status:** Settled
 `SyncRun` history records what runs were *kicked off*, not what data *landed* — a run can complete

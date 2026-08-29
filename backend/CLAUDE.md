@@ -10,6 +10,7 @@ Developer is new to Rails. Prefer idiomatic, conventional patterns over clever o
 - `app/models/` — Active Record models. Validations and associations belong here. Anything more than a couple lines of business logic moves to a service object, not a fat model method.
 - `app/services/` — plain Ruby objects for business logic that doesn't cleanly belong to one model (multi-step operations, external calls, anything a controller shouldn't own). One class, one job, name it as a verb (`ImportGameStats`, not `GameStatsHelper`).
 - `app/queries/` — objects that build a non-trivial read, named for what they return (`GameDatePage`). Noun-named, unlike services, because they answer a question rather than perform an action. **Adding a new `app/` subdirectory needs a server restart** — Rails works out autoload paths at boot, so the running process 500s with an uninitialized constant until it's bounced.
+  - `app/queries/concerns/` — reusable list-query mixins for search/filter/sort/paginate + a backend-owned column/filter schema. `include` the ones a query needs; controllers wire them via the `TableEndpoint` controller concern. Full design in `../docs/DECISIONS.md` (searchable-table standard).
 - `app/serializers/` — response shaping. Don't hand-build JSON hashes in controllers.
 - `spec/` — RSpec. Every model gets validation/association specs; every service gets a spec; request specs cover controller endpoints (not controller specs — those are deprecated in practice).
 

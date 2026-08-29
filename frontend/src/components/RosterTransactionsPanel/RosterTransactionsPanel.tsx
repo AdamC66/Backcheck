@@ -1,3 +1,4 @@
+import { Pager } from "@/components/Pager/Pager";
 import { RosterStatusBadge } from "@/components/RosterStatusBadge/RosterStatusBadge";
 import { Row } from "@/components/Row/Row";
 import { Stack } from "@/components/Stack/Stack";
@@ -48,28 +49,8 @@ export function RosterTransactionsPanel({
         </ul>
       )}
 
-      {meta !== undefined && meta.total_pages > 1 ? (
-        <Row justify="between" align="center">
-          <button
-            type="button"
-            disabled={meta.page <= 1}
-            onClick={() => onPageChange(meta.page - 1)}
-            className="cursor-pointer border border-slate-300 px-1.5 py-0.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Prev
-          </button>
-          <Text variant="caption" tone="muted">
-            Page {meta.page} of {meta.total_pages}
-          </Text>
-          <button
-            type="button"
-            disabled={meta.page >= meta.total_pages}
-            onClick={() => onPageChange(meta.page + 1)}
-            className="cursor-pointer border border-slate-300 px-1.5 py-0.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next
-          </button>
-        </Row>
+      {meta ? (
+        <Pager page={meta.page} totalPages={meta.total_pages} onPageChange={onPageChange} />
       ) : null}
     </Stack>
   );
