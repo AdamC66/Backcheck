@@ -3,11 +3,14 @@
 # and balloon each rebuild's tail (TASK-93) — track which players/teams a run
 # touches, then rebuild each one's chain once ingestion is fully done.
 class RebuildTouchedAdvancedStatsChains
+  attr_reader :failures
+
   def initialize(season:)
     @season = season
     @player_ids = Set.new
     @team_ids = Set.new
     @game_ids = Set.new
+    @failures = []
   end
 
   def track(game)
@@ -16,12 +19,22 @@ class RebuildTouchedAdvancedStatsChains
     team_ids << game.home_team_id << game.away_team_id
   end
 
+  # Each player/team rescued individually (TASK-104) — one bad row used to abort the
+  # whole batch uncaught, which also meant Game#stats_syncing below never got reset.
   def call
     players = Player.where(id: player_ids).index_by(&:id)
-    player_ids.each { |player_id| rebuild_player(players.fetch(player_id)) }
+    player_ids.each do |player_id|
+      rebuild_player(players.fetch(player_id))
+    rescue StandardError => e
+      failures << "player=#{player_id}: #{e.message}"
+    end
 
     teams = Team.where(id: team_ids).index_by(&:id)
-    team_ids.each { |team_id| RecomputeTeamSeasonAdvancedStats.new(team: teams.fetch(team_id), season: season).call }
+    team_ids.each do |team_id|
+      RecomputeTeamSeasonAdvancedStats.new(team: teams.fetch(team_id), season: season).call
+    rescue StandardError => e
+      failures << "team=#{team_id}: #{e.message}"
+    end
 
     Game.where(id: game_ids).update_all(stats_syncing: false)
   end

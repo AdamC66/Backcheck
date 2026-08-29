@@ -120,4 +120,15 @@ describe("SyncRunDetailPage", () => {
     expect(screen.getByText("ANA @ SJS: Socket::ResolutionError")).toBeInTheDocument();
     expect(screen.getByText("SJS @ LAK: boom")).toBeInTheDocument();
   });
+
+  // Regression guard for TASK-91: a partially-failed run reads as its own status,
+  // not the raw enum value with an underscore in it.
+  it("renders completed_with_errors as a readable label and as terminal (no cancel button)", async () => {
+    vi.mocked(fetchSyncRun).mockResolvedValue(runDetailFor({ status: "completed_with_errors" }));
+
+    renderDetail();
+
+    expect(await screen.findByText("1/2 (50%) — completed with errors")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+  });
 });

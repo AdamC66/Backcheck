@@ -42,9 +42,9 @@ class UpsertGameEvents
     "faceoff" => %w[winningPlayerId losingPlayerId]
   }.freeze
 
-  # Unmatched playerIds skip their row rather than raising; callers report these so a
-  # partial sync can't pass for a clean one.
-  attr_reader :missing_players
+  # Unmatched playerIds and rows that fail validation once built (TASK-103's
+  # BulkUpsert) skip rather than raise; callers report both instead.
+  attr_reader :missing_players, :failures
 
   def initialize(game:, payload:)
     @game = game
@@ -55,14 +55,18 @@ class UpsertGameEvents
   end
 
   def call
-    payload.fetch("plays").filter_map { |play| upsert(play) }
+    bulk = BulkUpsert.new(model: GameEvent, unique_by: %i[game_id nhl_event_id])
+    events = payload.fetch("plays").filter_map { |play| build_event(play) }.select { |event| bulk.add(event) }
+    bulk.call
+    @failures = bulk.failures
+    events
   end
 
   private
 
   attr_reader :game, :payload
 
-  def upsert(play)
+  def build_event(play)
     type_key = play["typeDescKey"]
     event_type = TYPE_MAP[type_key]
     return if event_type.nil?
@@ -74,8 +78,8 @@ class UpsertGameEvents
 
     team = team_for(details["eventOwnerTeamId"])
 
-    event = GameEvent.find_or_initialize_by(game: game, nhl_event_id: play.fetch("eventId"))
-    event.update!(
+    GameEvent.new(
+      game: game, nhl_event_id: play.fetch("eventId"),
       period: play.dig("periodDescriptor", "number"),
       period_time_seconds: parse_time(play["timeInPeriod"]),
       event_type: event_type,
@@ -90,7 +94,6 @@ class UpsertGameEvents
       tertiary_player: player_for(tertiary_id),
       home_team_defending_side: play["homeTeamDefendingSide"]
     )
-    event
   end
 
   # Memoized per game — a game touches ~40 players/2 teams across hundreds of rows

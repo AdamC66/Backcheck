@@ -12,6 +12,7 @@ class AdminSyncOrchestrator
     # only other thing a resumed run needs is to not redo work already marked done.
     resuming = sync_run.sync_run_items.exists?
     build_items
+    reset_current_step! if resuming
     sync_run.update!(status: SyncRun::STATUSES[:running], started_at: Time.current)
     sync_run.log(resuming ? "Run resumed (#{sync_run.total_steps} step(s))" : "Run started (#{sync_run.total_steps} step(s))")
 
@@ -46,9 +47,19 @@ class AdminSyncOrchestrator
   # A per-game kind counts its actual games, not the one item that tracks them —
   # otherwise a team with 82 games finishing looks identical to one with 2.
   def compute_total_steps
-    sync_run.sync_run_items.sum do |item|
-      PER_GAME_KINDS.include?(item.kind_name) ? games_for(item.team).count : 1
-    end
+    sync_run.sync_run_items.sum { |item| step_weight(item) }
+  end
+
+  # A raw incrementing counter has no reset point across a restart — recompute it
+  # from real completed work instead of trusting whatever it last held (TASK-96).
+  def reset_current_step!
+    done_steps = sync_run.sync_run_items.where(status: SyncRun::STATUSES[:completed])
+                          .to_a.sum { |item| step_weight(item) }
+    SyncRun.where(id: sync_run.id).update_all(current_step: done_steps)
+  end
+
+  def step_weight(item)
+    PER_GAME_KINDS.include?(item.kind_name) ? games_for(item.team).count : 1
   end
 
   # nil means every game in the season, not "no games" — Game.for_team(nil) would
@@ -86,6 +97,8 @@ class AdminSyncOrchestrator
     end
   end
 
+  # No mid-call cancellation check here, unlike the per-game loop — accepted, these
+  # are single fast/atomic calls, not worth threading a check through (TASK-98).
   def run_single_step_item(item)
     label = label_for(item)
     sync_run.update!(current_step_label: label)
@@ -126,26 +139,57 @@ class AdminSyncOrchestrator
       label = "#{item.kind_name.to_s.tr('_', ' ')} — #{matchup_label(game)} (#{index + 1}/#{games.size})"
       sync_run.update!(current_step_label: label)
 
-      begin
-        result = call_per_game_service(item.kind_name, game)
-        result.each { |stat| recompute_batch.track(stat, game.game_type) } if recompute_batch
-        chain_batch&.track(game)
-        sync_run.log("Completed #{label}")
-      rescue StandardError => e
-        failed_games << { "nhl_game_id" => game.nhl_game_id, "label" => matchup_label(game), "error" => e.message }
-        sync_run.log("Failed #{label}: #{e.message}")
-      end
+      result = sync_game(item.kind_name, game, label, failed_games)
+      track_game(result, game, recompute_batch, chain_batch, label) unless result.nil?
 
       advance_step!
     end
 
-    item.update!(status: failed_games.empty? ? SyncRun::STATUSES[:completed] : SyncRun::STATUSES[:failed],
-                 finished_at: Time.current, failed_games: failed_games)
+    item.update!(status: item_status(failed_games, games), finished_at: Time.current, failed_games: failed_games)
   ensure
     # In an ensure so a cancelled run still recomputes whatever it already touched,
     # not just a clean completion.
-    recompute_batch&.call
-    chain_batch&.call
+    run_batch(recompute_batch)
+    run_batch(chain_batch)
+  end
+
+  # Each batcher rescues its own per-row failures already (TASK-104) — this guards
+  # the rarer case where the batch's own setup query fails outright instead.
+  def run_batch(batch)
+    return unless batch
+
+    batch.call
+  rescue StandardError => e
+    sync_run.log("Warning: batch recompute failed: #{e.message}")
+  ensure
+    batch&.failures&.each { |failure| sync_run.log("Warning: #{failure}") }
+  end
+
+  def sync_game(kind_name, game, label, failed_games)
+    result = call_per_game_service(kind_name, game)
+    sync_run.log("Completed #{label}")
+    result
+  rescue StandardError => e
+    failed_games << { "nhl_game_id" => game.nhl_game_id, "label" => matchup_label(game), "error" => e.message }
+    sync_run.log("Failed #{label}: #{e.message}")
+    nil
+  end
+
+  # A separate rescue from the sync call itself (TASK-98) — a tracking-query hiccup
+  # shouldn't get recorded as this game's own sync failing when it didn't.
+  def track_game(result, game, recompute_batch, chain_batch, label)
+    result.each { |stat| recompute_batch.track(stat, game.game_type) } if recompute_batch
+    chain_batch&.track(game)
+  rescue StandardError => e
+    sync_run.log("Warning: recompute tracking failed for #{label}: #{e.message}")
+  end
+
+  # failed only for total failure (every game in scope errored) — TASK-91.
+  def item_status(failed_games, games)
+    return SyncRun::STATUSES[:completed] if failed_games.empty?
+    return SyncRun::STATUSES[:failed] if failed_games.size == games.size
+
+    SyncRun::STATUSES[:completed_with_errors]
   end
 
   def matchup_label(game)
@@ -173,16 +217,22 @@ class AdminSyncOrchestrator
 
   def finalize!
     sync_run.reload
-    status = if sync_run.status == SyncRun::STATUSES[:cancelled]
-      SyncRun::STATUSES[:cancelled]
-    elsif sync_run.sync_run_items.where(status: SyncRun::STATUSES[:failed]).exists?
-      SyncRun::STATUSES[:failed]
-    else
-      SyncRun::STATUSES[:completed]
-    end
+    status = sync_run.status == SyncRun::STATUSES[:cancelled] ? SyncRun::STATUSES[:cancelled] : run_status
 
     sync_run.update!(status: status, finished_at: Time.current)
     sync_run.log("Run #{SyncRun::STATUSES.key(status)}")
+  end
+
+  # failed only when every item failed outright — one flaky item alongside others
+  # that succeeded reads as completed_with_errors instead (TASK-91).
+  def run_status
+    item_statuses = sync_run.sync_run_items.pluck(:status)
+    errored = [ SyncRun::STATUSES[:failed], SyncRun::STATUSES[:completed_with_errors] ]
+
+    return SyncRun::STATUSES[:completed] if item_statuses.none? { |s| errored.include?(s) }
+    return SyncRun::STATUSES[:failed] if item_statuses.all? { |s| s == SyncRun::STATUSES[:failed] }
+
+    SyncRun::STATUSES[:completed_with_errors]
   end
 
   def label_for(item)

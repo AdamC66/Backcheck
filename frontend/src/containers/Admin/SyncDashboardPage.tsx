@@ -3,7 +3,7 @@ import { Button } from "@/components/Button/Button";
 import { Row } from "@/components/Row/Row";
 import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
-import { SYNC_KIND_LABELS, type SyncRun } from "@/models/adminSync";
+import { SYNC_KIND_LABELS, SYNC_RUN_STATUS_LABELS, type SyncRun } from "@/models/adminSync";
 import { useSyncRuns } from "@/models/useSyncRuns";
 
 function kindsLabel(run: SyncRun) {
@@ -25,7 +25,7 @@ function SyncRunRow({ run }: { run: SyncRun }) {
         </Stack>
         <Stack gap="xs" align="end">
           <Text variant="caption" className="font-semibold tracking-wide uppercase">
-            {run.status}
+            {SYNC_RUN_STATUS_LABELS[run.status]}
           </Text>
           <Text tone="muted" variant="caption">
             {run.current_step}/{run.total_steps} ({run.percent_complete}%)

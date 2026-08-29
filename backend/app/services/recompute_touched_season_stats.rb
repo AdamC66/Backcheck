@@ -2,15 +2,20 @@
 # batching to one recompute per distinct combo instead of one per game avoids
 # ~46x redundant RecomputeSeasonStats calls on a full-season backfill (TASK-88).
 class RecomputeTouchedSeasonStats
+  attr_reader :failures
+
   def initialize(season:)
     @season = season
     @touched = Set.new
+    @failures = []
   end
 
   def track(stat, game_type)
     touched << [ stat.player_id, stat.team_id, game_type ]
   end
 
+  # Each combo rescued individually (TASK-104) — one bad player/team used to abort
+  # the whole batch uncaught, crashing the run instead of recording one failure.
   def call
     players = Player.where(id: touched.map { |t| t[0] }).index_by(&:id)
     teams = Team.where(id: touched.map { |t| t[1] }).index_by(&:id)
@@ -18,6 +23,8 @@ class RecomputeTouchedSeasonStats
     touched.each do |player_id, team_id, game_type|
       RecomputeSeasonStats.new(player: players.fetch(player_id), team: teams.fetch(team_id),
                                 season: season, game_type: game_type).call
+    rescue StandardError => e
+      failures << "player=#{player_id} team=#{team_id} game_type=#{game_type}: #{e.message}"
     end
   end
 

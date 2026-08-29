@@ -93,4 +93,34 @@ RSpec.describe RebuildPlayerAdvancedStatsChain do
     expect(PlayerSeasonAdvancedStat.where(player: player, season: season).count).to eq(3)
     expect(PlayerSeasonAdvancedStat.where(player: player, season: later_season)).to be_none
   end
+
+  # Regression guard for TASK-103: BulkUpsert's per-row validation replaces
+  # create!'s own raise-on-invalid, so a bad row must still abort the whole chain.
+  it "rolls back the whole chain if any one row fails validation" do
+    rebuild_from(game1)
+    allow(PlayerSeasonAdvancedStat).to receive(:new).and_call_original
+    allow(PlayerSeasonAdvancedStat).to receive(:new).with(hash_including(as_of_game: game3)).and_wrap_original do |method, **kwargs|
+      method.call(**kwargs).tap { |record| allow(record).to receive(:valid?).with(:bulk_upsert).and_return(false) }
+    end
+
+    expect { rebuild_from(game1) }.to raise_error(/bulk upsert failed/)
+
+    # Unchanged from the pre-rebuild state above, not partially rewritten.
+    snapshots = PlayerSeasonAdvancedStat.where(player: player).joins(:as_of_game).order("games.starts_at")
+    expect(snapshots.map(&:games_played)).to eq([ 1, 2, 3 ])
+  end
+
+  # Regression guard for TASK-103: every row used to cost its own create! (~2.5/row
+  # across the full chain) instead of one bulk write.
+  it "writes every dimension's rebuilt rows in one statement, not one per row" do
+    write_count = 0
+    counter = lambda do |*, payload|
+      write_count += 1 if payload[:sql] =~ /INSERT INTO "player_season_advanced_stats"/
+    end
+
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { rebuild_from(game1) }
+
+    expect(write_count).to eq(1)
+    expect(PlayerSeasonAdvancedStat.where(player: player).count).to be > 1
+  end
 end

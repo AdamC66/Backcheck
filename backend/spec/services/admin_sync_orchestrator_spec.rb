@@ -59,7 +59,8 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.sync_run_items.where(status: SyncRun::STATUSES[:failed]).count).to eq(1)
     expect(run.sync_run_items.where(status: SyncRun::STATUSES[:completed]).count).to eq(1)
     expect(run.sync_run_items.find_by(status: SyncRun::STATUSES[:failed]).error_message).to eq("boom")
-    expect(run.status).to eq(SyncRun::STATUSES[:failed])
+    # One of two items failed, the other completed — partial, not total, failure (TASK-91).
+    expect(run.status).to eq(SyncRun::STATUSES[:completed_with_errors])
   end
 
   it "counts total_steps and current_step by real games for a game_stats item, not by the one item" do
@@ -168,7 +169,31 @@ RSpec.describe AdminSyncOrchestrator do
     expect(calls).to eq(2)
     run.reload
     expect(run.status).to eq(SyncRun::STATUSES[:completed])
+    expect(run.current_step).to eq(2) # not double-counted across the resume
     expect(run.activity_log.map { |e| e["message"] }).to include("Run resumed (2 step(s))")
+  end
+
+  # Regression guard for TASK-96: confirmed live as run 23 finishing at 144% — a
+  # re-run item piled its new increments on top of its stale pre-crash total.
+  it "recomputes current_step on resume instead of accumulating across restarts" do
+    season = create(:season, league: league)
+    games = Array.new(3) do |n|
+      create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+             starts_at: Time.utc(2025, 10, 8 + n))
+    end
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:game_stats] ],
+                 total_steps: games.size, current_step: 2)
+    # Simulates a crash mid-item: the worker died after advancing current_step for
+    # some games, but the item itself was never marked completed.
+    run.sync_run_items.create!(kind: SyncRun::SYNC_KINDS[:game_stats], team: team,
+                                status: SyncRun::STATUSES[:running])
+    allow(SyncGameStats).to receive(:new).and_return(instance_double(SyncGameStats, call: []))
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    expect(run.current_step).to eq(games.size) # reset to 0, then re-counted for real — not 2 + 3
+    expect(run.percent_complete).to eq(100)
   end
 
   it "fully re-runs an item that was still running when the job died, not just skips it" do
@@ -240,10 +265,89 @@ RSpec.describe AdminSyncOrchestrator do
 
     run.reload
     item = run.sync_run_items.first
-    expect(item.status).to eq(SyncRun::STATUSES[:failed])
+    # 2 of 3 games failed — partial, not total, failure (TASK-91).
+    expect(item.status).to eq(SyncRun::STATUSES[:completed_with_errors])
     expect(item.failed_games.size).to eq(2)
     expect(item.failed_games.map { |g| g["error"] }).to contain_exactly("network blip", "boom")
     expect(run.current_step).to eq(3) # all 3 games still processed, not aborted after the first failure
+    expect(run.status).to eq(SyncRun::STATUSES[:completed_with_errors])
+  end
+
+  # Regression guard for TASK-98: a tracking-query hiccup (recompute_batch/chain_batch)
+  # shouldn't get attributed to the game's own sync, which actually succeeded.
+  it "doesn't record a game as failed when only its recompute tracking raises" do
+    season = create(:season, league: league)
+    game = create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+                  starts_at: Time.utc(2025, 10, 8))
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:game_stats] ])
+    stat = create(:skater_game_stat, game: game, team: team)
+    allow(SyncGameStats).to receive(:new).and_return(instance_double(SyncGameStats, call: [ stat ]))
+    tracker = instance_double(RecomputeTouchedSeasonStats, call: nil, failures: [])
+    allow(tracker).to receive(:track).and_raise("db blip")
+    allow(RecomputeTouchedSeasonStats).to receive(:new).and_return(tracker)
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    item = run.sync_run_items.first
+    expect(item.status).to eq(SyncRun::STATUSES[:completed])
+    expect(item.failed_games).to be_empty
+    expect(run.activity_log.map { |e| e["message"] }).to include(a_string_matching(/Warning: recompute tracking failed/))
+  end
+
+  # Regression guard for TASK-104: a batch recompute failure used to propagate
+  # out of run_per_game_item's ensure block uncaught, crashing the whole job.
+  it "doesn't crash the run when the batch recompute itself raises" do
+    season = create(:season, league: league)
+    game = create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+                  starts_at: Time.utc(2025, 10, 8))
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:game_stats] ])
+    stat = create(:skater_game_stat, game: game, team: team)
+    allow(SyncGameStats).to receive(:new).and_return(instance_double(SyncGameStats, call: [ stat ]))
+    tracker = instance_double(RecomputeTouchedSeasonStats, track: nil, failures: [])
+    allow(tracker).to receive(:call).and_raise("db blip")
+    allow(RecomputeTouchedSeasonStats).to receive(:new).and_return(tracker)
+
+    expect { described_class.new(sync_run: run).call }.not_to raise_error
+
+    run.reload
+    expect(run.status).to eq(SyncRun::STATUSES[:completed])
+    expect(run.activity_log.map { |e| e["message"] }).to include(a_string_matching(/Warning: batch recompute failed/))
+  end
+
+  # Regression guard for TASK-91: every game in the item's scope failing is total
+  # failure, not partial — status: failed is reserved for that, not any single flake.
+  it "marks the item (and run) failed, not completed_with_errors, when every game in it fails" do
+    season = create(:season, league: league)
+    games = Array.new(2) do |n|
+      create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+             starts_at: Time.utc(2025, 10, 8 + n))
+    end
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:game_stats] ])
+    allow(SyncGameStats).to receive(:new) do |**|
+      instance_double(SyncGameStats, call: []).tap { |d| allow(d).to receive(:call).and_raise("boom") }
+    end
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    expect(run.sync_run_items.first.status).to eq(SyncRun::STATUSES[:failed])
+    expect(run.status).to eq(SyncRun::STATUSES[:failed])
+  end
+
+  # Regression guard for TASK-91: one item totally failing alongside another item
+  # that fully succeeded is still partial at the run level.
+  it "marks the run completed_with_errors when one item fails but another succeeds" do
+    create(:team, league: league, name: "Team A")
+    run = create(:sync_run, league: league,
+                 sync_kinds: [ SyncRun::SYNC_KINDS[:team_roster], SyncRun::SYNC_KINDS[:standings] ])
+    allow(SyncTeamRoster).to receive(:new).and_return(instance_double(SyncTeamRoster).tap { |d| allow(d).to receive(:call).and_raise("boom") })
+    allow(SyncStandings).to receive(:new).and_return(instance_double(SyncStandings, call: []))
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    expect(run.status).to eq(SyncRun::STATUSES[:completed_with_errors])
   end
 
   it "stops before its next item once the run is cancelled mid-loop" do

@@ -5,6 +5,7 @@ import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
 import {
   SYNC_KIND_LABELS,
+  SYNC_RUN_STATUS_LABELS,
   type FailedGame,
   type SyncRunActivityLogEntry,
   type SyncRunItemPayload,
@@ -45,7 +46,7 @@ function ItemRow({ item }: { item: SyncRunItemPayload }) {
       <Row justify="between">
         <Text variant="label">{item.team_name ?? SYNC_KIND_LABELS[item.kind]}</Text>
         <Text variant="caption" className="font-semibold tracking-wide uppercase">
-          {item.status}
+          {SYNC_RUN_STATUS_LABELS[item.status]}
         </Text>
       </Row>
       {item.failed_games.length > 0 ? <FailedGamesList games={item.failed_games} /> : null}
@@ -92,7 +93,7 @@ export function SyncRunDetailPage() {
             {data.sync_kinds.map((kind) => SYNC_KIND_LABELS[kind]).join(", ")}
           </Text>
           <Text tone="muted" variant="caption">
-            {data.current_step_label ?? data.status}
+            {data.current_step_label ?? SYNC_RUN_STATUS_LABELS[data.status]}
           </Text>
         </Stack>
 
@@ -111,7 +112,8 @@ export function SyncRunDetailPage() {
       <Stack gap="xs">
         <ProgressBar percent={data.percent_complete} />
         <Text tone="muted" variant="caption">
-          {data.current_step}/{data.total_steps} ({data.percent_complete}%) — {data.status}
+          {data.current_step}/{data.total_steps} ({data.percent_complete}%) —{" "}
+          {SYNC_RUN_STATUS_LABELS[data.status]}
         </Text>
       </Stack>
 

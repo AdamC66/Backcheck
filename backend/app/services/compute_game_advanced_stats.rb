@@ -24,6 +24,8 @@ class ComputeGameAdvancedStats
   ALL_SCORE = PlayerGameAdvancedStat::SCORE_STATES[:all]
   CLOSE_SCORE = PlayerGameAdvancedStat::SCORE_STATES[:close]
 
+  attr_reader :failures
+
   def initialize(game:)
     @game = game
     @xg_model = XgModel.active
@@ -31,6 +33,7 @@ class ComputeGameAdvancedStats
 
     @player_totals = Hash.new { |h, k| h[k] = zero_totals }
     @team_totals = Hash.new { |h, k| h[k] = zero_totals }
+    @failures = []
   end
 
   def call
@@ -179,23 +182,36 @@ class ComputeGameAdvancedStats
     event.team_id == game.home_team_id ? -home_net_x : home_net_x
   end
 
+  # The object, not just the id — lets each row's team_played_in_game validate
+  # without a query of its own (TASK-103's BulkUpsert validates every row in Ruby).
+  def teams_by_id
+    @teams_by_id ||= { game.home_team_id => game.home_team, game.away_team_id => game.away_team }
+  end
+
+  # Same reasoning as teams_by_id — skater_shifts already has each player preloaded.
+  def players_by_id
+    @players_by_id ||= skater_shifts.index_by(&:player_id).transform_values(&:player)
+  end
+
   def persist_player_rows
+    bulk = BulkUpsert.new(model: PlayerGameAdvancedStat, unique_by: %i[game_id player_id strength_state score_state])
     player_totals.each do |(player_id, strength_state, score_state), totals|
-      row = PlayerGameAdvancedStat.find_or_initialize_by(game: game, player_id: player_id,
-                                                          strength_state: strength_state, score_state: score_state)
-      row.team_id = player_team_ids.fetch(player_id)
-      row.xg_model = xg_model
-      row.assign_attributes(totals)
-      row.save!
+      bulk.add(PlayerGameAdvancedStat.new(game: game, player: players_by_id.fetch(player_id),
+                                          team: teams_by_id.fetch(player_team_ids.fetch(player_id)),
+                                          strength_state: strength_state, score_state: score_state,
+                                          xg_model: xg_model, **totals))
     end
+    bulk.call
+    failures.concat(bulk.failures)
   end
 
   def persist_team_rows
+    bulk = BulkUpsert.new(model: TeamGameAdvancedStat, unique_by: %i[game_id team_id strength_state score_state])
     team_totals.each do |(team_id, strength_state, score_state), totals|
-      row = TeamGameAdvancedStat.find_or_initialize_by(game: game, team_id: team_id, strength_state: strength_state,
-                                                        score_state: score_state)
-      row.assign_attributes(totals)
-      row.save!
+      bulk.add(TeamGameAdvancedStat.new(game: game, team: teams_by_id.fetch(team_id),
+                                        strength_state: strength_state, score_state: score_state, **totals))
     end
+    bulk.call
+    failures.concat(bulk.failures)
   end
 end

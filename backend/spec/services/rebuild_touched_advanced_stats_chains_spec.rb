@@ -71,4 +71,25 @@ RSpec.describe RebuildTouchedAdvancedStatsChains do
 
     expect(game.reload.stats_syncing).to be false
   end
+
+  # Regression guard for TASK-104: one bad player's chain used to abort the whole
+  # batch uncaught, leaving stats_syncing stuck true instead of getting cleared.
+  it "keeps rebuilding the rest when one player raises, and records the failure" do
+    other_player = create(:player)
+    game = create(:game, season: season, home_team: team, away_team: opponent, starts_at: Time.utc(2025, 10, 1),
+                  stats_syncing: true)
+    create(:player_game_advanced_stat, game: game, player: player, team: team, xg_model: xg_model)
+    create(:player_game_advanced_stat, game: game, player: other_player, team: team, xg_model: xg_model)
+    allow(RebuildPlayerAdvancedStatsChain).to receive(:new).and_call_original
+    allow(RebuildPlayerAdvancedStatsChain).to receive(:new).with(hash_including(player: player)).and_raise("boom")
+
+    b = batch
+    b.track(game)
+    b.call
+
+    expect(PlayerSeasonAdvancedStat.find_by(player: other_player)).to be_present
+    expect(PlayerSeasonAdvancedStat.find_by(player: player)).to be_nil
+    expect(b.failures).to eq([ "player=#{player.id}: boom" ])
+    expect(game.reload.stats_syncing).to be false
+  end
 end

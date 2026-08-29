@@ -11,7 +11,9 @@ class PlayerGameAdvancedStat < ApplicationRecord
 
   validates :strength_state, presence: true, inclusion: { in: STRENGTH_STATES.values }
   validates :score_state, presence: true, inclusion: { in: SCORE_STATES.values }
-  validates :player_id, uniqueness: { scope: [ :game_id, :strength_state, :score_state ] }
+  # on: — skipped for BulkUpsert's :bulk_upsert context (TASK-103); the DB's own
+  # unique index backs it there instead, via upsert_all's on-conflict match.
+  validates :player_id, uniqueness: { scope: [ :game_id, :strength_state, :score_state ], on: %i[create update] }
   validate :team_played_in_game
 
   private

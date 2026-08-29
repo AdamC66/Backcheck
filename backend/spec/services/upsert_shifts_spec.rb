@@ -70,4 +70,18 @@ RSpec.describe UpsertShifts do
 
     expect(query_count).to eq(2) # 1 distinct player + 1 distinct team, not 10 (5 rows × 2 lookups)
   end
+
+  # Regression guard for TASK-103: every row used to cost its own find_or_initialize_by
+  # + update! (~2/row measured against real data) instead of one bulk write.
+  it "writes every shift in one statement, not one per row" do
+    write_count = 0
+    counter = lambda do |*, payload|
+      write_count += 1 if payload[:sql] =~ /INSERT INTO "shifts"/
+    end
+
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { upsert.call }
+
+    expect(write_count).to eq(1)
+    expect(Shift.where(game: game).count).to be > 1
+  end
 end

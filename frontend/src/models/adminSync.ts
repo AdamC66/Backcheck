@@ -1,6 +1,7 @@
 import { request, requestWithMeta, type Envelope } from "@/lib/apiClient";
 
-export type SyncRunStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
+export type SyncRunStatus =
+  "queued" | "running" | "completed" | "failed" | "cancelled" | "completed_with_errors";
 
 export type SyncKind =
   | "team_roster"
@@ -10,6 +11,15 @@ export type SyncKind =
   | "daily_scores"
   | "game_stats"
   | "advanced_stats";
+
+export const SYNC_RUN_STATUS_LABELS: Record<SyncRunStatus, string> = {
+  queued: "queued",
+  running: "running",
+  completed: "completed",
+  failed: "failed",
+  cancelled: "cancelled",
+  completed_with_errors: "completed with errors",
+};
 
 export const SYNC_KIND_LABELS: Record<SyncKind, string> = {
   team_roster: "Team roster",

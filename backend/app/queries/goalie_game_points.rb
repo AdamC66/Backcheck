@@ -7,18 +7,20 @@ class GoalieGamePoints
   end
 
   def goals
-    goal_events.where(primary_player: player).count
+    goal_events.count { |event| event.primary_player_id == player.id }
   end
 
   def assists
-    goal_events.where(secondary_player: player).or(goal_events.where(tertiary_player: player)).count
+    goal_events.count { |event| event.secondary_player_id == player.id || event.tertiary_player_id == player.id }
   end
 
   private
 
   attr_reader :game, :player
 
+  # Loaded once and reused by both #goals and #assists instead of a separate
+  # query each (TASK-101) — a game's goal events are few enough to hold in memory.
   def goal_events
-    GameEvent.where(game: game, event_type: GameEvent::EVENT_TYPES[:goal])
+    @goal_events ||= GameEvent.where(game: game, event_type: GameEvent::EVENT_TYPES[:goal]).to_a
   end
 end

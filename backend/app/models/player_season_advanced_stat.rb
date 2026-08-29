@@ -7,7 +7,10 @@ class PlayerSeasonAdvancedStat < ApplicationRecord
   validates :strength_state, presence: true, inclusion: { in: PlayerGameAdvancedStat::STRENGTH_STATES.values }
   validates :score_state, presence: true, inclusion: { in: PlayerGameAdvancedStat::SCORE_STATES.values }
   validates :game_type, presence: true, inclusion: { in: Game::GAME_TYPES.values }
-  validates :player_id, uniqueness: { scope: [ :season_id, :strength_state, :score_state, :game_type, :as_of_game_id ] }
+  # on: — skipped for BulkUpsert's :bulk_upsert context (TASK-103); the DB's own
+  # unique index backs it there instead, via upsert_all's on-conflict match.
+  validates :player_id, uniqueness: { scope: [ :season_id, :strength_state, :score_state, :game_type, :as_of_game_id ],
+                                      on: %i[create update] }
   validate :team_belongs_to_season_league
   validate :as_of_game_belongs_to_season
   validate :game_type_matches_as_of_game

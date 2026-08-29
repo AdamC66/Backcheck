@@ -21,7 +21,9 @@ class GameEvent < ApplicationRecord
   # A goal can carry two assists; secondary_player holds the first, this the second.
   belongs_to :tertiary_player, class_name: "Player", optional: true, inverse_of: :tertiary_game_events
 
-  validates :nhl_event_id, presence: true, uniqueness: { scope: :game_id }
+  # on: — skipped for BulkUpsert's :bulk_upsert context (TASK-103); the DB's own
+  # unique index backs it there instead, via upsert_all's on-conflict match.
+  validates :nhl_event_id, presence: true, uniqueness: { scope: :game_id, on: %i[create update] }
   validates :period, :period_time_seconds, presence: true
   validates :event_type, presence: true, inclusion: { in: EVENT_TYPES.values }
   validates :shot_type, inclusion: { in: SHOT_TYPES.values }, allow_nil: true

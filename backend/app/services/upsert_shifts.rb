@@ -3,9 +3,9 @@
 class UpsertShifts
   REAL_SHIFT_TYPE_CODE = 517
 
-  # Unmatched playerIds skip their row rather than raising; callers report these so a
-  # partial sync can't pass for a clean one.
-  attr_reader :missing_players
+  # Unmatched playerIds and rows that fail validation once built (TASK-103's
+  # BulkUpsert) skip rather than raise; callers report both instead.
+  attr_reader :missing_players, :failures
 
   def initialize(game:, payload:)
     @game = game
@@ -16,29 +16,33 @@ class UpsertShifts
   end
 
   def call
-    payload.select { |row| row["typeCode"] == REAL_SHIFT_TYPE_CODE }.filter_map { |row| upsert(row) }
+    bulk = BulkUpsert.new(model: Shift, unique_by: %i[game_id nhl_shift_id])
+    shifts = payload.select { |row| row["typeCode"] == REAL_SHIFT_TYPE_CODE }
+                    .filter_map { |row| build_shift(row) }.select { |shift| bulk.add(shift) }
+    bulk.call
+    @failures = bulk.failures
+    shifts
   end
 
   private
 
   attr_reader :game, :payload
 
-  def upsert(row)
+  def build_shift(row)
     player = player_for(row.fetch("playerId"))
     return if player.nil?
 
     team = team_for(row.fetch("teamId"))
     return if team.nil?
 
-    shift = Shift.find_or_initialize_by(game: game, nhl_shift_id: row.fetch("id"))
-    shift.update!(
+    Shift.new(
+      game: game, nhl_shift_id: row.fetch("id"),
       team: team,
       player: player,
       period: row.fetch("period"),
       start_time_seconds: parse_time(row["startTime"]),
       end_time_seconds: parse_time(row["endTime"])
     )
-    shift
   end
 
   # Memoized per game — a game's ~1,300 shift rows only touch ~40 players/2 teams

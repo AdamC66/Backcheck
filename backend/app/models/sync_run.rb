@@ -12,12 +12,15 @@ class SyncRun < ApplicationRecord
   }.freeze
 
   # SyncRunItem#status validates against this same set rather than defining its own.
+  # completed_with_errors: some but not all games/items failed — failed is reserved
+  # for total failure, so one flaky game doesn't read the same as all of them (TASK-91).
   STATUSES = {
     queued: 0,
     running: 1,
     completed: 2,
     failed: 3,
-    cancelled: 4
+    cancelled: 4,
+    completed_with_errors: 5
   }.freeze
 
   # Matches NhlClient/HockeyTechClient's own DEFAULT_MIN_INTERVAL (0.5) as "normal".
@@ -41,6 +44,10 @@ class SyncRun < ApplicationRecord
   validates :min_interval, presence: true
   validate :sync_kinds_are_known
 
+  # A property of the row existing, not a separate step a caller can skip or
+  # have fail independently of the save (TASK-97).
+  after_create_commit :enqueue_orchestrator_job
+
   def percent_complete
     return 0 if total_steps.zero?
 
@@ -55,6 +62,10 @@ class SyncRun < ApplicationRecord
   end
 
   private
+
+  def enqueue_orchestrator_job
+    AdminSyncOrchestratorJob.perform_later(id)
+  end
 
   def sync_kinds_are_known
     unknown = sync_kinds.to_a - SYNC_KINDS.values

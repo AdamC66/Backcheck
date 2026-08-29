@@ -15,7 +15,14 @@ class RebuildPlayerAdvancedStatsChain
 
   def call
     ActiveRecord::Base.transaction do
-      dimensions_to_rebuild.each { |strength_state, score_state| rebuild_chain(strength_state, score_state) }
+      bulk = BulkUpsert.new(model: PlayerSeasonAdvancedStat,
+                            unique_by: %i[player_id season_id strength_state score_state game_type as_of_game_id])
+      dimensions_to_rebuild.each { |strength_state, score_state| rebuild_chain(strength_state, score_state, bulk) }
+      bulk.call
+
+      # A row failing here is corruption risk, not routine noise — roll back the
+      # whole chain rather than commit a season with a hole in it (TASK-103).
+      raise "PlayerSeasonAdvancedStat bulk upsert failed: #{bulk.failures.join('; ')}" if bulk.failures.any?
     end
   end
 
@@ -27,18 +34,15 @@ class RebuildPlayerAdvancedStatsChain
     PlayerGameAdvancedStat.where(player: player, game: from_game).distinct.pluck(:strength_state, :score_state)
   end
 
-  # A player's actual games in order, not the team's schedule (a call-up skips games).
-  # Scoped to from_game's game_type (a playoff correction never touches the regular
-  # chain) and season — without the season filter, a player with rows in multiple
-  # seasons pulls every season's games sharing that game_type into one chain, and
-  # PlayerSeasonAdvancedStat#create! rejects the season/as_of_game mismatch.
+  # Scoped to from_game's season too, or a multi-season player pulls every season
+  # sharing that game_type into one chain. .includes: read per row below (TASK-103).
   def ordered_rows(strength_state, score_state)
     PlayerGameAdvancedStat.where(player: player, strength_state: strength_state, score_state: score_state)
                            .joins(:game).where(games: { game_type: from_game.game_type, season_id: season.id })
-                           .order("games.starts_at ASC").to_a
+                           .includes(:team, :game).order("games.starts_at ASC").to_a
   end
 
-  def rebuild_chain(strength_state, score_state)
+  def rebuild_chain(strength_state, score_state, bulk)
     rows = ordered_rows(strength_state, score_state)
     from_index = rows.index { |row| row.game_id == from_game.id }
     return if from_index.nil?
@@ -61,12 +65,12 @@ class RebuildPlayerAdvancedStatsChain
       games_played += 1
       running_totals = SUMMABLE_COLUMNS.index_with { |col| running_totals[col] + pgas.public_send(col) }
 
-      PlayerSeasonAdvancedStat.create!(
+      bulk.add(PlayerSeasonAdvancedStat.new(
         player: player, team: pgas.team, season: season, as_of_game: pgas.game,
         strength_state: strength_state, score_state: score_state, game_type: from_game.game_type,
         games_played: games_played, stale: false,
         **running_totals
-      )
+      ))
     end
   end
 end

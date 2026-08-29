@@ -3,7 +3,9 @@ class Shift < ApplicationRecord
   belongs_to :team
   belongs_to :player
 
-  validates :nhl_shift_id, presence: true, uniqueness: { scope: :game_id }
+  # on: — skipped for BulkUpsert's :bulk_upsert context (TASK-103); the DB's own
+  # unique index backs it there instead, via upsert_all's on-conflict match.
+  validates :nhl_shift_id, presence: true, uniqueness: { scope: :game_id, on: %i[create update] }
   validates :period, :start_time_seconds, :end_time_seconds, presence: true
   validate :team_played_in_game
   validate :end_after_start

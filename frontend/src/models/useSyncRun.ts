@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchSyncRun } from "@/models/adminSync";
 import { syncRunKey } from "@/models/queryKeys";
 
-const TERMINAL_STATUSES = new Set(["completed", "failed", "cancelled"]);
+const TERMINAL_STATUSES = new Set(["completed", "failed", "cancelled", "completed_with_errors"]);
 
 export function useSyncRun(id: number | null) {
   return useQuery({

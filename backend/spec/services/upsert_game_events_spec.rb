@@ -89,4 +89,18 @@ RSpec.describe UpsertGameEvents do
 
     expect(query_count).to eq(3) # 2 distinct players + 1 distinct team, not 15 (5 plays × 3 lookups)
   end
+
+  # Regression guard for TASK-103: every row used to cost its own find_or_initialize_by
+  # + update! (~1.8 queries/row measured against real data) instead of one bulk write.
+  it "writes every event in one statement, not one per row" do
+    write_count = 0
+    counter = lambda do |*, payload|
+      write_count += 1 if payload[:sql] =~ /INSERT INTO "game_events"/
+    end
+
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { upsert.call }
+
+    expect(write_count).to eq(1)
+    expect(GameEvent.where(game: game).count).to be > 1
+  end
 end

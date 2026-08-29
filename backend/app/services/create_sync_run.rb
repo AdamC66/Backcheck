@@ -33,12 +33,14 @@ class CreateSyncRun
       return
     end
 
+    # .uniq: a duplicated kind in the request would otherwise build two identical
+    # items and double the work for it (TASK-98).
     @resolved_kinds = requested_kinds.filter_map do |name|
       SyncRun::SYNC_KINDS.fetch(name.to_sym) do
         errors << "unknown sync kind: #{name}"
         nil
       end
-    end
+    end.uniq
   end
 
   # A kind's required axes come from the same registry the orchestrator resolves
@@ -59,7 +61,6 @@ class CreateSyncRun
                        season: season, team: team, min_interval: min_interval)
 
     if run.save
-      AdminSyncOrchestratorJob.perform_later(run.id)
       @result = run
     else
       @errors = run.errors.full_messages

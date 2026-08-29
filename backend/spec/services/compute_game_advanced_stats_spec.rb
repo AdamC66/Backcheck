@@ -95,6 +95,23 @@ RSpec.describe ComputeGameAdvancedStats do
 
       expect { described_class.new(game: game) }.to raise_error(ArgumentError, /active xg_model/)
     end
+
+    # Regression guard for TASK-103: persist_player_rows/persist_team_rows used to
+    # cost find_or_initialize_by + save! per row instead of one bulk write per table.
+    it "writes player rows and team rows in one statement each, not one per row" do
+      player_writes = 0
+      team_writes = 0
+      counter = lambda do |*, payload|
+        player_writes += 1 if payload[:sql] =~ /INSERT INTO "player_game_advanced_stats"/
+        team_writes += 1 if payload[:sql] =~ /INSERT INTO "team_game_advanced_stats"/
+      end
+
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { described_class.new(game: game).call }
+
+      expect(player_writes).to eq(1)
+      expect(team_writes).to eq(1)
+      expect(PlayerGameAdvancedStat.where(game: game).count).to be > 1
+    end
   end
 
   context "score_state buckets" do
