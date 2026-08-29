@@ -70,9 +70,10 @@ class AdminSyncOrchestrator
   end
 
   # Re-reads from the DB rather than the in-memory sync_run, since a cancel
-  # request lands via a separate web request updating the same row.
+  # request lands via a separate web request updating the same row — pick, not
+  # reload, since this runs once per game and only ever needs the one column.
   def cancelled?
-    sync_run.reload.status == SyncRun::STATUSES[:cancelled]
+    SyncRun.where(id: sync_run.id).pick(:status) == SyncRun::STATUSES[:cancelled]
   end
 
   def run_item(item)
@@ -109,10 +110,12 @@ class AdminSyncOrchestrator
     # rather than per-failure — one flaky game shouldn't cost a write on top of the
     # error itself, and TASK-90 needs every failure, not just whichever wrote last.
     failed_games = []
-    # game_stats batches its season-stat recompute once per distinct player/team across
-    # the whole item instead of once per game (TASK-88); advanced_stats' per-game
-    # recompute is load-bearing (its rollups are a snapshot chain), so it stays as-is.
-    recompute_batch = RecomputeTouchedSeasonStats.new(season: sync_run.season) if item.kind_name == :game_stats
+    # Both kinds batch their season-stat recompute once per distinct player/team touched
+    # across the whole item instead of once per game — game_stats' skaters/goalies
+    # (TASK-88), advanced_stats' goalies via RecomputeGoalieGamePoints (TASK-102).
+    # advanced_stats also batches its season-chain rebuild the same way (TASK-94).
+    recompute_batch = RecomputeTouchedSeasonStats.new(season: sync_run.season) if PER_GAME_KINDS.include?(item.kind_name)
+    chain_batch = RebuildTouchedAdvancedStatsChains.new(season: sync_run.season) if item.kind_name == :advanced_stats
 
     games.each_with_index do |game, index|
       if cancelled?
@@ -126,6 +129,7 @@ class AdminSyncOrchestrator
       begin
         result = call_per_game_service(item.kind_name, game)
         result.each { |stat| recompute_batch.track(stat, game.game_type) } if recompute_batch
+        chain_batch&.track(game)
         sync_run.log("Completed #{label}")
       rescue StandardError => e
         failed_games << { "nhl_game_id" => game.nhl_game_id, "label" => matchup_label(game), "error" => e.message }
@@ -141,6 +145,7 @@ class AdminSyncOrchestrator
     # In an ensure so a cancelled run still recomputes whatever it already touched,
     # not just a clean completion.
     recompute_batch&.call
+    chain_batch&.call
   end
 
   def matchup_label(game)
@@ -152,15 +157,18 @@ class AdminSyncOrchestrator
     when :game_stats
       SyncGameStats.new(game: game, client: nhl_client, recompute: false).call
     when :advanced_stats
-      SyncGameEvents.new(game: game, client: nhl_client, stats_client: nhl_stats_client, recompute_inline: true).call
+      sync = SyncGameEvents.new(game: game, client: nhl_client, stats_client: nhl_stats_client, recompute: :skip)
+      sync.call
+      sync.goalie_stats
     end
   end
 
   # A raw UPDATE, not sync_run.increment!, so a concurrent writer's value is never
-  # overwritten by whatever this process last loaded into memory.
+  # overwritten by whatever this process last loaded into memory. No reload after —
+  # runs once per game, and nothing downstream reads current_step off this instance
+  # (finalize! reloads its own copy before it needs one).
   def advance_step!
     SyncRun.where(id: sync_run.id).update_all("current_step = current_step + 1")
-    sync_run.reload
   end
 
   def finalize!

@@ -45,13 +45,27 @@ RSpec.describe SyncGameEvents do
     expect(Shift.where(game: game).count).to eq(11)
   end
 
-  # Regression guard for TASK-93: a bulk caller runs the advanced-stats rebuild
-  # in-process instead of enqueuing it, so it can't fall behind a lagging queue.
-  it "rebuilds advanced stats in-process, without enqueuing a job, when recompute_inline: true" do
+  # Regression guard for TASK-94: a bulk caller defers the whole advanced-stats
+  # rebuild to its own end-of-run batch pass instead of triggering it per game.
+  it "ingests events/shifts and computes per-game advanced stats, but defers the rebuild, when recompute: :skip" do
     expect {
-      described_class.new(game: game, client: client, stats_client: stats_client, recompute_inline: true).call
+      described_class.new(game: game, client: client, stats_client: stats_client, recompute: :skip).call
     }.not_to have_enqueued_job(RebuildAdvancedStatsJob)
 
+    expect(PlayerGameAdvancedStat.where(game: game)).to be_present
     expect(game.reload.stats_syncing).to be false
+  end
+
+  # Regression guard for TASK-102: goalie_stats exposes what RecomputeGoalieGamePoints
+  # touched, so a bulk caller can batch its season-stat recompute the same way
+  # SyncGameStats' rows already are, instead of #call itself doing it per game.
+  it "exposes the touched GoalieGameStat rows via goalie_stats" do
+    goalie = create(:player, position: Player::POSITIONS[:goalie])
+    stat = create(:goalie_game_stat, player: goalie, game: game, team: home_team)
+
+    result = sync
+    result.call
+
+    expect(result.goalie_stats).to eq([ stat ])
   end
 end

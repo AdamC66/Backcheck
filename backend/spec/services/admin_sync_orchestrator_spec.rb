@@ -113,7 +113,7 @@ RSpec.describe AdminSyncOrchestrator do
     recomputed_games = []
     allow(SyncGameEvents).to receive(:new) do |game:, **|
       recomputed_games << game
-      instance_double(SyncGameEvents, call: [])
+      instance_double(SyncGameEvents, call: [], goalie_stats: [])
     end
 
     described_class.new(sync_run: run).call
@@ -134,7 +134,7 @@ RSpec.describe AdminSyncOrchestrator do
     recomputed_games = []
     allow(SyncGameEvents).to receive(:new) do |game:, **|
       recomputed_games << game
-      instance_double(SyncGameEvents, call: [])
+      instance_double(SyncGameEvents, call: [], goalie_stats: [])
     end
 
     described_class.new(sync_run: run).call
