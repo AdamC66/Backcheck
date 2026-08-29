@@ -44,6 +44,14 @@ RSpec.describe NhlClient do
     expect(result["plays"].map { |play| play["typeDescKey"] }).to include("goal", "shot-on-goal")
   end
 
+  it "retries a transient SSL error the same way as a socket error" do
+    stub_request(:get, "https://api-web.nhle.com/v1/standings-season").to_raise(OpenSSL::SSL::SSLError)
+
+    expect { unthrottled_client.standings_season }.to raise_error(described_class::TransportError)
+    expect(a_request(:get, "https://api-web.nhle.com/v1/standings-season"))
+      .to have_been_made.times(described_class::MAX_ATTEMPTS)
+  end
+
   it "returns a player's landing profile" do
     stub_nhl("/v1/player/8484158/landing", fixture: "player_landing")
 

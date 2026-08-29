@@ -511,5 +511,16 @@ Diagnosing the TASK-93/94 backlog required repeatedly querying `SolidQueue::Job`
 
 This app is `config.api_only = true`; Mission Control ships real HTML/JS/CSS views, which needs a real asset pipeline (`propshaft`, added alongside it) that API-only mode otherwise skips entirely. Deliberate, narrow carve-out — the JSON API under `/api/v1` is untouched, this is a separate, non-API surface for local/ops visibility only. Verified live: unauthenticated request to `/jobs` returns 401, correct credentials return 200.
 
+### BaseApiClient: shared throttle/retry/error-handling for external clients (TASK-100)
+**Status:** Settled
+
+`NhlClient`, `NhlStatsClient`, and `HockeyTechClient` had grown ~90% duplicated: class-level throttle state, the retry-with-backoff wrapper, the transport-error rescue, and the `Error`/`NotFound`/`RateLimited`/`ServerError`/`TransportError` hierarchy were near-byte-identical across all three — real, already-paid cost, since an earlier `DEFAULT_MIN_INTERVAL` change had to be hand-applied to all three files separately.
+
+Extracted `BaseApiClient`; each subclass now supplies only `BASE_URL` and its own endpoint methods, overriding `path_for`/`request_params`/`parse_body` where its request shape actually differs (`HockeyTechClient`'s fixed-path/query-folded view, its non-bare-JSON body). The shared `Error` hierarchy lives on `BaseApiClient` and subclasses inherit the same constants (`NhlClient::NotFound` and `HockeyTechClient::NotFound` are now the same class) — the one real caller doing `rescue NhlClient::NotFound` needed no change, since Ruby's constant lookup resolves it through the ancestor chain. Each subclass still gets its own independent throttle mutex/`last_request_at`, since `class << self; attr_accessor` defines per-singleton-class state, not something `class` methods share across subclasses — confirmed live (separate `Mutex` objects, one class's requests never waiting on another's).
+
+Folded in three smaller findings from the same audit rather than filing them separately: `#perform`'s rescue list now also catches `OpenSSL::SSL::SSLError`/`EOFError` (previously skipped the retry/backoff entirely, verified via a live-network smoke test); `NhlClient#get`/`#get_following_redirects` now share one `#with_retries` instead of duplicating the same loop twice in one file; a persistent/keep-alive connection was explicitly deferred (documented in `BaseApiClient#perform`) since the enforced throttle interval already dwarfs one handshake's cost today.
+
+Net ~97 fewer lines across the client layer despite gaining behavior (widened rescue list, shared retry helper). Verified against real data: all three clients hit their live APIs successfully post-refactor (standings, shift-chart, HockeyTech seasons, a 307-redirect roster fetch, and a real 404), plus the full existing spec suite (338 examples) unchanged.
+
 ### Project scope / feature set
 **Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.
