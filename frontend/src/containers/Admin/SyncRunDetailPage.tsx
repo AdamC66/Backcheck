@@ -93,6 +93,9 @@ export function SyncRunDetailPage() {
             {data.sync_kinds.map((kind) => SYNC_KIND_LABELS[kind]).join(", ")}
           </Text>
           <Text tone="muted" variant="caption">
+            {[data.league_name, data.season_label, data.team_name].filter(Boolean).join(" — ")}
+          </Text>
+          <Text tone="muted" variant="caption">
             {data.current_step_label ?? SYNC_RUN_STATUS_LABELS[data.status]}
           </Text>
         </Stack>

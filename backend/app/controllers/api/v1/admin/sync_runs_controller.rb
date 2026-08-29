@@ -5,7 +5,7 @@ module Api
         before_action :set_sync_run, only: [ :show, :cancel ]
 
         def index
-          runs = SyncRun.order(created_at: :desc).limit(50)
+          runs = SyncRun.includes(:league, :season, :team).order(created_at: :desc).limit(50)
 
           render_data(runs.map { |run| SyncRunSerializer.new(run).as_json }, meta: { counts: status_counts })
         end

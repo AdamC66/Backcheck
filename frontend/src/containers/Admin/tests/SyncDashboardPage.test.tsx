@@ -18,8 +18,11 @@ describe("SyncDashboardPage", () => {
           status: "running",
           sync_kinds: ["team_roster"],
           league_id: 1,
+          league_name: "National Hockey League",
           season_id: null,
+          season_label: null,
           team_id: 5,
+          team_name: "San Jose Sharks",
           total_steps: 4,
           current_step: 2,
           current_step_label: "team roster — San Jose Sharks",
@@ -37,6 +40,7 @@ describe("SyncDashboardPage", () => {
     renderWithProviders(<SyncDashboardPage />);
 
     expect(await screen.findByText("Team roster")).toBeInTheDocument();
+    expect(screen.getByText("National Hockey League — San Jose Sharks")).toBeInTheDocument();
     expect(screen.getByText("team roster — San Jose Sharks")).toBeInTheDocument();
     expect(screen.getByText("2/4 (50%)")).toBeInTheDocument();
   });

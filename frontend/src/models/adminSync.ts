@@ -36,8 +36,11 @@ export interface SyncRun {
   status: SyncRunStatus;
   sync_kinds: SyncKind[];
   league_id: number | null;
+  league_name: string | null;
   season_id: number | null;
+  season_label: string | null;
   team_id: number | null;
+  team_name: string | null;
   total_steps: number;
   current_step: number;
   current_step_label: string | null;

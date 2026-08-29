@@ -10,6 +10,10 @@ function kindsLabel(run: SyncRun) {
   return run.sync_kinds.map((kind) => SYNC_KIND_LABELS[kind]).join(", ");
 }
 
+function scopeLabel(run: SyncRun) {
+  return [run.league_name, run.season_label, run.team_name].filter(Boolean).join(" — ");
+}
+
 function SyncRunRow({ run }: { run: SyncRun }) {
   return (
     <Link
@@ -19,6 +23,9 @@ function SyncRunRow({ run }: { run: SyncRun }) {
       <Row justify="between" className="border-b border-slate-100 py-3 last:border-b-0">
         <Stack gap="xs">
           <Text variant="label">{kindsLabel(run)}</Text>
+          <Text tone="muted" variant="caption">
+            {scopeLabel(run)}
+          </Text>
           <Text tone="muted" variant="caption">
             {run.current_step_label ?? "Queued"}
           </Text>
