@@ -1,9 +1,8 @@
 # Ingests a game's play-by-play/shift-chart data, computes advanced stats, then hands
 # off to the same MarkGameForStatsRecompute path a manual correction uses — one entry point.
 class SyncGameEvents
-  # goalie_stats/skater_stats: the rows RecomputeGoalieGamePoints/ComputeIndividualGameStats
-  # touched — a bulk caller batches their season-stat recompute the same way SyncGameStats'
-  # rows are (TASK-102), rather than reading it off #call's own return value.
+  # goalie_stats/skater_stats: rows the caller batches into its own season-stat
+  # recompute, same as SyncGameStats' rows (TASK-102).
   attr_reader :missing_players, :goalie_stats, :skater_stats
 
   # recompute: :skip for a bulk sync — see MarkGameForStatsRecompute (TASK-94) and

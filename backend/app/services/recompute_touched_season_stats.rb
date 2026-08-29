@@ -1,6 +1,5 @@
-# Bulk syncs touch the same (player, team, game_type) combo across many games —
-# batching to one recompute per distinct combo instead of one per game avoids
-# ~46x redundant RecomputeSeasonStats calls on a full-season backfill (TASK-88).
+# Batches one recompute per distinct (player, team, game_type) combo touched across
+# a bulk sync, instead of once per game (TASK-88).
 class RecomputeTouchedSeasonStats
   attr_reader :failures
 
@@ -14,8 +13,8 @@ class RecomputeTouchedSeasonStats
     touched << [ stat.player_id, stat.team_id, game_type ]
   end
 
-  # Each combo rescued individually (TASK-104) — one bad player/team used to abort
-  # the whole batch uncaught, crashing the run instead of recording one failure.
+  # Each combo rescued individually (TASK-104), so one bad player/team can't crash
+  # the whole batch.
   def call
     players = Player.where(id: touched.map { |t| t[0] }).index_by(&:id)
     teams = Team.where(id: touched.map { |t| t[1] }).index_by(&:id)

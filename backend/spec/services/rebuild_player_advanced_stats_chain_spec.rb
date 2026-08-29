@@ -76,10 +76,8 @@ RSpec.describe RebuildPlayerAdvancedStatsChain do
     expect(regular_season_final).to have_attributes(games_played: 3, corsi_for: 30)
   end
 
-  # Regression guard for TASK-93: backfilling an older season after a newer one is
-  # already ingested (the same player has rows in both) used to pull the newer
-  # season's games into the chain via a from_game.game_type-only filter, then fail
-  # PlayerSeasonAdvancedStat's season/as_of_game validation trying to save them.
+  # Regression guard for TASK-93: filtering by game_type alone isn't enough — a
+  # player with rows in another season sharing it must still stay excluded.
   it "never mixes another season's games into the chain, even sharing the same game_type" do
     later_season = create(:season, league: season.league, starts_on: season.ends_on + 1.day,
                           ends_on: season.ends_on + 200.days)
@@ -110,8 +108,7 @@ RSpec.describe RebuildPlayerAdvancedStatsChain do
     expect(snapshots.map(&:games_played)).to eq([ 1, 2, 3 ])
   end
 
-  # Regression guard for TASK-103: every row used to cost its own create! (~2.5/row
-  # across the full chain) instead of one bulk write.
+  # Regression guard for TASK-103: the whole chain must write in one statement.
   it "writes every dimension's rebuilt rows in one statement, not one per row" do
     write_count = 0
     counter = lambda do |*, payload|

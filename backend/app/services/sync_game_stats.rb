@@ -1,10 +1,8 @@
 class SyncGameStats
   attr_reader :missing_players
 
-  # recompute: false lets a bulk caller (AdminSyncOrchestrator, nhl:backfill_game_stats)
-  # batch RecomputeSeasonStats once per distinct player/team instead of once per game
-  # (TASK-88, via RecomputeTouchedSeasonStats) — true is the default for a standalone,
-  # single-game caller, which has no immediate real-world trigger today (TASK-99).
+  # recompute: false lets a bulk caller batch RecomputeSeasonStats once per distinct
+  # player/team instead of once per game (TASK-88).
   def initialize(game:, client: NhlClient.new, recompute: true)
     @game = game
     @client = client

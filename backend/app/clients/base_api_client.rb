@@ -1,8 +1,7 @@
 require "net/http"
 
-# Shared throttle/retry/error-handling for every external API client (TASK-100).
-# A subclass supplies BASE_URL and its own endpoint methods, overriding path_for/
-# request_params/parse_body only where its request shape differs from a bare GET.
+# Shared throttle/retry/error-handling for every external API client — a subclass
+# overrides path_for/request_params/parse_body only where its shape isn't a bare GET.
 class BaseApiClient
   MAX_ATTEMPTS = 3
   OPEN_TIMEOUT = 5

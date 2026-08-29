@@ -26,9 +26,8 @@ RSpec.describe MarkGameForStatsRecompute do
     expect(PlayerSeasonAdvancedStat.find_by(as_of_game: later_game).stale).to be true
   end
 
-  # Regression guard for TASK-94: a player with rows in another season used to get
-  # that season's already-correct rows spuriously marked stale too, since a plain
-  # starts_at comparison spans every season chronologically.
+  # Regression guard for TASK-94: a starts_at comparison alone spans every season
+  # chronologically, so this must stay scoped to the game's own season.
   it "never marks another season's rows stale, even for the same player" do
     other_season = create(:season, league: season.league, starts_on: season.ends_on + 1.day,
                           ends_on: season.ends_on + 200.days)
@@ -41,10 +40,8 @@ RSpec.describe MarkGameForStatsRecompute do
     expect(other_row.reload.stale).to be false
   end
 
-  # Regression guard for TASK-94: a bulk sync defers the whole rebuild (no
-  # stale-marking, no job) to a single end-of-run batch pass instead of doing it
-  # per game, since a season mid-backfill has nothing built yet for the
-  # intermediate flags to usefully describe.
+  # Regression guard for TASK-94: mode: :skip must defer the whole rebuild, not
+  # just skip the job.
   it "does nothing when mode: :skip — no stale-marking, no job, no stats_syncing flag" do
     expect {
       described_class.new(game: game, mode: :skip).call

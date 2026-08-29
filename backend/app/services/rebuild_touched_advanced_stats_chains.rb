@@ -1,7 +1,5 @@
-# Batches season-chain rebuilds for a bulk advanced_stats sync (TASK-94): instead of
-# rebuilding per game — which let ingestion race ahead of a lagging recompute queue
-# and balloon each rebuild's tail (TASK-93) — track which players/teams a run
-# touches, then rebuild each one's chain once ingestion is fully done.
+# Batches season-chain rebuilds for a bulk sync (TASK-94): tracks which players/teams
+# a run touches, then rebuilds each one's chain once ingestion is fully done.
 class RebuildTouchedAdvancedStatsChains
   attr_reader :failures
 
@@ -19,8 +17,8 @@ class RebuildTouchedAdvancedStatsChains
     team_ids << game.home_team_id << game.away_team_id
   end
 
-  # Each player/team rescued individually (TASK-104) — one bad row used to abort the
-  # whole batch uncaught, which also meant Game#stats_syncing below never got reset.
+  # Each player/team rescued individually (TASK-104), so one bad row can't abort
+  # the whole batch or leave Game#stats_syncing below stuck true.
   def call
     players = Player.where(id: player_ids).index_by(&:id)
     player_ids.each do |player_id|
@@ -49,16 +47,8 @@ class RebuildTouchedAdvancedStatsChains
     end
   end
 
-  # Each dimension's own true earliest game for the season, not just the earliest
-  # game this run happened to touch first — a dimension that only first appears
-  # partway through the season (a skater's first power-play shift, say) still needs
-  # its own anchor, or that dimension's chain would never get built at all.
-  #
-  # Also scoped per game_type, not just strength_state/score_state — preseason,
-  # regular-season, and playoff games all share one season_id, so without this a
-  # player with any preseason rows anchored every dimension at their (chronologically
-  # earliest) preseason game, silently rebuilding only a preseason chain and never
-  # touching the real regular-season/playoff ones at all (found live, TASK-105).
+  # Anchored per (game_type, strength_state, score_state), not just the earliest game
+  # this run touched — preseason/regular/playoff games share one season_id (TASK-105).
   def dimension_start_games(player)
     season_rows = PlayerGameAdvancedStat.where(player: player).joins(:game).merge(Game.for_season(season))
     dimensions = season_rows.distinct.pluck("games.game_type", :strength_state, :score_state)

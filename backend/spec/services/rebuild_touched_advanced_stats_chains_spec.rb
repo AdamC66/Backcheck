@@ -26,10 +26,8 @@ RSpec.describe RebuildTouchedAdvancedStatsChains do
     expect(final).to have_attributes(games_played: 2, corsi_for: 25)
   end
 
-  # Regression guard for TASK-94: a dimension that only first appears partway
-  # through the games this run touched (not the player's very first game) still
-  # needs its own chain built — anchoring every dimension at the earliest game
-  # this run happened to see first would silently drop it.
+  # Regression guard for TASK-94: a dimension appearing only partway through the
+  # season still needs its own anchor game, not the player's very first one.
   it "builds every dimension's chain, even one that first appears in a later tracked game" do
     game1 = create(:game, season: season, home_team: team, away_team: opponent, starts_at: Time.utc(2025, 10, 1))
     game2 = create(:game, season: season, home_team: team, away_team: opponent, starts_at: Time.utc(2025, 10, 5))
@@ -51,10 +49,8 @@ RSpec.describe RebuildTouchedAdvancedStatsChains do
     expect(power_play).to have_attributes(games_played: 1, corsi_for: 4)
   end
 
-  # Regression guard for TASK-105: preseason, regular-season, and playoff games all
-  # share one season_id — anchoring a dimension at its earliest game regardless of
-  # game_type picked the (chronologically earlier) preseason game every time, so the
-  # real regular-season chain silently never got built at all.
+  # Regression guard for TASK-105: preseason/regular/playoff games share one
+  # season_id, so the anchor game must be scoped by game_type too.
   it "builds separate chains per game_type, not just per dimension" do
     preseason_game = create(:game, season: season, home_team: team, away_team: opponent,
                             game_type: Game::GAME_TYPES[:preseason], starts_at: Time.utc(2025, 9, 20))
@@ -97,8 +93,8 @@ RSpec.describe RebuildTouchedAdvancedStatsChains do
     expect(game.reload.stats_syncing).to be false
   end
 
-  # Regression guard for TASK-104: one bad player's chain used to abort the whole
-  # batch uncaught, leaving stats_syncing stuck true instead of getting cleared.
+  # Regression guard for TASK-104: one bad player's chain must not abort the whole
+  # batch or leave stats_syncing stuck true.
   it "keeps rebuilding the rest when one player raises, and records the failure" do
     other_player = create(:player)
     game = create(:game, season: season, home_team: team, away_team: opponent, starts_at: Time.utc(2025, 10, 1),

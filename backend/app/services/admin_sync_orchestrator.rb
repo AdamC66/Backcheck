@@ -10,9 +10,8 @@ class AdminSyncOrchestrator
   end
 
   def call
-    # A dead worker process's claimed job gets released and re-run by Solid Queue's
-    # own supervisor (TASK-84) — build_items already no-ops once items exist, so the
-    # only other thing a resumed run needs is to not redo work already marked done.
+    # A dead worker's claimed job gets released and re-run by Solid Queue's own
+    # supervisor (TASK-84) — a resumed run just needs to skip work already done.
     resuming = sync_run.sync_run_items.exists?
     build_items
     reset_current_step! if resuming
@@ -72,9 +71,8 @@ class AdminSyncOrchestrator
     team ? scope.for_team(team) : scope
   end
 
-  # A per-game kind gets exactly one item regardless of scope — games_for(team) is
-  # already the whole season filtered down to one team when there is one, so fanning
-  # out into one item per team would just process every shared game twice over.
+  # A per-game kind gets exactly one item regardless of scope — fanning out into
+  # one item per team would just process every shared game twice over.
   def teams_for(kind)
     return [ sync_run.team ] if PER_GAME_KINDS.include?(SyncKindRegistry.normalize(kind))
     return [ nil ] unless SyncKindRegistry.scope_axes(kind).include?(:team)
@@ -122,14 +120,11 @@ class AdminSyncOrchestrator
   # check and a step advance per game rather than per item.
   def run_per_game_item(item)
     games = games_for(item.team).to_a
-    # Collected in memory and written once at the end (here and on cancel/error below)
-    # rather than per-failure — one flaky game shouldn't cost a write on top of the
-    # error itself, and TASK-90 needs every failure, not just whichever wrote last.
+    # Collected in memory, written once at the end (here and on cancel/error below) —
+    # TASK-90 needs every failure recorded, not just whichever wrote last.
     failed_games = []
-    # Both kinds batch their season-stat recompute once per distinct player/team touched
-    # across the whole item instead of once per game — game_stats' skaters/goalies
-    # (TASK-88), advanced_stats' goalies via RecomputeGoalieGamePoints (TASK-102).
-    # advanced_stats also batches its season-chain rebuild the same way (TASK-94).
+    # Batched once per distinct player/team touched across the item, not once per
+    # game (TASK-88/94/102).
     recompute_batch = RecomputeTouchedSeasonStats.new(season: sync_run.season) if PER_GAME_KINDS.include?(item.kind_name)
     chain_batch = RebuildTouchedAdvancedStatsChains.new(season: sync_run.season) if CHAIN_REBUILD_KINDS.include?(item.kind_name)
 
@@ -212,10 +207,8 @@ class AdminSyncOrchestrator
     end
   end
 
-  # A raw UPDATE, not sync_run.increment!, so a concurrent writer's value is never
-  # overwritten by whatever this process last loaded into memory. No reload after —
-  # runs once per game, and nothing downstream reads current_step off this instance
-  # (finalize! reloads its own copy before it needs one).
+  # A raw UPDATE, not sync_run.increment! — a concurrent writer's value is never
+  # overwritten by whatever this process last loaded into memory.
   def advance_step!
     SyncRun.where(id: sync_run.id).update_all("current_step = current_step + 1")
   end

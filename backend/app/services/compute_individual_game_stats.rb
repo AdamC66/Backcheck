@@ -1,11 +1,8 @@
-# The individual (not on-ice) counting stats game_events alone can answer: faceoff
-# wins/losses, and the shots a player personally attempted/missed/had blocked. Written
-# onto the same SkaterGameStat row the box score populates — order-independent of
-# SyncGameStats, since this only ever updates these columns, never the box-score ones.
+# The individual (not on-ice) counting stats derivable from game_events alone —
+# faceoff wins/losses, shots personally attempted/missed/had blocked.
 #
-# recompute: :skip for a bulk sync, same reasoning as RecomputeGoalieGamePoints
-# (TASK-102): defers the season-stat rollup to the caller's own batch instead of once
-# per game. Returns the touched SkaterGameStat rows either way.
+# recompute: :skip defers the season-stat rollup to the caller's own batch, same as
+# RecomputeGoalieGamePoints (TASK-102).
 class ComputeIndividualGameStats
   SHOT_EVENT_TYPES = [
     GameEvent::EVENT_TYPES[:goal], GameEvent::EVENT_TYPES[:shot],
@@ -43,9 +40,8 @@ class ComputeIndividualGameStats
     @totals ||= Hash.new { |h, k| h[k] = zero_counts }
   end
 
-  # Read off the same events being counted, not a shift lookup — a goalie can take a
-  # shot (an empty-net attempt) with zero shift rows to fall back on, since shift
-  # charts only ever cover skaters (found live, TASK-105).
+  # Read off the events being counted, not a shift lookup — shift charts only cover
+  # skaters, so a goalie has no shift row to fall back on (TASK-105).
   def team_ids
     @team_ids ||= {}
   end

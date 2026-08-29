@@ -7,16 +7,14 @@ module SyncKindRegistry
     team_schedule: { service: SyncTeamSchedule, scope: [ :team, :season ] },
     standings: { service: SyncStandings, scope: [ :league, :date ] },
     daily_scores: { service: SyncDailyScores, scope: [ :league, :date ] },
-    # SyncGameStats itself takes a single game; the admin trigger runs it as one item
-    # covering every finished game in scope (the whole season, or one team's slice of
-    # it), not one item per team (TASK-85).
+    # SyncGameStats takes a single game; the admin trigger runs it as one item over
+    # every finished game in scope, not one item per team (TASK-85).
     game_stats: { service: SyncGameStats, scope: [ :team, :season ] },
     # Real ingestion (TASK-76) — SyncGameEvents itself hands off to
     # MarkGameForStatsRecompute, the same corrected-game recompute path.
     advanced_stats: { service: SyncGameEvents, scope: [ :team, :season ] },
-    # No NHL API call — recomputes individual/season stats from game_events already
-    # ingested. Self-service re-run for whenever a new stat calc needs backfilling
-    # into a season that's already fully synced (TASK-105).
+    # No NHL API call — recomputes from game_events already ingested, re-runnable
+    # whenever a new stat calc needs backfilling into an already-synced season (TASK-105).
     rebuild_season_stats: { service: ComputeIndividualGameStats, scope: [ :team, :season ] }
   }.freeze
 

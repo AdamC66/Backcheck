@@ -56,9 +56,8 @@ RSpec.describe SyncGameEvents do
     expect(game.reload.stats_syncing).to be false
   end
 
-  # Regression guard for TASK-102: goalie_stats exposes what RecomputeGoalieGamePoints
-  # touched, so a bulk caller can batch its season-stat recompute the same way
-  # SyncGameStats' rows already are, instead of #call itself doing it per game.
+  # Regression guard for TASK-102: goalie_stats must expose the touched rows so a
+  # bulk caller can batch their season-stat recompute itself.
   it "exposes the touched GoalieGameStat rows via goalie_stats" do
     goalie = create(:player, position: Player::POSITIONS[:goalie])
     stat = create(:goalie_game_stat, player: goalie, game: game, team: home_team)

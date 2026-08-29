@@ -46,8 +46,8 @@ RSpec.describe RecomputeTeamSeasonAdvancedStats do
     expect(preseason).to have_attributes(games_played: 1, corsi_for: 5)
   end
 
-  # Regression guard for TASK-95: this used to issue 11 separate aggregate queries
-  # per dimension (count plus ten sum/average) instead of aggregating once in Ruby.
+  # Regression guard for TASK-95: season totals must aggregate in a handful of
+  # queries, not one per column per dimension.
   it "computes a team's season totals in a handful of queries, not 11 per dimension" do
     create(:team_game_advanced_stat, team: team, game: create(:game, season: season, home_team: team))
 

@@ -23,10 +23,8 @@ RSpec.describe RecomputeGoalieGamePoints do
     expect { described_class.new(game: game).call }.not_to change(GoalieGameStat, :count)
   end
 
-  # Regression guard for TASK-102: a bulk sync defers the season-stat recompute to its
-  # own batch instead of doing it per game, same reasoning as TASK-88/93 — but the
-  # goalie's own goals/assists still update immediately either way, and the touched
-  # GoalieGameStat rows are always returned so the caller can batch them itself.
+  # Regression guard for TASK-102: goals/assists must still update immediately even
+  # when the season rollup itself is deferred to the caller's batch.
   it "still updates goals/assists but defers the season rollup when recompute: :skip" do
     season = create(:season)
     team = create(:team, league: season.league)

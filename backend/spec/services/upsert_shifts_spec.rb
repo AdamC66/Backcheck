@@ -50,8 +50,8 @@ RSpec.describe UpsertShifts do
     expect(Shift.where(game: game).count).to eq(11)
   end
 
-  # Regression guard for TASK-89: player_for/team_for used to re-query per row with
-  # no caching, even when the same player/team appears across many shift rows.
+  # Regression guard for TASK-89: player_for/team_for must look up each distinct
+  # player/team once per game, not once per shift row.
   it "looks up each distinct player/team once per game, not once per shift row" do
     rows = 5.times.map do |i|
       { "id" => 9000 + i, "typeCode" => UpsertShifts::REAL_SHIFT_TYPE_CODE, "playerId" => 8482144,
@@ -71,8 +71,8 @@ RSpec.describe UpsertShifts do
     expect(query_count).to eq(2) # 1 distinct player + 1 distinct team, not 10 (5 rows × 2 lookups)
   end
 
-  # Regression guard for TASK-103: every row used to cost its own find_or_initialize_by
-  # + update! (~2/row measured against real data) instead of one bulk write.
+  # Regression guard for TASK-103: shifts must write in one statement, not one
+  # per row.
   it "writes every shift in one statement, not one per row" do
     write_count = 0
     counter = lambda do |*, payload|

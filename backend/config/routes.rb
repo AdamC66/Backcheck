@@ -1,9 +1,8 @@
 Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Solid Queue's own dashboard — separate HTML UI, not part of the JSON API, so it
-  # sits outside /api/v1 (TASK-84 follow-up). Gated by HTTP Basic auth, see
-  # config/initializers/mission_control.rb.
+  # Solid Queue's own dashboard — a separate HTML UI, so it sits outside /api/v1.
+  # Gated by HTTP Basic auth, see config/initializers/mission_control.rb.
   mount MissionControl::Jobs::Engine, at: "/jobs"
 
   namespace :api do

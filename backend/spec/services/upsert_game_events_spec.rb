@@ -64,8 +64,8 @@ RSpec.describe UpsertGameEvents do
     expect(GameEvent.where(game: game).count).to eq(7)
   end
 
-  # Regression guard for TASK-89: player_for/team_for used to re-query per row with
-  # no caching, even when the same player/team appears across many plays.
+  # Regression guard for TASK-89: player_for/team_for must look up each distinct
+  # player/team once per game, not once per play.
   it "looks up each distinct player/team once per game, not once per play" do
     faceoffs = 5.times.map do |i|
       {
@@ -90,8 +90,8 @@ RSpec.describe UpsertGameEvents do
     expect(query_count).to eq(3) # 2 distinct players + 1 distinct team, not 15 (5 plays × 3 lookups)
   end
 
-  # Regression guard for TASK-103: every row used to cost its own find_or_initialize_by
-  # + update! (~1.8 queries/row measured against real data) instead of one bulk write.
+  # Regression guard for TASK-103: events must write in one statement, not one
+  # per row.
   it "writes every event in one statement, not one per row" do
     write_count = 0
     counter = lambda do |*, payload|

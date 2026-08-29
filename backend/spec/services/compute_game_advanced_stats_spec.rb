@@ -96,8 +96,8 @@ RSpec.describe ComputeGameAdvancedStats do
       expect { described_class.new(game: game) }.to raise_error(ArgumentError, /active xg_model/)
     end
 
-    # Regression guard for TASK-103: persist_player_rows/persist_team_rows used to
-    # cost find_or_initialize_by + save! per row instead of one bulk write per table.
+    # Regression guard for TASK-103: player/team rows must write in one statement
+    # each, not one per row.
     it "writes player rows and team rows in one statement each, not one per row" do
       player_writes = 0
       team_writes = 0

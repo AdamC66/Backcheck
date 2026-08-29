@@ -2,10 +2,8 @@
 # immediately (synchronously) and hands the actual rebuild to a background job, so
 # stats_syncing/stale are visible right away even before the ingest queue gets to it.
 #
-# mode: :skip is for a bulk sync — it defers the whole rebuild (no stale-marking, no
-# job) to a single end-of-run batch pass (TASK-94), since a season mid-backfill
-# has nothing built yet for the intermediate flags to usefully describe. The
-# single-game/live-correction path keeps the :async default.
+# mode: :skip defers the whole rebuild (no stale-marking, no job) to a single
+# end-of-run batch pass instead — a bulk sync's mid-backfill has nothing built yet (TASK-94).
 class MarkGameForStatsRecompute
   def initialize(game:, mode: :async)
     @game = game
@@ -16,9 +14,8 @@ class MarkGameForStatsRecompute
     return if mode == :skip
 
     game.update!(stats_syncing: true)
-    # Scoped to game's own season — without it, a player with rows in another
-    # season gets that season's already-correct rows spuriously marked stale too,
-    # since starts_at comparisons alone span every season chronologically (TASK-94).
+    # Scoped to game's own season, or a player's already-correct rows in another
+    # season get spuriously marked stale too (TASK-94).
     PlayerSeasonAdvancedStat.where(player_id: affected_player_ids)
                             .joins(:as_of_game).where(games: { season_id: game.season_id })
                             .where("games.starts_at >= ?", game.starts_at)

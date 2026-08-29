@@ -41,9 +41,7 @@ RSpec.describe ComputeIndividualGameStats do
     expect(SkaterGameStat.find_by(game: game, player: winner)).to have_attributes(team: home_team, shots_attempted: 1)
   end
 
-  # Regression guard for TASK-105: shift charts only ever cover skaters, so a goalie
-  # crediting a shot (an empty-net attempt) has no shift row to look their team up
-  # from — the event's own team_id has to be the source, not a shift lookup.
+  # Regression guard for TASK-105: goalies have no shift row to look their team up from.
   it "resolves a goalie's team from the event itself, since goalies have no shifts" do
     goalie = create(:player, position: Player::POSITIONS[:goalie])
     create(:game_event, game: game, team: home_team, event_type: GameEvent::EVENT_TYPES[:shot], primary_player: goalie)
@@ -53,9 +51,8 @@ RSpec.describe ComputeIndividualGameStats do
     expect(SkaterGameStat.find_by(game: game, player: goalie)).to have_attributes(team: home_team, shots_attempted: 1)
   end
 
-  # Regression guard for TASK-105: a faceoff's own team_id is the winner's — the
-  # loser's team has to be derived (whichever of the game's two teams isn't that),
-  # and a faceoff loser can just as easily have no shift row as a shooter can.
+  # Regression guard for TASK-105: a faceoff loser's team has to be derived, not read
+  # off the event directly (that's the winner's).
   it "resolves a faceoff loser's team as the other of the game's two teams" do
     goalie = create(:player, position: Player::POSITIONS[:goalie])
     create(:game_event, game: game, team: home_team, event_type: GameEvent::EVENT_TYPES[:faceoff],

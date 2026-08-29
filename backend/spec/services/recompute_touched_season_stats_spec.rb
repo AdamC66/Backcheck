@@ -36,8 +36,7 @@ RSpec.describe RecomputeTouchedSeasonStats do
     batch.call
   end
 
-  # Regression guard for TASK-104: one bad combo used to abort the whole batch
-  # uncaught instead of recording just its own failure and moving on.
+  # Regression guard for TASK-104: one bad combo must not abort the whole batch.
   it "keeps recomputing the rest when one combo raises, and records the failure" do
     other_team = create(:team, league: season.league)
     other_player = create(:player)

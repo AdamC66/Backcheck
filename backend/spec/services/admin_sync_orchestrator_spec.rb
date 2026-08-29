@@ -125,9 +125,7 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.status).to eq(SyncRun::STATUSES[:completed])
   end
 
-  # Regression guard for TASK-105: a self-service, no-NHL-API-call way to re-run
-  # individual/season-stat recomputes against already-ingested games — for whenever
-  # a new stat calc needs backfilling into a season that's already fully synced.
+  # Regression guard for TASK-105: rebuild_season_stats must never call the NHL API.
   it "recomputes individual/season stats for a rebuild_season_stats item, no NHL API call" do
     season = create(:season, league: league)
     games = Array.new(2) do |n|
@@ -197,8 +195,8 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.activity_log.map { |e| e["message"] }).to include("Run resumed (2 step(s))")
   end
 
-  # Regression guard for TASK-96: confirmed live as run 23 finishing at 144% — a
-  # re-run item piled its new increments on top of its stale pre-crash total.
+  # Regression guard for TASK-96: a resumed item's re-run must not pile new
+  # increments on top of its stale pre-crash total.
   it "recomputes current_step on resume instead of accumulating across restarts" do
     season = create(:season, league: league)
     games = Array.new(3) do |n|
@@ -319,8 +317,8 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.activity_log.map { |e| e["message"] }).to include(a_string_matching(/Warning: recompute tracking failed/))
   end
 
-  # Regression guard for TASK-104: a batch recompute failure used to propagate
-  # out of run_per_game_item's ensure block uncaught, crashing the whole job.
+  # Regression guard for TASK-104: a batch recompute failure must not crash the
+  # whole job.
   it "doesn't crash the run when the batch recompute itself raises" do
     season = create(:season, league: league)
     game = create(:game, season: season, home_team: team, away_team: create(:team, league: league),

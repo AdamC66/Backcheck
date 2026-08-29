@@ -15,8 +15,7 @@ class RecomputeTeamSeasonAdvancedStats
 
   attr_reader :team, :season
 
-  # Loaded once and grouped in Ruby — each dimension used to issue its own 11
-  # aggregate queries (one count, ten sum/average) off this same relation (TASK-95).
+  # Loaded once and grouped in Ruby, not one aggregate query per column (TASK-95).
   def base_rows
     @base_rows ||= TeamGameAdvancedStat.where(team: team).joins(:game).merge(Game.for_season(season))
                                         .includes(:game).to_a
