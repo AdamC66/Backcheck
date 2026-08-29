@@ -10,7 +10,8 @@ export type SyncKind =
   | "standings"
   | "daily_scores"
   | "game_stats"
-  | "advanced_stats";
+  | "advanced_stats"
+  | "rebuild_season_stats";
 
 export const SYNC_RUN_STATUS_LABELS: Record<SyncRunStatus, string> = {
   queued: "queued",
@@ -29,6 +30,7 @@ export const SYNC_KIND_LABELS: Record<SyncKind, string> = {
   daily_scores: "Daily scores",
   game_stats: "Game stats",
   advanced_stats: "Advanced stats",
+  rebuild_season_stats: "Rebuild season stats",
 };
 
 export interface SyncRun {

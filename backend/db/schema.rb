@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_28_122414) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_29_122713) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -360,17 +360,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_122414) do
     t.integer "assists", default: 0, null: false
     t.integer "blocked_shots", default: 0, null: false
     t.datetime "created_at", null: false
+    t.integer "faceoff_losses", default: 0, null: false
     t.decimal "faceoff_winning_pctg", precision: 5, scale: 4
+    t.integer "faceoff_wins", default: 0, null: false
     t.bigint "game_id", null: false
     t.integer "giveaways", default: 0, null: false
     t.integer "goals", default: 0, null: false
     t.integer "hits", default: 0, null: false
+    t.integer "missed_shots", default: 0, null: false
     t.integer "pim", default: 0, null: false
     t.bigint "player_id", null: false
     t.integer "plus_minus", default: 0, null: false
     t.integer "points", default: 0, null: false
     t.integer "power_play_goals", default: 0, null: false
     t.integer "shifts", default: 0, null: false
+    t.integer "shots_attempted", default: 0, null: false
+    t.integer "shots_blocked_against", default: 0, null: false
     t.integer "shots_on_goal", default: 0, null: false
     t.integer "takeaways", default: 0, null: false
     t.bigint "team_id", null: false
@@ -386,12 +391,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_122414) do
     t.integer "assists", default: 0, null: false
     t.integer "blocked_shots", default: 0, null: false
     t.datetime "created_at", null: false
+    t.integer "faceoff_losses", default: 0, null: false
     t.decimal "faceoff_winning_pctg", precision: 5, scale: 4
+    t.integer "faceoff_wins", default: 0, null: false
     t.integer "game_type", null: false
     t.integer "games_played", default: 0, null: false
     t.integer "giveaways", default: 0, null: false
     t.integer "goals", default: 0, null: false
     t.integer "hits", default: 0, null: false
+    t.integer "missed_shots", default: 0, null: false
     t.integer "pim", default: 0, null: false
     t.bigint "player_id", null: false
     t.integer "plus_minus", default: 0, null: false
@@ -399,6 +407,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_122414) do
     t.integer "power_play_goals", default: 0, null: false
     t.bigint "season_id", null: false
     t.integer "shifts", default: 0, null: false
+    t.integer "shots_attempted", default: 0, null: false
+    t.integer "shots_blocked_against", default: 0, null: false
     t.integer "shots_on_goal", default: 0, null: false
     t.integer "takeaways", default: 0, null: false
     t.bigint "team_id", null: false

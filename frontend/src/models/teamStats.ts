@@ -21,6 +21,11 @@ export interface SkaterSeasonStat {
   blocked_shots: number;
   giveaways: number;
   takeaways: number;
+  faceoff_wins: number;
+  faceoff_losses: number;
+  shots_attempted: number;
+  missed_shots: number;
+  shots_blocked_against: number;
 }
 
 export interface GoalieSeasonStat {

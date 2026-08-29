@@ -1,6 +1,9 @@
 class AdminSyncOrchestrator
   # These track progress per game rather than per team — one item can mean 82 games.
-  PER_GAME_KINDS = %i[game_stats advanced_stats].freeze
+  PER_GAME_KINDS = %i[game_stats advanced_stats rebuild_season_stats].freeze
+  # Both also batch a season-chain rebuild (PlayerSeasonAdvancedStat/TeamSeasonAdvancedStat)
+  # once per item instead of once per game (TASK-94, TASK-105).
+  CHAIN_REBUILD_KINDS = %i[advanced_stats rebuild_season_stats].freeze
 
   def initialize(sync_run:)
     @sync_run = sync_run
@@ -128,7 +131,7 @@ class AdminSyncOrchestrator
     # (TASK-88), advanced_stats' goalies via RecomputeGoalieGamePoints (TASK-102).
     # advanced_stats also batches its season-chain rebuild the same way (TASK-94).
     recompute_batch = RecomputeTouchedSeasonStats.new(season: sync_run.season) if PER_GAME_KINDS.include?(item.kind_name)
-    chain_batch = RebuildTouchedAdvancedStatsChains.new(season: sync_run.season) if item.kind_name == :advanced_stats
+    chain_batch = RebuildTouchedAdvancedStatsChains.new(season: sync_run.season) if CHAIN_REBUILD_KINDS.include?(item.kind_name)
 
     games.each_with_index do |game, index|
       if cancelled?
@@ -203,7 +206,9 @@ class AdminSyncOrchestrator
     when :advanced_stats
       sync = SyncGameEvents.new(game: game, client: nhl_client, stats_client: nhl_stats_client, recompute: :skip)
       sync.call
-      sync.goalie_stats
+      sync.goalie_stats + sync.skater_stats
+    when :rebuild_season_stats
+      ComputeIndividualGameStats.new(game: game, recompute: :skip).call
     end
   end
 

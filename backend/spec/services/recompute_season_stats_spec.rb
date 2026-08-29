@@ -13,13 +13,13 @@ RSpec.describe RecomputeSeasonStats do
   it "sums a player's stat lines across every game played for that team this season" do
     2.times do
       game = create(:game, season: season, home_team: team)
-      create(:skater_game_stat, player: player, game: game, team: team, goals: 2, assists: 1)
+      create(:skater_game_stat, player: player, game: game, team: team, goals: 2, assists: 1, faceoff_wins: 3)
     end
 
     recompute
 
     stat = SkaterSeasonStat.find_by(player: player, team: team, season: season)
-    expect(stat).to have_attributes(games_played: 2, goals: 4, assists: 2)
+    expect(stat).to have_attributes(games_played: 2, goals: 4, assists: 2, faceoff_wins: 6)
   end
 
   it "sums a goalie's own goals/assists into the season rollup too" do

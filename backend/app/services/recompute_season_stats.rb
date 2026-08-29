@@ -42,7 +42,12 @@ class RecomputeSeasonStats
       shifts: sum_of(rows, :shifts),
       blocked_shots: sum_of(rows, :blocked_shots),
       giveaways: sum_of(rows, :giveaways),
-      takeaways: sum_of(rows, :takeaways)
+      takeaways: sum_of(rows, :takeaways),
+      faceoff_wins: sum_of(rows, :faceoff_wins),
+      faceoff_losses: sum_of(rows, :faceoff_losses),
+      shots_attempted: sum_of(rows, :shots_attempted),
+      missed_shots: sum_of(rows, :missed_shots),
+      shots_blocked_against: sum_of(rows, :shots_blocked_against)
     )
   end
 

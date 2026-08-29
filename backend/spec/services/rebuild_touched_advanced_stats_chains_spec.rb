@@ -51,6 +51,31 @@ RSpec.describe RebuildTouchedAdvancedStatsChains do
     expect(power_play).to have_attributes(games_played: 1, corsi_for: 4)
   end
 
+  # Regression guard for TASK-105: preseason, regular-season, and playoff games all
+  # share one season_id — anchoring a dimension at its earliest game regardless of
+  # game_type picked the (chronologically earlier) preseason game every time, so the
+  # real regular-season chain silently never got built at all.
+  it "builds separate chains per game_type, not just per dimension" do
+    preseason_game = create(:game, season: season, home_team: team, away_team: opponent,
+                            game_type: Game::GAME_TYPES[:preseason], starts_at: Time.utc(2025, 9, 20))
+    regular_game = create(:game, season: season, home_team: team, away_team: opponent,
+                          game_type: Game::GAME_TYPES[:regular_season], starts_at: Time.utc(2025, 10, 8))
+    create(:player_game_advanced_stat, game: preseason_game, player: player, team: team, xg_model: xg_model,
+           corsi_for: 99)
+    create(:player_game_advanced_stat, game: regular_game, player: player, team: team, xg_model: xg_model,
+           corsi_for: 10)
+
+    b = batch
+    b.track(preseason_game)
+    b.track(regular_game)
+    b.call
+
+    regular_season_row = PlayerSeasonAdvancedStat.find_by(player: player, game_type: Game::GAME_TYPES[:regular_season])
+    preseason_row = PlayerSeasonAdvancedStat.find_by(player: player, game_type: Game::GAME_TYPES[:preseason])
+    expect(regular_season_row).to have_attributes(games_played: 1, corsi_for: 10)
+    expect(preseason_row).to have_attributes(games_played: 1, corsi_for: 99)
+  end
+
   it "rebuilds every distinct touched team's season rollup too" do
     game = create(:game, season: season, home_team: team, away_team: opponent, starts_at: Time.utc(2025, 10, 1))
     create(:team_game_advanced_stat, game: game, team: team, corsi_for: 50)

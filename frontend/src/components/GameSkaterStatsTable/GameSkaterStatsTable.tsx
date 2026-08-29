@@ -34,6 +34,11 @@ const COLUMNS = buildColumns(columnHelper, [
   { name: "shots_on_goal", header: "SOG", title: "Shots on goal" },
   { name: "hits", header: "HITS", title: "Hits" },
   { name: "blocked_shots", header: "BLK", title: "Blocked shots" },
+  { name: "shots_attempted", header: "SATT", title: "Shots attempted" },
+  { name: "missed_shots", header: "MISS", title: "Missed shots" },
+  { name: "shots_blocked_against", header: "BLKD", title: "Shots blocked by an opponent" },
+  { name: "faceoff_wins", header: "FOW", title: "Faceoff wins" },
+  { name: "faceoff_losses", header: "FOL", title: "Faceoff losses" },
   {
     name: "time_on_ice_seconds",
     header: "TOI",

@@ -21,7 +21,12 @@ class PlayerSkaterSeasonSerializer
       shifts: stat.shifts,
       blocked_shots: stat.blocked_shots,
       giveaways: stat.giveaways,
-      takeaways: stat.takeaways
+      takeaways: stat.takeaways,
+      faceoff_wins: stat.faceoff_wins,
+      faceoff_losses: stat.faceoff_losses,
+      shots_attempted: stat.shots_attempted,
+      missed_shots: stat.missed_shots,
+      shots_blocked_against: stat.shots_blocked_against
     }
   end
 

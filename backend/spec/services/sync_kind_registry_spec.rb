@@ -19,6 +19,10 @@ RSpec.describe SyncKindRegistry do
     expect(described_class.scope_axes(:advanced_stats)).to eq([ :team, :season ])
   end
 
+  it "requires team and season for rebuild_season_stats too" do
+    expect(described_class.scope_axes(:rebuild_season_stats)).to eq([ :team, :season ])
+  end
+
   it "normalizes the integer form SyncRunItem#kind stores" do
     expect(described_class.scope_axes(SyncRun::SYNC_KINDS[:team_schedule])).to eq([ :team, :season ])
   end

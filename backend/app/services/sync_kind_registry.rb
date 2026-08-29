@@ -13,7 +13,11 @@ module SyncKindRegistry
     game_stats: { service: SyncGameStats, scope: [ :team, :season ] },
     # Real ingestion (TASK-76) — SyncGameEvents itself hands off to
     # MarkGameForStatsRecompute, the same corrected-game recompute path.
-    advanced_stats: { service: SyncGameEvents, scope: [ :team, :season ] }
+    advanced_stats: { service: SyncGameEvents, scope: [ :team, :season ] },
+    # No NHL API call — recomputes individual/season stats from game_events already
+    # ingested. Self-service re-run for whenever a new stat calc needs backfilling
+    # into a season that's already fully synced (TASK-105).
+    rebuild_season_stats: { service: ComputeIndividualGameStats, scope: [ :team, :season ] }
   }.freeze
 
   def self.for(kind)

@@ -53,12 +53,18 @@ class RebuildTouchedAdvancedStatsChains
   # game this run happened to touch first — a dimension that only first appears
   # partway through the season (a skater's first power-play shift, say) still needs
   # its own anchor, or that dimension's chain would never get built at all.
+  #
+  # Also scoped per game_type, not just strength_state/score_state — preseason,
+  # regular-season, and playoff games all share one season_id, so without this a
+  # player with any preseason rows anchored every dimension at their (chronologically
+  # earliest) preseason game, silently rebuilding only a preseason chain and never
+  # touching the real regular-season/playoff ones at all (found live, TASK-105).
   def dimension_start_games(player)
     season_rows = PlayerGameAdvancedStat.where(player: player).joins(:game).merge(Game.for_season(season))
-    dimensions = season_rows.distinct.pluck(:strength_state, :score_state)
+    dimensions = season_rows.distinct.pluck("games.game_type", :strength_state, :score_state)
 
-    dimensions.filter_map do |strength_state, score_state|
-      season_rows.where(strength_state: strength_state, score_state: score_state)
+    dimensions.filter_map do |game_type, strength_state, score_state|
+      season_rows.where(strength_state: strength_state, score_state: score_state, games: { game_type: game_type })
                  .order("games.starts_at").first&.game
     end.uniq
   end

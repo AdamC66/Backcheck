@@ -114,13 +114,37 @@ RSpec.describe AdminSyncOrchestrator do
     recomputed_games = []
     allow(SyncGameEvents).to receive(:new) do |game:, **|
       recomputed_games << game
-      instance_double(SyncGameEvents, call: [], goalie_stats: [])
+      instance_double(SyncGameEvents, call: [], goalie_stats: [], skater_stats: [])
     end
 
     described_class.new(sync_run: run).call
 
     run.reload
     expect(recomputed_games).to match_array(games)
+    expect(run.total_steps).to eq(games.size)
+    expect(run.status).to eq(SyncRun::STATUSES[:completed])
+  end
+
+  # Regression guard for TASK-105: a self-service, no-NHL-API-call way to re-run
+  # individual/season-stat recomputes against already-ingested games — for whenever
+  # a new stat calc needs backfilling into a season that's already fully synced.
+  it "recomputes individual/season stats for a rebuild_season_stats item, no NHL API call" do
+    season = create(:season, league: league)
+    games = Array.new(2) do |n|
+      create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+             starts_at: Time.utc(2025, 10, 8 + n))
+    end
+    run = create(:sync_run, team: team, season: season, sync_kinds: [ SyncRun::SYNC_KINDS[:rebuild_season_stats] ])
+    touched_games = []
+    allow(ComputeIndividualGameStats).to receive(:new) do |game:, **|
+      touched_games << game
+      instance_double(ComputeIndividualGameStats, call: [])
+    end
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    expect(touched_games).to match_array(games)
     expect(run.total_steps).to eq(games.size)
     expect(run.status).to eq(SyncRun::STATUSES[:completed])
   end
@@ -135,7 +159,7 @@ RSpec.describe AdminSyncOrchestrator do
     recomputed_games = []
     allow(SyncGameEvents).to receive(:new) do |game:, **|
       recomputed_games << game
-      instance_double(SyncGameEvents, call: [], goalie_stats: [])
+      instance_double(SyncGameEvents, call: [], goalie_stats: [], skater_stats: [])
     end
 
     described_class.new(sync_run: run).call

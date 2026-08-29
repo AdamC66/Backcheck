@@ -234,6 +234,11 @@ export function skaterGameStatFor(overrides: Partial<SkaterGameStat> = {}): Skat
     blocked_shots: 1,
     giveaways: 2,
     takeaways: 1,
+    faceoff_wins: 5,
+    faceoff_losses: 3,
+    shots_attempted: 6,
+    missed_shots: 2,
+    shots_blocked_against: 1,
     ...overrides,
   };
 }
@@ -435,6 +440,11 @@ export function skaterSeasonStatFor(overrides: Partial<SkaterSeasonStat> = {}): 
     blocked_shots: 30,
     giveaways: 40,
     takeaways: 35,
+    faceoff_wins: 300,
+    faceoff_losses: 250,
+    shots_attempted: 260,
+    missed_shots: 50,
+    shots_blocked_against: 30,
     ...overrides,
   };
 }
@@ -570,6 +580,11 @@ export function playerSkaterSeasonFor(
     blocked_shots: 30,
     giveaways: 40,
     takeaways: 35,
+    faceoff_wins: 300,
+    faceoff_losses: 250,
+    shots_attempted: 260,
+    missed_shots: 50,
+    shots_blocked_against: 30,
     ...overrides,
   };
 }
