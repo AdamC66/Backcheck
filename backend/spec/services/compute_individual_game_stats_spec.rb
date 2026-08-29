@@ -41,6 +41,31 @@ RSpec.describe ComputeIndividualGameStats do
     expect(SkaterGameStat.find_by(game: game, player: winner)).to have_attributes(team: home_team, shots_attempted: 1)
   end
 
+  # Regression guard for TASK-105: shift charts only ever cover skaters, so a goalie
+  # crediting a shot (an empty-net attempt) has no shift row to look their team up
+  # from — the event's own team_id has to be the source, not a shift lookup.
+  it "resolves a goalie's team from the event itself, since goalies have no shifts" do
+    goalie = create(:player, position: Player::POSITIONS[:goalie])
+    create(:game_event, game: game, team: home_team, event_type: GameEvent::EVENT_TYPES[:shot], primary_player: goalie)
+
+    described_class.new(game: game, recompute: :skip).call
+
+    expect(SkaterGameStat.find_by(game: game, player: goalie)).to have_attributes(team: home_team, shots_attempted: 1)
+  end
+
+  # Regression guard for TASK-105: a faceoff's own team_id is the winner's — the
+  # loser's team has to be derived (whichever of the game's two teams isn't that),
+  # and a faceoff loser can just as easily have no shift row as a shooter can.
+  it "resolves a faceoff loser's team as the other of the game's two teams" do
+    goalie = create(:player, position: Player::POSITIONS[:goalie])
+    create(:game_event, game: game, team: home_team, event_type: GameEvent::EVENT_TYPES[:faceoff],
+          primary_player: winner, secondary_player: goalie)
+
+    described_class.new(game: game, recompute: :skip).call
+
+    expect(SkaterGameStat.find_by(game: game, player: goalie)).to have_attributes(team: away_team, faceoff_losses: 1)
+  end
+
   # Regression guard for TASK-102/104's established pattern: a bulk sync defers the
   # season-stat rollup to its own batch instead of recomputing once per game.
   it "defers the season-stat rollup when recompute: :skip, but still returns the touched rows" do
