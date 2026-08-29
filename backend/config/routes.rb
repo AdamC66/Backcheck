@@ -41,6 +41,8 @@ Rails.application.routes.draw do
         end
         resources :sync_kinds, only: [ :index ]
         get "roadmap", to: "roadmap#show"
+        get "coverage", to: "coverage#index"
+        get "coverage/:season_id/:kind", to: "coverage#gaps"
       end
     end
   end

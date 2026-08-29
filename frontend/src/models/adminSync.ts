@@ -77,6 +77,12 @@ export function fetchSyncKinds(): Promise<SyncKindInfo[]> {
 
 export type MinIntervalPreset = "conservative" | "normal" | "aggressive";
 
+export const MIN_INTERVAL_PRESET_OPTIONS: { value: MinIntervalPreset; label: string }[] = [
+  { value: "conservative", label: "Conservative" },
+  { value: "normal", label: "Normal" },
+  { value: "aggressive", label: "Aggressive" },
+];
+
 export interface CreateSyncRunPayload {
   sync_kinds: SyncKind[];
   league_id?: number;

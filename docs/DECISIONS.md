@@ -4,6 +4,38 @@ Newest first. One entry per decision: what, why, alternatives considered.
 
 ---
 
+### Data tab: coverage computed live from the data tables, not from SyncRun (TASK-92)
+**Status:** Settled
+`SyncRun` history records what runs were *kicked off*, not what data *landed* — a run can complete
+over already-synced data, or fail partway and leave silent gaps (found this way: NHL 2023-24 had
+`game_stats` for 1215/1230 regular-season games and `advanced_stats` for 0/1230). New **Data** tab
+in the admin console: pick a league, see a row per season with games / roster / stats / advanced
+cells, each computed live by `LeagueCoverageMatrix` (`app/queries/`) straight from `Game`,
+`RosterSpot`, `SkaterGameStat`, `PlayerGameAdvancedStat`, `PlayerSeasonAdvancedStat` — so it
+reflects ground truth regardless of how the data got there. Advanced coverage keys off
+`PlayerGameAdvancedStat` (computed output), not `GameEvent` (ingested play-by-play), so a game
+whose compute step failed reads as not covered. Every column is one grouped query across the league's
+season ids, never one per season (the per-column round-trip rule in `backend/CLAUDE.md`).
+
+Decisions inside this:
+- **games denominator** = the latest `team_standings` snapshot per team, `Σ games_played / 2`
+  (upstream's own count of games played). Null when the league has no standings — the cell then
+  shows just the synced count. This is the layer that surfaces missing *Game rows*; the stats /
+  advanced cells measure against our own finished-regular-season game count, surfacing failed
+  ingestion on top.
+- **all leagues shown**, but `games`/`stats`/`advanced` are `n/a` (serialized as `null`) for a
+  season with no `nhl_season_id` — HockeyTech leagues (AHL/ECHL) have no game-stats / advanced /
+  standings path, only rosters. `nhl_season_id.present?` is the data-driven signal, not a slug check.
+- **drill-down is a route** (`GET /admin/coverage/:season_id/:kind` → `CoverageGapList`, frontend
+  `/admin/data/:seasonId/:kind`), listing the specific games (stats/advanced) or teams
+  (games/roster) behind a cell — the per-game breakdown TASK-90's `failed_games` groundwork
+  models, applied to coverage gaps.
+- **invoke reuses `POST /admin/sync_runs`** — no new endpoint. Cell → sync kind:
+  `games→team_schedule`, `roster→team_roster`, `stats→game_stats`, `advanced→advanced_stats`,
+  all resolved from `league_id` + `season_id` (team omitted = whole league, which
+  `AdminSyncOrchestrator#teams_for` already handles). A confirm dialog with the rate-limit preset
+  gates the run.
+
 ### Missing player identity: self-heal in UpsertGameStats, not a historical roster pull
 **Status:** Settled (design; implementation tracked as TASK-56)
 Running the admin sync console against live 2026-27 data surfaced a real gap: a player who logged games/stats for a team in 2025-26 but has since left that org (trade, UFA, waivers, retirement) is invisible to us and stays that way permanently — not a timing issue that resolves once the API rolls onto the new season, because it already has, and the roster endpoint is inherently present-tense. The only thing that ever creates a `Player` row for an NHL player is `SyncTeamRoster`, which only ever syncs `/v1/roster/{team}/current` — never a past season. Once a player is off every current roster, no existing sync path can rediscover him, so `UpsertGameStats#player_for` finds no match and skips the stat row (reporting the id in `missing_players`) forever. This affects a full-career vet who's since moved on exactly the same way it affects a player whose entire NHL career was one or two games — both hit the identical code path.

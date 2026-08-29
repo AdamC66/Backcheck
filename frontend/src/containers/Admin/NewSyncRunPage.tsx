@@ -6,18 +6,17 @@ import { SegmentedControl } from "@/components/SegmentedControl/SegmentedControl
 import { Select } from "@/components/Select/Select";
 import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
-import { SYNC_KIND_LABELS, type MinIntervalPreset, type SyncKind } from "@/models/adminSync";
+import {
+  MIN_INTERVAL_PRESET_OPTIONS,
+  SYNC_KIND_LABELS,
+  type MinIntervalPreset,
+  type SyncKind,
+} from "@/models/adminSync";
 import { useCreateSyncRun } from "@/models/useCreateSyncRun";
 import { useLeague } from "@/models/useLeague";
 import { useLeagues } from "@/models/useLeagues";
 import { useSeasons } from "@/models/useSeasons";
 import { useSyncKinds } from "@/models/useSyncKinds";
-
-const PRESET_OPTIONS: { value: MinIntervalPreset; label: string }[] = [
-  { value: "conservative", label: "Conservative" },
-  { value: "normal", label: "Normal" },
-  { value: "aggressive", label: "Aggressive" },
-];
 
 export function NewSyncRunPage() {
   const navigate = useNavigate();
@@ -119,7 +118,7 @@ export function NewSyncRunPage() {
 
         <SegmentedControl
           label="Rate limit"
-          options={PRESET_OPTIONS}
+          options={MIN_INTERVAL_PRESET_OPTIONS}
           value={preset}
           onChange={setPreset}
         />

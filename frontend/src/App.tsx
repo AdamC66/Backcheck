@@ -16,6 +16,8 @@ import { AdminPage } from "@/containers/Admin/AdminPage";
 import { SyncDashboardPage } from "@/containers/Admin/SyncDashboardPage";
 import { NewSyncRunPage } from "@/containers/Admin/NewSyncRunPage";
 import { SyncRunDetailPage } from "@/containers/Admin/SyncRunDetailPage";
+import { DataCoveragePage } from "@/containers/Admin/DataCoveragePage";
+import { CoverageGapPage } from "@/containers/Admin/CoverageGapPage";
 import { RoadmapPage } from "@/containers/Admin/RoadmapPage";
 
 export function App() {
@@ -85,6 +87,8 @@ export function App() {
         <Route index element={<SyncDashboardPage />} />
         <Route path="sync/new" element={<NewSyncRunPage />} />
         <Route path="sync/:id" element={<SyncRunDetailPage />} />
+        <Route path="data" element={<DataCoveragePage />} />
+        <Route path="data/:seasonId/:kind" element={<CoverageGapPage />} />
         <Route path="roadmap" element={<RoadmapPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
