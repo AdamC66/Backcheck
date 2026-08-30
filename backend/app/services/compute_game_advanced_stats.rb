@@ -75,46 +75,16 @@ class ComputeGameAdvancedStats
   end
 
   def corsi_events
-    GameEvent.where(game: game, event_type: CORSI_EVENT_TYPES).where.not(team_id: nil)
+    GameEvent.where(game: game, event_type: CORSI_EVENT_TYPES).where.not(team_id: nil).preload(:game)
   end
 
-  # goal-type events in chronological order, used to reconstruct the score entering
-  # any other event — "entering", not after, so a tying goal is itself still scored
-  # under the pre-goal (closer) score state.
-  def goal_events
-    @goal_events ||= GameEvent.where(game: game, event_type: GameEvent::EVENT_TYPES[:goal])
-                              .order(:period, :period_time_seconds, :id).to_a
-  end
-
-  def score_before(event)
-    key = [ event.period, event.period_time_seconds, event.id ]
-    home = 0
-    away = 0
-
-    goal_events.each do |goal|
-      break if ([ goal.period, goal.period_time_seconds, goal.id ] <=> key) >= 0
-
-      home += 1 if goal.team_id == game.home_team_id
-      away += 1 if goal.team_id == game.away_team_id
-    end
-
-    [ home, away ]
-  end
-
-  # "close" = within one goal in the 1st/2nd, tied in the 3rd, all of OT regardless
-  # of margin — see PlayerGameAdvancedStat::SCORE_STATES.
-  def close?(event, home_score, away_score)
-    diff = (home_score - away_score).abs
-    return true if event.period >= 4
-    return diff <= 1 if event.period <= 2
-
-    diff.zero?
+  def score_timeline
+    @score_timeline ||= GameScoreTimeline.new(game)
   end
 
   def score_buckets_for(event)
-    home_score, away_score = score_before(event)
     buckets = [ ALL_SCORE ]
-    buckets << CLOSE_SCORE if close?(event, home_score, away_score)
+    buckets << CLOSE_SCORE if score_timeline.close?(event)
     buckets
   end
 
@@ -170,16 +140,7 @@ class ComputeGameAdvancedStats
 
   def xg_for(event)
     XgFormula.calculate(coefficients: xg_model.coefficients, x_coord: event.x_coord, y_coord: event.y_coord,
-                        target_net_x: target_net_x_for(event))
-  end
-
-  # The net a shot is aimed at, not the shooter's own — home's net sits on
-  # home_team_defending_side; away shoots at that side, home shoots at the opposite one.
-  def target_net_x_for(event)
-    return nil if event.home_team_defending_side.blank? || event.team_id.nil?
-
-    home_net_x = event.home_team_defending_side == GameEvent::DEFENDING_SIDES[:left] ? -ShotGeometry::HALF_RINK_X : ShotGeometry::HALF_RINK_X
-    event.team_id == game.home_team_id ? -home_net_x : home_net_x
+                        target_net_x: event.target_net_x)
   end
 
   # The object, not just the id — lets each row's team_played_in_game validate

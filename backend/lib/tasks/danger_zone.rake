@@ -1,22 +1,8 @@
 # Proves DangerZone's boundaries (TASK-106) against ingested shots. Re-runnable, no NHL API call.
-module DangerZoneValidation
-  module_function
-
-  def shot_event_types
-    GameEvent::EVENT_TYPES.values_at(:goal, :shot, :missed_shot)
-  end
-
-  # Net resolution matches ComputeGameAdvancedStats#target_net_x_for; TASK-108 generalizes it.
-  def target_net_x_for(event, game)
-    home_net_x = event.home_team_defending_side == GameEvent::DEFENDING_SIDES[:left] ? -ShotGeometry::HALF_RINK_X : ShotGeometry::HALF_RINK_X
-    event.team_id == game.home_team_id ? -home_net_x : home_net_x
-  end
-end
-
 namespace :danger_zone do
   desc "Classify already-ingested shot events against DangerZone's boundaries and print a validation report"
   task validate: :environment do
-    v = DangerZoneValidation
+    shot_event_types = GameEvent::EVENT_TYPES.values_at(:goal, :shot, :missed_shot)
     games = Game.where(id: GameEvent.select(:game_id).distinct).includes(:home_team, :away_team)
     abort("No games have stored game_events yet — nothing to validate.") if games.none?
 
@@ -28,13 +14,13 @@ namespace :danger_zone do
 
     games.find_each do |game|
       matchup = "#{game.away_team.abbreviation} @ #{game.home_team.abbreviation}"
-      events = GameEvent.where(game: game, event_type: v.shot_event_types)
+      events = GameEvent.where(game: game, event_type: shot_event_types)
                         .where.not(x_coord: nil).where.not(y_coord: nil)
                         .where.not(team_id: nil).where.not(home_team_defending_side: nil)
+                        .preload(:game)
       events.each do |event|
-        target_net_x = v.target_net_x_for(event, game)
-        geometry = ShotGeometry.new(x_coord: event.x_coord, y_coord: event.y_coord, target_net_x: target_net_x)
-        bucket = DangerZone.classify(x_coord: event.x_coord, y_coord: event.y_coord, target_net_x: target_net_x)
+        geometry = ShotGeometry.new(x_coord: event.x_coord, y_coord: event.y_coord, target_net_x: event.target_net_x)
+        bucket = DangerZone.classify(x_coord: event.x_coord, y_coord: event.y_coord, target_net_x: event.target_net_x)
         counts[bucket] += 1
 
         next unless event.event_type == GameEvent::EVENT_TYPES[:goal]
