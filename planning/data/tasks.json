@@ -1090,9 +1090,9 @@
     "id": "TASK-107",
     "epic_id": "EPIC-18",
     "title": "DangerZone classifier service",
-    "description": "A service (DangerZone.classify(x_coord:, y_coord:, target_net_x:)) returning :high_danger / :mid_range / :long_range for a shot, built on TASK-106's boundaries. Reuses XgFormula's existing target_net_x/distance/angle normalization rather than duplicating it \u2014 extract the shared normalization step if needed so XgFormula and DangerZone both call it. Pure function, no new schema.\n\nGameEvent.x_coord/y_coord are nullable integers (only populated from real play-by-play). classify must return a defined result for a null-coordinate shot (e.g. nil / :unknown) rather than raising or silently bucketing it \u2014 same nil-tolerance XgFormula.calculate already has (returns 0.0).",
+    "description": "A service (DangerZone.classify(x_coord:, y_coord:, target_net_x:)) returning :high_danger / :mid_range / :long_range for a shot, built on TASK-106's boundaries. Reuses XgFormula's existing target_net_x/distance/angle normalization rather than duplicating it \u2014 extract the shared normalization step if needed so XgFormula and DangerZone both call it. Pure function, no new schema.\n\nGameEvent.x_coord/y_coord are nullable integers (only populated from real play-by-play). classify must return a defined result for a null-coordinate shot (e.g. nil / :unknown) rather than raising or silently bucketing it \u2014 same nil-tolerance XgFormula.calculate already has (returns 0.0).\n\nDone: ShotGeometry value object (app/services/) holds the distance/angle/offensive-frame math and HALF_RINK_X; XgFormula and DangerZone both build one instead of duplicating normalization (XgFormula's result unchanged). DangerZone.classify(x_coord:, y_coord:, target_net_x:) returns :high_danger/:mid_range/:long_range or nil for a coordinate-less shot; point-in-polygon is a private class method. danger_zone.rake's draft classifier collapsed to call it. Smoke specs for both. TASK-108 still owns resolving target_net_x from a GameEvent.",
     "type": "feature",
-    "status": "backlog"
+    "status": "done"
   },
   {
     "id": "TASK-108",

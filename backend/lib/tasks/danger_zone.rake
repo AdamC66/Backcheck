@@ -1,5 +1,4 @@
-# Proves DangerZone's boundaries (TASK-106) against ingested shots before anything downstream
-# consumes them. The draft classifier lives here until TASK-107 adds DangerZone.classify.
+# Proves DangerZone's boundaries (TASK-106) against ingested shots. Re-runnable, no NHL API call.
 module DangerZoneValidation
   module_function
 
@@ -7,36 +6,10 @@ module DangerZoneValidation
     GameEvent::EVENT_TYPES.values_at(:goal, :shot, :missed_shot)
   end
 
-  def in_high_danger_polygon?(x, y)
-    poly = DangerZone::HIGH_DANGER_POLYGON
-    inside = false
-    j = poly.length - 1
-    poly.each_index do |i|
-      xi, yi = poly[i]
-      xj, yj = poly[j]
-      inside = !inside if (yi > y) != (yj > y) && x < (((xj - xi) * (y - yi) / (yj - yi).to_f) + xi)
-      j = i
-    end
-    inside
-  end
-
-  # Net resolution matches ComputeGameAdvancedStats#target_net_x_for; TASK-107 extracts the shared step.
-  def normalized_shot(event, game)
-    home_net_x = event.home_team_defending_side == GameEvent::DEFENDING_SIDES[:left] ? -DangerZone::GOAL_LINE_X : DangerZone::GOAL_LINE_X
-    target_net_x = event.team_id == game.home_team_id ? -home_net_x : home_net_x
-
-    x = target_net_x.negative? ? -event.x_coord : event.x_coord
-    y = target_net_x.negative? ? -event.y_coord : event.y_coord
-    distance = Math.sqrt(((DangerZone::GOAL_LINE_X - x)**2) + (y**2))
-    [ x, y, distance ]
-  end
-
-  def classify(x, y, distance)
-    return :high_danger if distance <= DangerZone::HIGH_DANGER_CREASE_RADIUS_FT
-    return :high_danger if in_high_danger_polygon?(x, y)
-    return :mid_range if distance <= DangerZone::MID_RANGE_MAX_DISTANCE_FT
-
-    :long_range
+  # Net resolution matches ComputeGameAdvancedStats#target_net_x_for; TASK-108 generalizes it.
+  def target_net_x_for(event, game)
+    home_net_x = event.home_team_defending_side == GameEvent::DEFENDING_SIDES[:left] ? -ShotGeometry::HALF_RINK_X : ShotGeometry::HALF_RINK_X
+    event.team_id == game.home_team_id ? -home_net_x : home_net_x
   end
 end
 
@@ -59,14 +32,16 @@ namespace :danger_zone do
                         .where.not(x_coord: nil).where.not(y_coord: nil)
                         .where.not(team_id: nil).where.not(home_team_defending_side: nil)
       events.each do |event|
-        x, y, distance = v.normalized_shot(event, game)
-        bucket = v.classify(x, y, distance)
+        target_net_x = v.target_net_x_for(event, game)
+        geometry = ShotGeometry.new(x_coord: event.x_coord, y_coord: event.y_coord, target_net_x: target_net_x)
+        bucket = DangerZone.classify(x_coord: event.x_coord, y_coord: event.y_coord, target_net_x: target_net_x)
         counts[bucket] += 1
 
         next unless event.event_type == GameEvent::EVENT_TYPES[:goal]
 
         goal_counts[bucket] += 1
-        row = { game: matchup, x: x.round, y: y.round, dist: distance.round(1) }
+        distance = geometry.distance
+        row = { game: matchup, x: geometry.offensive_x, y: geometry.offensive_y, dist: distance.round(1) }
         high_danger_goals << row if bucket == :high_danger
         long_range_shots << row if bucket == :long_range
         sharp_angle_close_goals << row.merge(bucket: bucket) if distance < 15 && bucket != :high_danger

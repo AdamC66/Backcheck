@@ -178,7 +178,7 @@ class ComputeGameAdvancedStats
   def target_net_x_for(event)
     return nil if event.home_team_defending_side.blank? || event.team_id.nil?
 
-    home_net_x = event.home_team_defending_side == GameEvent::DEFENDING_SIDES[:left] ? -XgFormula::HALF_RINK_X : XgFormula::HALF_RINK_X
+    home_net_x = event.home_team_defending_side == GameEvent::DEFENDING_SIDES[:left] ? -ShotGeometry::HALF_RINK_X : ShotGeometry::HALF_RINK_X
     event.team_id == game.home_team_id ? -home_net_x : home_net_x
   end
 
