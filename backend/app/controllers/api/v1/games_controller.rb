@@ -12,7 +12,8 @@ module Api
             advanced: {
               players: player_advanced_stats.map { |stat| PlayerGameAdvancedStatSerializer.new(stat).as_json },
               teams: team_advanced_stats.map { |stat| TeamGameAdvancedStatSerializer.new(stat).as_json }
-            }
+            },
+            zone_time: GameZoneTimeSerializer.new(game).as_json
           },
           meta: meta_for(game)
         )

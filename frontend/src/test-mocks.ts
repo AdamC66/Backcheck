@@ -340,6 +340,34 @@ export const GAME_DETAIL: Envelope<GameDetail, GameDetailMeta> = {
         teamGameAdvancedStatFor({ team_id: TEAMS[1].id, corsi_for: 42, corsi_against: 58 }),
       ],
     },
+    zone_time: {
+      periods: [
+        {
+          period: 1,
+          length_seconds: 1200,
+          segments: [
+            { start_seconds: 0, end_seconds: 400, zone: "neutral" },
+            { start_seconds: 400, end_seconds: 900, zone: "offensive" },
+            { start_seconds: 900, end_seconds: 1200, zone: "defensive" },
+          ],
+        },
+      ],
+      totals: { offensive_seconds: 500, neutral_seconds: 400, defensive_seconds: 300 },
+      skaters: [
+        {
+          player: playerFor(1, { first_name: "Auston", last_name: "Matthews" }),
+          team_id: TEAMS[0].id,
+          starts: { offensive: 8, neutral: 3, defensive: 4, on_the_fly: 20 },
+          seconds: { offensive: 520, neutral: 180, defensive: 300 },
+        },
+        {
+          player: playerFor(2, { first_name: "William", last_name: "Nylander" }),
+          team_id: TEAMS[1].id,
+          starts: { offensive: 5, neutral: 4, defensive: 6, on_the_fly: 19 },
+          seconds: { offensive: 300, neutral: 210, defensive: 480 },
+        },
+      ],
+    },
   },
   meta: {},
 };

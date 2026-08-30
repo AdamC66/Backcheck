@@ -1330,9 +1330,9 @@
     "id": "TASK-135",
     "epic_id": "EPIC-18",
     "title": "ShotLocationList: shots-against mode for a team",
-    "description": "ShotLocationList (TASK-108) returns a team's shots-for only. Add a way to get shots-against \u2014 opponents' unblocked shots in that team's games, normalized to the offensive frame \u2014 so the defense heatmap (TASK-115) and any shots-against split can consume the same shape. A `side:` param on the team subject, or a sibling query. Goalie shots-against still waits on GameEvent gaining a goalie reference (TASK-122); this is team-level only.",
+    "description": "ShotLocationList (TASK-108) returns a team's shots-for only. Add a way to get shots-against \u2014 opponents' unblocked shots in that team's games, normalized to the offensive frame \u2014 so the defense heatmap (TASK-115) and any shots-against split can consume the same shape. A `side:` param on the team subject, or a sibling query. Goalie shots-against still waits on GameEvent gaining a goalie reference (TASK-122); this is team-level only. Done: added side: :for (default) / :against to ShotLocationList \u2014 :against selects the opponents' unblocked shots in the given games (team subject only; :against + player: raises InvalidSubject), and build_shot's existing normalization folds each onto its target net so for and against share the offensive-zone frame the TASK-115 defense heatmap compares. strength_state/score_state/close handling reused unchanged; the strength filter is the raw event strength (opponent's, for :against), consistent with TeamGameAdvancedStat's against buckets. Smoke specs.",
     "type": "feature",
-    "status": "backlog"
+    "status": "done"
   },
   {
     "id": "TASK-136",
@@ -1341,5 +1341,13 @@
     "description": "The hockeyviz-style relative shot map: red where a team generates/concedes more shots than league average from a location, blue where less. Needs a league-wide baseline \u2014 every team's shots binned to a grid, normalized per game, averaged \u2014 computed once and cached (rake task or a cached table), then the team's offense/defense surfaces (TASK-115) rendered as a diverging scale around that baseline instead of an absolute one. Later upgrade; the absolute for/against maps ship first.",
     "type": "feature",
     "status": "backlog"
+  },
+  {
+    "id": "TASK-137",
+    "epic_id": "EPIC-19",
+    "title": "Zone-time panel on the game page",
+    "description": "First look at TASK-110/111 output: a Zone time section on GamePage. GameZoneTimeSerializer folds into GET /api/v1/games/:id \u2014 periods (ZoneOccupancyTimeline segments, home-team frame) and per-skater rows (PlayerGameZoneTime). Frontend: ZoneOccupancyStrip (SVG bar per period, O/N/D bands over time, forward-fill caveat in the caption) + ZoneTimeTable (per team, OZS/NZS/DZS/OTF counts and OZ/NZ/DZ time %, sorted by DZ starts). rake zone_time:backfill computes player_game_zone_times for every ingested game. Done.",
+    "type": "feature",
+    "status": "done"
   }
 ]

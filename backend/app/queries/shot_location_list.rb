@@ -1,6 +1,9 @@
-# Team/player subjects only — GameEvent carries no goalie reference for shots-against (TASK-122).
+# side: :against is team-level only — GameEvent carries no goalie reference, so a
+# goalie's shots-against waits on TASK-122.
 class ShotLocationList
   SHOT_EVENT_TYPES = GameEvent::EVENT_TYPES.values_at(:goal, :shot, :missed_shot).freeze
+
+  SIDES = %i[for against].freeze
 
   STRENGTH_STATES = PlayerGameAdvancedStat::STRENGTH_STATES
   SCORE_STATES = PlayerGameAdvancedStat::SCORE_STATES
@@ -21,12 +24,16 @@ class ShotLocationList
 
   class InvalidSubject < ArgumentError; end
 
-  def initialize(games:, team: nil, player: nil, strength_state: STRENGTH_STATES[:all], score_state: SCORE_STATES[:all])
+  def initialize(games:, team: nil, player: nil, side: :for, strength_state: STRENGTH_STATES[:all],
+                 score_state: SCORE_STATES[:all])
     raise InvalidSubject, "pass exactly one of team:/player:" unless team.nil? ^ player.nil?
+    raise InvalidSubject, "side: must be one of #{SIDES}" unless SIDES.include?(side)
+    raise InvalidSubject, "side: :against needs a team:" if side == :against && team.nil?
 
     @games = games
     @team = team
     @player = player
+    @side = side
     @strength_state = strength_state
     @score_state = score_state
   end
@@ -44,12 +51,21 @@ class ShotLocationList
   def filtered_events
     @filtered_events ||= begin
       scope = GameEvent.where(game_id: game_ids, event_type: SHOT_EVENT_TYPES).preload(:game)
-      scope = @team ? scope.where(team_id: @team.id) : scope.where(primary_player_id: @player.id)
+      scope = subject_scope(scope)
       scope = scope.where(strength_state: mapped_strength) if mapped_strength
 
       events = scope.to_a
       close_only? ? events.select { |event| timeline_for(event.game).close?(event) } : events
     end
+  end
+
+  # :against selects the opponents' shots in these games; build_shot then normalizes each
+  # onto its target net (the subject team's), so for and against land in the same frame.
+  def subject_scope(scope)
+    return scope.where(primary_player_id: @player.id) if @player
+    return scope.where(team_id: @team.id) if @side == :for
+
+    scope.where.not(team_id: @team.id)
   end
 
   def located_events

@@ -30,6 +30,26 @@ RSpec.describe "GET /api/v1/games/:id", type: :request do
     expect(body.dig("advanced", "teams").first["corsi_for"]).to eq(55)
   end
 
+  it "includes the zone-occupancy timeline and per-skater zone time" do
+    skater = create(:player, first_name: "Morgan", last_name: "Rielly")
+    create(:shift, game: game, team: home_team, player: skater, period: 1,
+           start_time_seconds: 0, end_time_seconds: 60)
+    create(:game_event, game: game, team: home_team, primary_player: skater,
+           event_type: GameEvent::EVENT_TYPES[:faceoff], period: 1, period_time_seconds: 0, x_coord: 0,
+           home_team_defending_side: GameEvent::DEFENDING_SIDES[:left])
+    create(:player_game_zone_time, game: game, player: skater, team: home_team,
+           offensive_starts: 4, neutral_seconds: 55)
+
+    get "/api/v1/games/#{game.id}", headers: auth_headers(super_admin)
+
+    zone_time = response.parsed_body.dig("data", "zone_time")
+    expect(zone_time.dig("periods", 0, "period")).to eq(1)
+    expect(zone_time.dig("totals", "neutral_seconds")).to eq(60)
+    expect(zone_time.dig("skaters", 0, "player", "last_name")).to eq("Rielly")
+    expect(zone_time.dig("skaters", 0, "starts", "offensive")).to eq(4)
+    expect(zone_time.dig("skaters", 0, "seconds", "neutral")).to eq(55)
+  end
+
   it "includes meta.stats_syncing only when the game is mid-recalculation" do
     get "/api/v1/games/#{game.id}", headers: auth_headers(super_admin)
     expect(response.parsed_body["meta"]).not_to have_key("stats_syncing")

@@ -80,6 +80,35 @@ export interface TeamGameAdvancedStat {
   toi_seconds: number;
 }
 
+export type Zone = "offensive" | "neutral" | "defensive";
+
+export interface ZoneSegment {
+  start_seconds: number;
+  end_seconds: number;
+  zone: Zone;
+}
+
+export interface ZoneTimePeriod {
+  period: number;
+  length_seconds: number;
+  segments: ZoneSegment[];
+}
+
+export interface ZoneTimeSkater {
+  player: RosterPlayer;
+  team_id: number;
+  starts: { offensive: number; neutral: number; defensive: number; on_the_fly: number };
+  seconds: { offensive: number; neutral: number; defensive: number };
+}
+
+// segments and totals are in the home team's frame: "offensive" = the home team attacking.
+// The away team's split is the mirror (its offensive === home defensive).
+export interface GameZoneTime {
+  periods: ZoneTimePeriod[];
+  totals: { offensive_seconds: number; neutral_seconds: number; defensive_seconds: number };
+  skaters: ZoneTimeSkater[];
+}
+
 export interface GameDetail {
   game: Game;
   skaters: SkaterGameStat[];
@@ -88,6 +117,7 @@ export interface GameDetail {
     players: PlayerGameAdvancedStat[];
     teams: TeamGameAdvancedStat[];
   };
+  zone_time: GameZoneTime;
 }
 
 export interface GameDetailMeta {

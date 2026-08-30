@@ -1,6 +1,22 @@
 # Checks ZoneOccupancyTimeline / zone-start derivation (TASK-110/111) against ingested
 # games. Re-runnable, no NHL API call, writes nothing. See docs/DECISIONS.md (TASK-112).
 namespace :zone_time do
+  desc "Compute and store player_game_zone_times for every game with stored game_events and " \
+       "shifts. No NHL API call. Usage: rake zone_time:backfill"
+  task backfill: :environment do
+    games = Game.where(id: GameEvent.select(:game_id).distinct).where(id: Shift.select(:game_id).distinct)
+    abort("No games have both game_events and shifts yet — nothing to backfill.") if games.none?
+
+    count = 0
+    games.find_each do |game|
+      ComputeGameZoneTime.new(game: game).call
+      count += 1
+      print "."
+    end
+    puts
+    puts "Done. #{count} game(s)."
+  end
+
   desc "Derive zone time + zone starts from already-ingested games and print a validation report"
   task validate: :environment do
     games = Game.where(id: GameEvent.select(:game_id).distinct)

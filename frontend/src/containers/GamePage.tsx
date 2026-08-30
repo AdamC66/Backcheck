@@ -1,11 +1,14 @@
 import { useParams } from "react-router";
 import { GameGoalieStatsTable } from "@/components/GameGoalieStatsTable/GameGoalieStatsTable";
 import { GameSkaterStatsTable } from "@/components/GameSkaterStatsTable/GameSkaterStatsTable";
+import { GameZoneShareBar } from "@/components/GameZoneShareBar/GameZoneShareBar";
 import { PageShell } from "@/components/PageShell/PageShell";
 import { PlayerAdvancedStatsTable } from "@/components/PlayerAdvancedStatsTable/PlayerAdvancedStatsTable";
 import { Row } from "@/components/Row/Row";
 import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
+import { ZoneOccupancyStrip } from "@/components/ZoneOccupancyStrip/ZoneOccupancyStrip";
+import { ZoneTimeTable } from "@/components/ZoneTimeTable/ZoneTimeTable";
 import { UserMenu } from "@/containers/UserMenu";
 import { formatGameDateTime } from "@/lib/format";
 import type { TeamGameAdvancedStat } from "@/models/gameDetail";
@@ -120,7 +123,7 @@ export function GamePage() {
     );
   }
 
-  const { game, skaters, goalies, advanced } = detail.data.data;
+  const { game, skaters, goalies, advanced, zone_time: zoneTime } = detail.data.data;
   const statsSyncing = detail.data.meta?.stats_syncing === true;
 
   return (
@@ -193,6 +196,44 @@ export function GamePage() {
             <Stack gap="md">
               <GameGoalieStatsTable stats={bySide(goalies, game.away.team.id)} />
               <GameGoalieStatsTable stats={bySide(goalies, game.home.team.id)} />
+            </Stack>
+          )}
+        </Stack>
+
+        <Stack gap="sm">
+          <Text variant="label" className="font-bold tracking-wide text-slate-500 uppercase">
+            Zone time
+          </Text>
+          {zoneTime.periods.length === 0 ? (
+            <Text tone="muted">No zone data for this game yet.</Text>
+          ) : (
+            <Stack gap="md">
+              <GameZoneShareBar
+                rows={[
+                  {
+                    label: game.away.team.abbreviation,
+                    offensiveSeconds: zoneTime.totals.defensive_seconds,
+                    neutralSeconds: zoneTime.totals.neutral_seconds,
+                    defensiveSeconds: zoneTime.totals.offensive_seconds,
+                  },
+                  {
+                    label: game.home.team.abbreviation,
+                    offensiveSeconds: zoneTime.totals.offensive_seconds,
+                    neutralSeconds: zoneTime.totals.neutral_seconds,
+                    defensiveSeconds: zoneTime.totals.defensive_seconds,
+                  },
+                ]}
+              />
+              <ZoneOccupancyStrip
+                periods={zoneTime.periods}
+                homeAbbreviation={game.home.team.abbreviation}
+              />
+              {zoneTime.skaters.length === 0 ? null : (
+                <Stack gap="md">
+                  <ZoneTimeTable skaters={bySide(zoneTime.skaters, game.away.team.id)} />
+                  <ZoneTimeTable skaters={bySide(zoneTime.skaters, game.home.team.id)} />
+                </Stack>
+              )}
             </Stack>
           )}
         </Stack>

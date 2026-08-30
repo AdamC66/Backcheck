@@ -25,11 +25,18 @@ describe("GamePage", () => {
   it("shows the matchup, basic stats, and advanced stats for both teams", async () => {
     renderGame();
 
-    // Appears in both the skater table and the per-player advanced table.
-    expect((await screen.findAllByText("Auston Matthews")).length).toBe(2);
-    expect(screen.getByText("William Nylander")).toBeInTheDocument();
+    // Appears in the skater table, the per-player advanced table, and the zone-time table.
+    expect((await screen.findAllByText("Auston Matthews")).length).toBe(3);
+    expect(screen.getAllByText("William Nylander").length).toBeGreaterThan(0);
     expect(screen.getByText("Anthony Stolarz")).toBeInTheDocument();
     expect(screen.getAllByText(TEAMS[0].abbreviation).length).toBeGreaterThan(0);
+  });
+
+  it("shows the zone-occupancy strip and per-skater zone time", async () => {
+    renderGame();
+
+    expect(await screen.findByText("Zone time")).toBeInTheDocument();
+    expect(screen.getByText("P1")).toBeInTheDocument();
   });
 
   it("shows a syncing notice when the game is mid-recalculation", async () => {
