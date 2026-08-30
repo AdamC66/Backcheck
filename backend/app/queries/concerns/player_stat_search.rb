@@ -153,8 +153,6 @@ module PlayerStatSearch
   end
 
   def team_json(record)
-    return "TOT" if record["team_count"].to_i > 1
-
     team = teams_by_id[record["team_id"].to_i]
     team && TeamSerializer.new(team).as_json
   end
