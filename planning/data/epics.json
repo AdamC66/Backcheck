@@ -115,8 +115,8 @@
     "id": "EPIC-15",
     "project_id": "backcheck",
     "title": "Play-by-play/shift ingestion; validate and surface advanced stats",
-    "description": "Builds the ingestion path EPIC-13 deliberately deferred: a real NHL client for play-by-play and shift-chart data, upserting into game_events/shifts (TASK-58), wired through ComputeGameAdvancedStats (TASK-72) and the existing recompute pipeline (TASK-62) end to end \u2014 closing the composition point TASK-72 was left unwired at. Also validates the whole computation pipeline's accuracy against real data: on-ice attribution, Corsi/Fenwick/xG, and score-state splits (TASK-64) have only ever been exercised against synthetic spec fixtures, never a real game. Frontend: surfaces these now-real advanced stats, which requires building game detail and player detail pages that don't exist yet at all, plus extending the existing team stats page.",
-    "status": "in_progress",
+    "description": "Builds the ingestion path EPIC-13 deliberately deferred: a real NHL client for play-by-play and shift-chart data, upserting into game_events/shifts (TASK-58), wired through ComputeGameAdvancedStats (TASK-72) and the existing recompute pipeline (TASK-62) end to end \u2014 closing the composition point TASK-72 was left unwired at. Also validates the whole computation pipeline's accuracy against real data: on-ice attribution, Corsi/Fenwick/xG, and score-state splits (TASK-64) have only ever been exercised against synthetic spec fixtures, never a real game. Frontend: surfaces these now-real advanced stats, which requires building game detail and player detail pages that don't exist yet at all, plus extending the existing team stats page. TASK-81 broken out into its own epic (EPIC-23) once scoping made clear it was many tasks, not one \u2014 see EPIC-23. Every other task in this epic is done; epic complete.",
+    "status": "done",
     "priority": "medium"
   },
   {
@@ -172,6 +172,30 @@
     "project_id": "backcheck",
     "title": "Team-to-team comparison",
     "description": "The third leg of the comparison tools from planning, and the cheapest full slice of the four analytics epics \u2014 mostly assembly of what EPIC-18/EPIC-19 already build (TeamSeasonAdvancedStat, standings data, the team shot heatmap and game-over-game trend component) into an N-way side-by-side layout, rather than new schema or ingestion work. Worth shipping early, once EPIC-18 lands, to prove the N-way comparison pattern before it's reused by the heavier skater/goalie comparison epics.",
+    "status": "backlog",
+    "priority": "medium"
+  },
+  {
+    "id": "EPIC-23",
+    "project_id": "backcheck",
+    "title": "Train and land a real xG model",
+    "description": "TASK-81 (originally under EPIC-15) turned out to be many tasks once actually scoped \u2014 broken out here. Recon done 2026-08-30 (see project scoping doc): 4,420 games / ~375k Fenwick shot events / ~27k goals already ingested and validated (TASK-106's rake task), enough to fit against today, no new ingestion needed. The active XgModel is v0-placeholder, made-up coefficients, confirmed wrong live (TOR @ ANA 2026-03-30: 10.55-12.10 combined team xG against a realistic 2-4). Four decisions settled during scoping: velocity is dropped from the feature set entirely \u2014 NHL Edge (confirmed reachable, unauthenticated, same api-web.nhle.com host) only exposes season-level aggregates/top-10-hardest-shot per player, never a value for an arbitrary shot, so there's no path to a velocity column on every game_events row; training tooling is a one-off Python script (pandas + scikit-learn), the first Python in this repo, not a new service; the model family is logistic regression, matching XgModel.coefficients' existing weighted-sum-through-sigmoid shape exactly (a gradient-boosted model would need a real serving redesign and is a future option, not v1); and historical player_game_advanced_stats/team_game_advanced_stats get backfilled against the new model once it activates, riding TASK-62's existing recompute-chain machinery. Unblocks six backlog items explicitly held on this: TASK-109, TASK-115, TASK-123, TASK-129, TASK-134.",
+    "status": "backlog",
+    "priority": "high"
+  },
+  {
+    "id": "EPIC-24",
+    "project_id": "backcheck",
+    "title": "Draft pick inventory & lottery odds",
+    "description": "Track B from claude/analytics-viz-roadmap.md (project docs), raised separately from the analytics/visualization push: pick tracking has to exist before trades can move picks, and lottery odds are wanted for the current season. No Draft/DraftPick model exists today (confirmed: no such migration/model in backend/app/models). EPIC-9 (in progress) is where trade-proposal actions live (TASK-38, backlog) and EPIC-11 (backlog, unscoped) is the unified transaction log that depends on EPIC-9's trade actions existing first \u2014 neither currently treats a pick as a tradeable asset. This epic covers the DraftPick model and lottery-odds display; making TASK-38's trade actions pick-aware is a task on EPIC-9 (see TASK-148), not part of this epic, per the roadmap doc's own call not to stand up a parallel trade system.",
+    "status": "backlog",
+    "priority": "low"
+  },
+  {
+    "id": "EPIC-25",
+    "project_id": "backcheck",
+    "title": "Full game boxscore (goal summary, penalties, period detail)",
+    "description": "Track C from claude/analytics-viz-roadmap.md (project docs): GamePage today only shows player stat tables and whole-game advanced-stat totals (Api::V1::GamesController#show \u2014 skaters, goalies, advanced.players/teams, zone_time; confirmed reading it 2026-08-30). Recon: GameEvent already stores goal events fully attributed (primary_player=scorer, secondary/tertiary=assist1/assist2) and penalty events (primary_player=committed-by, secondary_player=drawn-by), with period/period_time_seconds/team/strength_state, via UpsertGameEvents \u2014 confirmed reading game_event.rb and upsert_game_events.rb. GoalieGameStat.decision/starter/saves/shots_against are already computed and already serialized by GoalieGameStatSerializer, just not rendered as a boxscore line. Genuinely missing: penalty infraction type/duration (no column on GameEvent, and the play-by-play payload isn't confirmed to carry it in a stored field); period-by-period score/shots-on-goal (no existing serializer path, though derivable from GameEvent). Open question, needs a live check before the penalty/period tasks are real: NhlClient#boxscore (already called by SyncGameStats) hits the same /v1/gamecenter/{id}/boxscore endpoint that publicly is known to carry a summary object (scoring/penalties/linescore/three-stars, per community references like the Zmalski docs already cited in claude/xg-model-scoping.md) \u2014 nothing in this codebase has read that part of the response yet, so it's unconfirmed whether goal/penalty/period detail is better sourced from the boxscore response already fetched than from deeper play-by-play parsing. See TASK-149.",
     "status": "backlog",
     "priority": "medium"
   }

@@ -847,9 +847,9 @@
     "id": "TASK-81",
     "epic_id": "EPIC-15",
     "title": "Train a real xG model to replace the placeholder coefficients",
-    "description": "The active XgModel (\"v0-placeholder\") has made-up coefficients (intercept: 0.2, distance: -0.05, angle: -0.02), not fitted ones \u2014 confirmed visibly wrong live (TOR @ ANA, 2026-03-30 showed 10.55-12.10 combined team xG; a real NHL team's xG per game is typically 2-4). The pipeline mechanics (on-ice attribution, per-shot formula application via XgFormula, home_team_defending_side coordinate normalization) are correct \u2014 only the coefficients are meaningless. Needs a real logistic regression (or similar) fit against historical shot data with actual goal/no-goal outcomes, using distance-to-net and angle-to-net as features (matching XgFormula's existing two-feature shape, or widening it if a real fit calls for more features e.g. shot_type, strength_state, rebound/rush indicators \u2014 that's a model-design decision for whoever builds this, not decided here). Once trained, XgModel.activate! swaps it in atomically, no other code changes needed. Depends on enough real game_events existing to fit against (TASK-74/75/76 ingestion, run across enough real games).",
+    "description": "The active XgModel (\"v0-placeholder\") has made-up coefficients (intercept: 0.2, distance: -0.05, angle: -0.02), not fitted ones \u2014 confirmed visibly wrong live (TOR @ ANA, 2026-03-30 showed 10.55-12.10 combined team xG; a real NHL team's xG per game is typically 2-4). The pipeline mechanics (on-ice attribution, per-shot formula application via XgFormula, home_team_defending_side coordinate normalization) are correct \u2014 only the coefficients are meaningless. Needs a real logistic regression (or similar) fit against historical shot data with actual goal/no-goal outcomes, using distance-to-net and angle-to-net as features (matching XgFormula's existing two-feature shape, or widening it if a real fit calls for more features e.g. shot_type, strength_state, rebound/rush indicators \u2014 that's a model-design decision for whoever builds this, not decided here). Once trained, XgModel.activate! swaps it in atomically, no other code changes needed. Depends on enough real game_events existing to fit against (TASK-74/75/76 ingestion, run across enough real games). Superseded by EPIC-23: scoping (2026-08-30, see project's xG scoping doc) found this was many tasks, not one \u2014 velocity ruled out (NHL Edge only has season aggregates, no per-shot value), Python tooling decided, logistic regression confirmed as the model family matching XgModel's existing serving shape, and backfill scoped in. Broken into TASK-138 through TASK-145 under EPIC-23.",
     "type": "spike",
-    "status": "backlog",
+    "status": "done",
     "priority": "low",
     "acceptance_criteria": [
       "A newly trained XgModel's per-team-per-game xG totals fall in a realistic range (roughly 1-6 per team per game) against a sample of real ingested games, not the placeholder's inflated numbers",
@@ -1349,5 +1349,186 @@
     "description": "First look at TASK-110/111 output: a Zone time section on GamePage. GameZoneTimeSerializer folds into GET /api/v1/games/:id \u2014 periods (ZoneOccupancyTimeline segments, home-team frame) and per-skater rows (PlayerGameZoneTime). Frontend: ZoneOccupancyStrip (SVG bar per period, O/N/D bands over time, forward-fill caveat in the caption) + ZoneTimeTable (per team, OZS/NZS/DZS/OTF counts and OZ/NZ/DZ time %, sorted by DZ starts). rake zone_time:backfill computes player_game_zone_times for every ingested game. Done.",
     "type": "feature",
     "status": "done"
+  },
+  {
+    "id": "TASK-138",
+    "epic_id": "EPIC-23",
+    "title": "Stand up the one-off Python training environment",
+    "description": "First Python in this repo \u2014 docker-compose.yml is two Ruby services (backend, worker) plus Postgres, no requirements.txt/Pipfile anywhere (confirmed during TASK-81's scoping). A standalone script, not a new Docker service or CI dependency: lives outside backend/frontend (e.g. a new top-level ml/ or scripts/xg_training/ directory), pinned dependencies (pandas, scikit-learn, psycopg2 or sqlalchemy) via requirements.txt, a short README covering how to run it against the dev Postgres instance and what it outputs. Logged in docs/DECISIONS.md per the 'ask before an architectural call, log it once made' rule.",
+    "type": "chore",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "A pinned requirements.txt (or equivalent) lists every dependency the training script needs, no unpinned versions",
+      "README documents how to point the script at the dev Postgres instance and what output file(s) it produces",
+      "docs/DECISIONS.md has an entry recording Python as this repo's first non-Ruby tooling and why"
+    ]
+  },
+  {
+    "id": "TASK-139",
+    "epic_id": "EPIC-23",
+    "title": "Derive a rebound/rush shot-quality flag",
+    "description": "GameEvent has no stored sequencing field for 'was this shot within N seconds of the same team's previous shot attempt' \u2014 confirmed absent from schema during TASK-81's scoping. Derivable at query time from existing columns: period_time_seconds + team_id + game_id, self-joined to find the immediately preceding Fenwick event (goal/shot/missed_shot) by the same team in the same period, if any, within a short window (needs a real threshold decision, e.g. 3-5 seconds for 'rebound' \u2014 check against a sample of real sequences before fixing a number rather than guessing). No new ingestion or schema change. Output: a flag per Fenwick event, consumed by TASK-140's training-set export.",
+    "type": "spike",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "A query/service derives a rebound (and optionally rush) flag per Fenwick event using only existing columns, no new ingestion",
+      "The chosen time-window threshold is checked against a sample of real shot sequences and the reasoning is written down, not picked arbitrarily",
+      "A spec proves the derivation against a constructed sequence of events with a known expected flag per event"
+    ]
+  },
+  {
+    "id": "TASK-140",
+    "epic_id": "EPIC-23",
+    "title": "Build the xG training-set export",
+    "description": "A read-only rake task pulling every Fenwick event (goal/shot/missed_shot \u2014 never blocked_shot, whose coordinates are the blocker's position not the release point, per the existing DECISIONS.md rule) joined to ShotGeometry's distance/angle, shot_type, strength_state, DangerZone.classify's bucket, TASK-139's rebound/rush flag, season_id, and label = event_type == goal. Exports to CSV for TASK-138's Python script. ~375k rows already available per TASK-106's validation run, no new ingestion required. Depends on TASK-138 (where the script lives) and TASK-139 (rebound/rush column).",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "Export includes one row per Fenwick shot event with distance, angle, shot_type, strength_state, danger-zone bucket, rebound/rush flag, season_id, and goal/no-goal label",
+      "Re-running the export is deterministic \u2014 same input data produces the same file",
+      "Blocked shots are excluded, matching the existing xG-scoring rule"
+    ]
+  },
+  {
+    "id": "TASK-141",
+    "epic_id": "EPIC-23",
+    "title": "Fit and validate the baseline model (distance + angle only)",
+    "description": "Direct, apples-to-apples replacement for the v0-placeholder coefficients (intercept: 0.2, distance: -0.05, angle: -0.02) \u2014 confirmed wrong live (TOR @ ANA, 2026-03-30: 10.55-12.10 combined team xG against a realistic 2-4). Fits a logistic regression on distance/angle only from TASK-140's export, split by season, not by shot (shots within a season aren't independent \u2014 a random split leaks and overstates the fit). Purpose is proving the pipeline mechanics end to end \u2014 real data in, real coefficients out, realistic totals \u2014 before widening the feature set adds complexity.",
+    "type": "spike",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "Season-held-out validation, not a random shot-level split",
+      "Calibration curve and Brier score/log loss reported, not just accuracy",
+      "Per-team-per-game xG totals fall in a realistic range (roughly 1-6) against a held-out sample of real games"
+    ]
+  },
+  {
+    "id": "TASK-142",
+    "epic_id": "EPIC-23",
+    "title": "Fit and validate the full v1 model (+ shot_type, strength_state, danger-zone, rebound/rush)",
+    "description": "Widens TASK-141's baseline to the full v1 feature set settled during TASK-81's scoping: shot_type (one-hot), strength_state, DangerZone bucket, and TASK-139's rebound/rush flag, all reducible to a linear combination of features so the fit still matches XgModel.coefficients' existing weighted-sum-through-sigmoid shape (logistic regression, not a tree ensemble \u2014 a gradient-boosted model doesn't fit that storage/serving design and is a deferred future option, not v1 scope). Velocity is deliberately excluded \u2014 confirmed unavailable per-shot from any NHL data source, public or Edge, during TASK-81's scoping. Same validation bar as TASK-141, compared side by side to confirm the wider feature set is actually an improvement.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "Calibration (Brier score/log loss) is measurably better than TASK-141's baseline, not just different",
+      "Per-team-per-game xG totals remain realistic (roughly 1-6) against a held-out sample of real games",
+      "Feature choices and the training process are documented (DECISIONS.md or alongside the script) \u2014 TASK-81's original second acceptance criterion"
+    ]
+  },
+  {
+    "id": "TASK-143",
+    "epic_id": "EPIC-23",
+    "title": "Extend XgFormula/XgModel to serve the widened feature set",
+    "description": "XgFormula.calculate(coefficients:, x_coord:, y_coord:, target_net_x:) currently only ever weights distance and angle (intercept + distance*coef + angle*coef, through a sigmoid). TASK-142's fit needs shot_type/strength_state/danger-zone/rebound-rush terms represented and weighted too \u2014 real application code, not a training-script concern. XgModel.coefficients is already a flexible jsonb, so this is about XgFormula (and its caller, ComputeGameAdvancedStats) knowing how to build the full feature vector for a given GameEvent and apply the wider coefficient set, not a schema change. Needs its own specs proving the same physical shot scores identically regardless of which end is defended \u2014 the existing invariant TASK-75 already proved for distance/angle \u2014 still holds with the new terms.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "XgFormula (or a caller) builds the full v1 feature vector from a GameEvent and applies all of TASK-142's coefficient terms, not just distance/angle",
+      "A spec proves the same physical shot scores identically regardless of which end the team defends that period, matching the existing distance/angle invariant",
+      "Existing distance/angle-only XgModel versions (e.g. v0-placeholder) still compute correctly, unaffected by the wider code path"
+    ]
+  },
+  {
+    "id": "TASK-144",
+    "epic_id": "EPIC-23",
+    "title": "Activate the trained model",
+    "description": "Insert TASK-142's fitted coefficients as a new XgModel row (version, coefficients, trained_at) via a rake task reading the training script's actual output \u2014 not hand-typed. XgModel.activate!(version) atomically swaps it in (already built, TASK-59). No other application code changes needed once TASK-143 lands, per XgModel's existing design.",
+    "type": "chore",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "The new XgModel row is inserted from the training script's actual output file, not hand-transcribed",
+      "activate! makes it the sole active model in one atomic operation, matching the existing partial-unique-index guarantee"
+    ]
+  },
+  {
+    "id": "TASK-145",
+    "epic_id": "EPIC-23",
+    "title": "Backfill historical advanced stats against the trained model",
+    "description": "player_game_advanced_stats/team_game_advanced_stats rows carry xg_model_id, tagging them to whichever model version produced them \u2014 activating a new XgModel doesn't retroactively change already-computed rows. Scoped in during TASK-81's scoping: every historical game's advanced-stat rows should get recomputed against the newly active model, riding TASK-62's existing recompute-chain machinery (RebuildPlayerAdvancedStatsChain / RecomputeTeamSeasonAdvancedStats) rather than a new mechanism. Likely the longest-running step here \u2014 worth checking whether TASK-94's bulk/batch recompute path applies directly or needs adapting for a full-history run rather than a per-sync-run scope.",
+    "type": "chore",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "Every historical game with existing player_game_advanced_stats/team_game_advanced_stats rows is recomputed against the newly active XgModel",
+      "The recompute reuses TASK-62/TASK-94's existing chain-rebuild machinery rather than a new one-off script",
+      "A spot check confirms post-backfill xg_for/xg_against totals reflect the new model, not the placeholder, for a sample of historical games"
+    ]
+  },
+  {
+    "id": "TASK-146",
+    "epic_id": "EPIC-24",
+    "title": "DraftPick model: year, round, original/current owner, protections",
+    "description": "New model \u2014 draft_year, round, original_team_id, current_team_id (both Team refs), plus a field for conditions/protections (e.g. \"top-10 protected\") since real pick trades are usually described that way, not as a bare pick. current_team_id defaults to original_team_id at creation (no trade yet). Read-only/display for now \u2014 nothing writes to current_team_id until TASK-148 gives trades a way to move a pick.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-147",
+    "epic_id": "EPIC-24",
+    "title": "Draft lottery odds from current-season standings",
+    "description": "TeamStanding already carries league_sequence and points \u2014 the right base to weight against a lottery-odds table. Open question from the roadmap doc, needs an answer before building: the app spans NHL/AHL/ECHL teams (data/nhl-teams, data/ahl-teams, data/echl-teams all exist) but an actual draft lottery is an NHL-specific mechanic \u2014 default to scoping this to NHL standings only unless told otherwise.",
+    "type": "feature",
+    "status": "backlog",
+    "acceptance_criteria": [
+      "NHL-only scope (or the alternative) confirmed with Adam before implementing, per docs/STANDARDS.md's architectural-call rule"
+    ]
+  },
+  {
+    "id": "TASK-148",
+    "epic_id": "EPIC-9",
+    "title": "GM: include draft picks as a tradeable asset in trade proposals",
+    "description": "Extends TASK-38 (\"GM: propose and respond to trades with other teams\", backlog) to treat DraftPick (TASK-146) as an asset type alongside players/contracts, moving current_team_id on acceptance. Depends on TASK-146 and TASK-38.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-149",
+    "epic_id": "EPIC-25",
+    "title": "Spike: confirm live shape of the NHL boxscore endpoint's summary object",
+    "description": "NhlClient#boxscore (/v1/gamecenter/{id}/boxscore) is already called by SyncGameStats for skater/goalie stat lines, but nothing in this codebase has read its summary key. Hit it live for a real completed game and record what's actually there \u2014 same discipline as docs/DECISIONS.md's existing boxscore-field confirmations. Answers: does summary.scoring carry per-goal detail (scorer/assists/time/strength) redundant with or richer than GameEvent's goal events; does summary.penalties carry infraction type and duration (which GameEvent does not store today); does summary.linescore give period-by-period score/SOG directly. The answer decides whether TASK-150/151 read off GameEvent, off a new boxscore-summary field, or both.",
+    "type": "spike",
+    "status": "backlog",
+    "acceptance_criteria": [
+      "Result (the actual response shape, or a link/paste of it) recorded in docs/DECISIONS.md, matching how the existing boxscore field-scope confirmation is documented"
+    ]
+  },
+  {
+    "id": "TASK-150",
+    "epic_id": "EPIC-25",
+    "title": "GameEventSerializer + goal/penalty detail on GET /api/v1/games/:id",
+    "description": "Goal and penalty events are already fully ingested and attributed (see EPIC-25 description) \u2014 add a serializer and a new key on Api::V1::GamesController#show, same pattern as zone_time was added. Penalty infraction/duration depends on TASK-149's answer: either read off GameEvent (if a migration adds the column, sourced from play-by-play) or off the boxscore summary (if TASK-149 finds it there) \u2014 don't guess the source before that spike lands.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-151",
+    "epic_id": "EPIC-25",
+    "title": "Period-by-period score and shots-on-goal",
+    "description": "Derivable today by grouping existing GameEvent rows (goal for score, goal+shot for shots-on-goal) by period and team \u2014 no new ingestion required unless TASK-149 finds summary.linescore is a cheaper, more authoritative source. Depends on TASK-149.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-152",
+    "epic_id": "EPIC-25",
+    "title": "Goalie decision line in boxscore",
+    "description": "GoalieGameStat.decision/starter/saves/shots_against/pim are already computed and already returned by GET /api/v1/games/:id (goalies key, GoalieGameStatSerializer). No backend change \u2014 this is formatting the existing goalie rows into a W/L/OT boxscore line on the frontend.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-153",
+    "epic_id": "EPIC-25",
+    "title": "GameBoxscore frontend components: goal summary, penalty list, period score/shots table",
+    "description": "New components alongside GameSkaterStatsTable/GameGoalieStatsTable in GamePage.tsx \u2014 one component per file, per docs/STANDARDS.md. Consumes TASK-150 (goals/penalties), TASK-151 (period score/shots), TASK-152 (goalie decision line). Depends on all three.",
+    "type": "feature",
+    "status": "backlog"
   }
 ]
