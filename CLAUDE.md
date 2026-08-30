@@ -20,7 +20,7 @@ Backcheck is a public-facing, multi-tenant hockey analytics dashboard: many leag
 
 ## Non-negotiables (full detail in docs/STANDARDS.md)
 
-- Comments explain *why*, never *how*. 1-2 lines, only when the code can't speak for itself. No comment restating what the next line obviously does.
+- **Comments: default to none.** Write code that doesn't need them. Before adding any comment, state in your response the specific bug a maintainer would introduce without it — no nameable bug, delete it. Never write class/method/field summary comments. A comment describing *what* the code does is always wrong. If a reviewer has to ask you to cut comments, the change wasn't done.
 - No vibe-coded slop: understand the change before writing it, don't paste in unverified patterns.
 - One component per file. No folders that hold a single file's worth of content.
 - Ask before making an architectural call that isn't already in `docs/DECISIONS.md`. Log it there once made.

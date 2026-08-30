@@ -4,13 +4,15 @@ Applies across the whole repo (backend and frontend).
 
 ## Comment policy (strict)
 
-- Comments explain *why*, never *how*. The code already shows how; a comment repeating it is noise.
-- 1-2 lines maximum, and only when the reasoning genuinely isn't obvious from the code itself (a non-obvious business rule, a workaround for an external constraint, a deliberate deviation from the expected pattern).
-- If a comment is needed to explain *what* a block of code does, that's a signal the code should be restructured (extracted, renamed) instead of annotated.
+- **Default to zero comments.** The bar to add one: name the specific bug a maintainer would introduce without it. If you can't name one, there's no comment.
+- When you do add one, say in your PR/response what that bug is. A reviewer asking you to cut comments means the change isn't finished.
+- Never write summary comments on a class, method, or field. If a comment is needed to explain *what* code does, restructure (extract, rename) instead of annotating.
+- 1-2 lines maximum. Legitimate cases: a non-obvious business rule, a workaround for an external constraint, a deliberate deviation from the expected pattern.
 - No commented-out code left in commits. Delete it — git history has it if it's ever needed.
 - No changelog-style comments (`# added this on 2024-01-01`). Git history is the changelog.
 
 Bad: `# increment counter by 1` above `counter += 1`
+Bad: `# Returns the normalized shot coordinates` above `def normalized_coords`
 Good: `# Rails' default JSON serializer chokes on BigDecimal here, so we cast explicitly` above a `.to_f` cast
 
 ## No vibe-coded slop
