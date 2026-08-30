@@ -592,5 +592,20 @@ Folded in three smaller findings from the same audit rather than filing them sep
 
 Net ~97 fewer lines across the client layer despite gaining behavior (widened rescue list, shared retry helper). Verified against real data: all three clients hit their live APIs successfully post-refactor (standings, shift-chart, HockeyTech seasons, a 307-redirect roster fetch, and a real 404), plus the full existing spec suite (338 examples) unchanged.
 
+### Danger-zone boundaries in our coordinate system (TASK-106)
+**Status:** Settled
+
+EPIC-18 locked in adopting the public "home plate" shot-danger definition (Elias / War-on-Ice, as used by Natural Stat Trick and MoneyPuck) rather than inventing one. This task translated it into our `x_coord`/`y_coord` frame — feet, attacking net at `(XgFormula::HALF_RINK_X, 0)` — and validated the buckets against every ingested shot.
+
+**`DangerZone` holds constants only.** TASK-107 adds `DangerZone.classify`; the draft classifier logic lives in `rake danger_zone:validate` until then.
+
+**High-danger** = the home-plate polygon: `[54, ±22] → [69, ±22] → [89, ±3]`, i.e. from the top of the offensive faceoff circles (dot at x=69 minus the 15ft circle radius), out through the faceoff dots, angled to the goal posts — the source definition, verbatim, in our units. Plus a rounded front: any shot within `HIGH_DANGER_CREASE_RADIUS_FT` (8ft ≈ crease radius + a stick) is high-danger regardless of angle, so goal-mouth jams still count.
+
+**Mid-range / long-range** split shots *outside* the polygon by distance to the net (`MID_RANGE_MAX_DISTANCE_FT`, 60ft — just inside the offensive blue line, 64ft down the middle). Per EPIC-18's "polygon + distance bands" decision — not the War-on-Ice nested-grid approach, which needs the event modifiers (rebound, royal-road) that our xG hold-back (TASK-81) rules out for now.
+
+**Validation** (`rake danger_zone:validate`, no API call — re-runnable against ingested `game_events`): across 4,420 games / 375k shot events / 27k goals — high-danger 43% of shots but **72% of goals**, mid-range 44%/23%, long-range 12%/4%. Consistent with the known "most goals come from the home plate" result. Hand-checked samples: close in-slot goals land in high-danger, point shots in long-range (the two ACs). Known edge behavior, not a bug: the polygon deliberately excludes sharp-angle shots near the goal line, so ~3.7% of goals recorded within 15ft (bad-angle jams beyond the crease radius) classify as mid-range — matching how the geometric standard itself behaves. ~2.7% of goals have coordinates that normalize to the far end (empty-netters shot from the defensive zone, plus noisy source coords); they fall in long-range, which is harmless.
+
+**Coordinate normalization** reuses the same `home_team_defending_side` → `target_net_x` resolution as `ComputeGameAdvancedStats`, then folds every shot onto the +x net. TASK-107 will extract that shared step so `XgFormula` and `DangerZone` both call it.
+
 ### Project scope / feature set
 **Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.
