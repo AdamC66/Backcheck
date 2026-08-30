@@ -22,6 +22,7 @@ class SyncGameEvents
     shifts = upsert_shifts
 
     ComputeGameAdvancedStats.new(game: game).call
+    ComputeGameZoneTime.new(game: game).call
     MarkGameForStatsRecompute.new(game: game, mode: recompute).call
     @goalie_stats = RecomputeGoalieGamePoints.new(game: game, recompute: recompute).call
     @skater_stats = ComputeIndividualGameStats.new(game: game, recompute: recompute).call

@@ -34,12 +34,30 @@ class RebuildTouchedAdvancedStatsChains
       failures << "team=#{team_id}: #{e.message}"
     end
 
+    rebuild_zone_time_rollups
+
     Game.where(id: game_ids).update_all(stats_syncing: false)
   end
 
   private
 
   attr_reader :season, :player_ids, :team_ids, :game_ids
+
+  def rebuild_zone_time_rollups
+    game_types = Game.where(id: game_ids).pluck(:id, :game_type).to_h
+    stints = PlayerGameZoneTime.where(game_id: game_ids).distinct.pluck(:player_id, :team_id, :game_id)
+                               .map { |player_id, team_id, game_id| [ player_id, team_id, game_types.fetch(game_id) ] }
+                               .uniq
+    players = Player.where(id: stints.map(&:first)).index_by(&:id)
+    teams = Team.where(id: stints.map { |stint| stint[1] }).index_by(&:id)
+
+    stints.each do |player_id, team_id, game_type|
+      RecomputeSeasonZoneTime.new(player: players.fetch(player_id), team: teams.fetch(team_id),
+                                  season: season, game_type: game_type).call
+    rescue StandardError => e
+      failures << "zone_time player=#{player_id} team=#{team_id}: #{e.message}"
+    end
+  end
 
   def rebuild_player(player)
     dimension_start_games(player).each do |from_game|

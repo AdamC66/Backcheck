@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_29_122713) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_30_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -211,6 +211,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_29_122713) do
     t.index ["xg_model_id"], name: "index_player_game_advanced_stats_on_xg_model_id"
   end
 
+  create_table "player_game_zone_times", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "defensive_seconds", default: 0, null: false
+    t.integer "defensive_starts", default: 0, null: false
+    t.bigint "game_id", null: false
+    t.integer "neutral_seconds", default: 0, null: false
+    t.integer "neutral_starts", default: 0, null: false
+    t.integer "offensive_seconds", default: 0, null: false
+    t.integer "offensive_starts", default: 0, null: false
+    t.integer "on_the_fly_starts", default: 0, null: false
+    t.bigint "player_id", null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "player_id"], name: "index_player_game_zone_times_on_game_id_and_player_id", unique: true
+    t.index ["game_id"], name: "index_player_game_zone_times_on_game_id"
+    t.index ["player_id"], name: "index_player_game_zone_times_on_player_id"
+    t.index ["team_id"], name: "index_player_game_zone_times_on_team_id"
+  end
+
   create_table "player_season_advanced_stats", force: :cascade do |t|
     t.bigint "as_of_game_id", null: false
     t.integer "corsi_against", default: 0, null: false
@@ -237,6 +256,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_29_122713) do
     t.index ["player_id"], name: "index_player_season_advanced_stats_on_player_id"
     t.index ["season_id"], name: "index_player_season_advanced_stats_on_season_id"
     t.index ["team_id"], name: "index_player_season_advanced_stats_on_team_id"
+  end
+
+  create_table "player_season_zone_times", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "defensive_seconds", default: 0, null: false
+    t.integer "defensive_starts", default: 0, null: false
+    t.integer "game_type", null: false
+    t.integer "games_played", default: 0, null: false
+    t.integer "neutral_seconds", default: 0, null: false
+    t.integer "neutral_starts", default: 0, null: false
+    t.integer "offensive_seconds", default: 0, null: false
+    t.integer "offensive_starts", default: 0, null: false
+    t.integer "on_the_fly_starts", default: 0, null: false
+    t.bigint "player_id", null: false
+    t.bigint "season_id", null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_id", "team_id", "season_id", "game_type"], name: "index_pszt_on_stint", unique: true
+    t.index ["player_id"], name: "index_player_season_zone_times_on_player_id"
+    t.index ["season_id"], name: "index_player_season_zone_times_on_season_id"
+    t.index ["team_id"], name: "index_player_season_zone_times_on_team_id"
   end
 
   create_table "players", force: :cascade do |t|
@@ -619,10 +659,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_29_122713) do
   add_foreign_key "player_game_advanced_stats", "players"
   add_foreign_key "player_game_advanced_stats", "teams"
   add_foreign_key "player_game_advanced_stats", "xg_models"
+  add_foreign_key "player_game_zone_times", "games"
+  add_foreign_key "player_game_zone_times", "players"
+  add_foreign_key "player_game_zone_times", "teams"
   add_foreign_key "player_season_advanced_stats", "games", column: "as_of_game_id"
   add_foreign_key "player_season_advanced_stats", "players"
   add_foreign_key "player_season_advanced_stats", "seasons"
   add_foreign_key "player_season_advanced_stats", "teams"
+  add_foreign_key "player_season_zone_times", "players"
+  add_foreign_key "player_season_zone_times", "seasons"
+  add_foreign_key "player_season_zone_times", "teams"
   add_foreign_key "players", "teams", column: "draft_team_id"
   add_foreign_key "possible_duplicate_players", "players", column: "player_a_id"
   add_foreign_key "possible_duplicate_players", "players", column: "player_b_id"

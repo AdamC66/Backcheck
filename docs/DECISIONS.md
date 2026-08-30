@@ -620,5 +620,33 @@ Revisit only for the deferred smoothed-density heatmap — kernel-density contou
 
 **Revisited for the shot heatmap — `d3-contour` adopted for season-aggregate density maps.** Prototyped against ~4,800 real shots (VGK 2025-26, for and against): `contourDensity()` does the KDE + marching-squares in one call, returns polygon GeoJSON that renders as ~8 lines of SVG path. ~6kb gzipped, depends only on `d3-array`, no DOM code — a data module, not "d3 the framework," so it doesn't reopen the hand-rolled-UI stance any more than `@tanstack/react-table` did. It only pays off at volume (a full season); it's not for single games. **Single-game shot view stays a hand-rolled weighted scatter** — one circle per shot, area by a shot-quality proxy (1/distance) until TASK-81 lands a trained xG model, then it swaps to real xG. The hockeyviz-style "vs league average" diverging map needs a league-wide baseline shot-rate grid (backend work, TASK-136) and is a later upgrade on top of the absolute for/against maps.
 
+### Zone occupancy & zone time (TASK-110 / TASK-111)
+**Status:** Settled
+
+**Puck zone comes from `x_coord` + `home_team_defending_side`, not `zoneCode`.** `|x| ≤ 25` (blue line, `ZoneOccupancyTimeline::NEUTRAL_ZONE_MAX_ABS_X`) is neutral; otherwise offensive/defensive by whether the sign points to the home team's attacking end. `event.zone` (the NHL `zoneCode`) is only a fallback when coords are missing, and never for a blocked shot — a blocked shot's `zoneCode` is the blocker's frame, not the shooter's (confirmed in the `play_by_play` fixture: an away-owned block at x=−83, the away team's offensive end, carries `zoneCode` "D").
+
+**`ZoneOccupancyTimeline` is a forward-fill: "zone of the last zone-carrying event."** Each event's zone holds until the next one; the pre-first-event gap is seeded from the opening faceoff; the last segment runs to the period length (`max(shift.end_time_seconds)`, so OT falls out). This is a **proxy, not tracked zone time** — the stretch between two events is billed entirely to the earlier one, so it is biased toward event-dense zones (offensive, from shots; defensive) and blind to transitions. NHL Edge's tracked zone time (10Hz puck/player coords) is a different, unavailable thing; UI must not present this as equivalent.
+
+**No-data rule:** a period with no `home_team_defending_side` and no usable `zoneCode` produces no segments — no zeros, no default — matching the real-PBP-only stance of advanced stats.
+
+**Two confidence tiers, stored side by side on `player_game_zone_times`:** zone **starts** (faceoff within `ComputeGameZoneTime::START_FACEOFF_WINDOW_SECONDS` = 2s of the shift start, bucketed by that faceoff's zone; otherwise `on_the_fly_starts`) are faceoff-anchored and reliable — this is how the NHL's own OZS%/DZS% is computed. Zone **time** seconds are the proxy above. The "effective transporter" read (starts deep but drives play the right way) leans on existing on-ice Fenwick/xG from `PlayerGameAdvancedStat`; the zone-time delta is corroborating color, not the load-bearing signal.
+
+**Season rollup mirrors `SkaterSeasonStat` / `RecomputeSeasonStats`, not the advanced-stats chain.** `RecomputeSeasonZoneTime` re-sums `player_game_zone_times` from scratch per `(player, team, season, game_type)` stint. Zone time has no strength/score splits and no game-by-game as-of history, so the chain's machinery (as-of snapshots, `stale` flag, forward rebuild, touched-chain batching) buys nothing; `RecomputeTeamSeasonAdvancedStats` already sets the precedent that not every advanced rollup needs the chain. Trades are handled by the stint key, exactly as `SkaterSeasonStat`. The rollup piggybacks on the advanced-stats correction path — `RebuildAdvancedStatsForGame` (async, per game) and `RebuildTouchedAdvancedStatsChains` (bulk) already enumerate the touched players per game — so there is no separate job or orchestrator wiring.
+
+**Validated (TASK-112, `rake zone_time:validate` — re-runnable, writes nothing).** Over a 1,500-game sample (~1.1M skater shifts):
+
+- **Shift × segment intersection is exact** — zero player-games where the summed zone seconds diverge from summed shift length (over periods that have a timeline) by more than 2s.
+- **Coverage is ~100%** — every period with shifts also has zone events, so the no-data rule (below) is a safety net that essentially never fires on real NHL play-by-play.
+- **Zone starts:** ~58% on-the-fly; faceoff-anchored starts split ~32% O / ~38% N / ~30% D — consistent with the NHL's own OZS%/DZS% (on-the-fly majority; neutral lean from icing/offside/period-start draws).
+- **Zone time (the proxy):** ~43% O / ~16% N / ~41% D. O ≈ D as it must be league-wide (one team's offensive second is the other's defensive second). **Neutral is understated** — tracked data puts neutral-zone time near 25–30%; the forward-fill roughly halves it because almost no events fire in the neutral zone, so transition time gets billed to the O/D zone on either side. This is the headline limitation and the reason zone-time % is the corroborating signal, not the load-bearing one.
+- **Transition sensitivity:** shifts that start on a defensive-zone faceoff still spend ~15% of their time in the offensive zone (and symmetrically) — the proxy tracks within-shift puck movement, it is not just echoing the start draw, but the effect is compressed by short shift length.
+
+**Edge-case handling (deliberate, not silent defaults):**
+
+- *Shift with no zone-relevant event during it* — forward-filled from the last event before the shift (or the period's opening faceoff). It gets the last known puck zone, never a zero.
+- *Line change mid-transition* — the shift's start instant takes the last event's zone; only a faceoff within ±2s reclassifies it. Every other start is `on_the_fly`, counted separately and never guessed into O/N/D — this is what keeps zone *starts* trustworthy.
+- *Period with no defending-side / zone data at all* — no segments; its shifts contribute 0 seconds and are excluded from the coverage denominator (not recorded as "defensive: 0"). The report's `no data` line surfaces the volume.
+- *Empty-net / late-game* — those events carry coordinates like any other and flow through unchanged; no special-casing (negligible volume, same call as the danger-zone far-end note).
+
 ### Project scope / feature set
 **Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.

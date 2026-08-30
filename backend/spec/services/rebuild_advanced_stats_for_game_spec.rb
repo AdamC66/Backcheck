@@ -12,6 +12,7 @@ RSpec.describe RebuildAdvancedStatsForGame do
 
   before do
     create(:player_game_advanced_stat, game: game, player: player, team: home_team, xg_model: xg_model)
+    create(:player_game_zone_time, game: game, player: player, team: home_team)
     create(:team_game_advanced_stat, game: game, team: home_team)
     create(:team_game_advanced_stat, game: game, team: away_team)
   end
@@ -23,5 +24,12 @@ RSpec.describe RebuildAdvancedStatsForGame do
     expect(TeamSeasonAdvancedStat.find_by(team: home_team, season: season)).to be_present
     expect(TeamSeasonAdvancedStat.find_by(team: away_team, season: season)).to be_present
     expect(game.reload.stats_syncing).to be false
+  end
+
+  it "re-sums the affected player's season zone-time stint" do
+    described_class.new(game: game).call
+
+    expect(PlayerSeasonZoneTime.find_by(player: player, team: home_team, season: season, game_type: game.game_type))
+      .to be_present
   end
 end

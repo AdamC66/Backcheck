@@ -12,6 +12,7 @@ class RebuildAdvancedStatsForGame
     [ game.home_team, game.away_team ].each do |team|
       RecomputeTeamSeasonAdvancedStats.new(team: team, season: game.season).call
     end
+    rebuild_zone_time_rollups
     game.update!(stats_syncing: false)
   end
 
@@ -21,5 +22,12 @@ class RebuildAdvancedStatsForGame
 
   def affected_players
     Player.where(id: PlayerGameAdvancedStat.where(game: game).select(:player_id).distinct)
+  end
+
+  def rebuild_zone_time_rollups
+    PlayerGameZoneTime.where(game: game).includes(:player, :team).find_each do |row|
+      RecomputeSeasonZoneTime.new(player: row.player, team: row.team, season: game.season,
+                                  game_type: game.game_type).call
+    end
   end
 end
