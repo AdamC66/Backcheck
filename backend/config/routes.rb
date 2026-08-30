@@ -40,6 +40,8 @@ Rails.application.routes.draw do
 
       resources :roster_statuses, only: [ :index ]
 
+      get "danger_zones", to: "danger_zones#show"
+
       namespace :admin do
         resources :sync_runs, only: [ :index, :show, :create ] do
           member do

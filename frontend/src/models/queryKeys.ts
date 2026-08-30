@@ -38,6 +38,8 @@ export const ROADMAP_KEY = ["roadmap"] as const;
 
 export const SYNC_KINDS_KEY = ["sync-kinds"] as const;
 
+export const DANGER_ZONES_KEY = ["danger-zones"] as const;
+
 export const seasonsKey = (leagueSlug: string) => ["seasons", leagueSlug] as const;
 
 export const coverageKey = (leagueId: number) => ["coverage", leagueId] as const;

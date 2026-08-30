@@ -8,11 +8,12 @@ class DangerZone
   GOAL_LINE_X = ShotGeometry::HALF_RINK_X
 
   # Home-plate polygon for the net at +GOAL_LINE_X: top of the faceoff circles (dot x=69 minus
-  # the 15ft circle radius), out to the dots at y=±22, angled to the goal posts at y=±3. A shot's
-  # x is normalized onto this net before the point-in-polygon test; y-symmetric, so y-sign is moot.
+  # the 15ft circle radius), out to the dots at y=±22, angled to the goal-line corners of the
+  # crease at y=±4 (1ft outside each post). A shot's x is normalized onto this net before the
+  # point-in-polygon test; y-symmetric, so y-sign is moot.
   HIGH_DANGER_POLYGON = [
-    [ 54, 22 ], [ 69, 22 ], [ GOAL_LINE_X, 3 ],
-    [ GOAL_LINE_X, -3 ], [ 69, -22 ], [ 54, -22 ]
+    [ 54, 22 ], [ 69, 22 ], [ GOAL_LINE_X, 4 ],
+    [ GOAL_LINE_X, -4 ], [ 69, -22 ], [ 54, -22 ]
   ].freeze
 
   # A shot this close is high-danger at any angle — rounds off the polygon's flat goal-line edge

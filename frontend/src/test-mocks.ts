@@ -1,5 +1,6 @@
 import type { Envelope } from "@/lib/apiClient";
 import type { User } from "@/models/auth";
+import type { DangerZoneGeometry } from "@/models/dangerZones";
 import type {
   GameDetail,
   GameDetailMeta,
@@ -654,4 +655,18 @@ export const PLAYER_DETAIL: Envelope<PlayerDetail, PlayerDetailMeta> = {
     ],
   },
   meta: { game_type: "regular_season" },
+};
+
+export const DANGER_ZONES: DangerZoneGeometry = {
+  goal_line_x: 89,
+  high_danger_polygon: [
+    [54, 22],
+    [69, 22],
+    [89, 4],
+    [89, -4],
+    [69, -22],
+    [54, -22],
+  ],
+  high_danger_crease_radius_ft: 8,
+  mid_range_max_distance_ft: 60,
 };

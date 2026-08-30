@@ -7,6 +7,7 @@ import { UserMenu } from "@/containers/UserMenu";
 const NAV_ITEMS = [
   { label: "Sync Runs", to: "", end: true },
   { label: "Data", to: "data" },
+  { label: "Danger zones", to: "rink" },
   { label: "Roadmap", to: "roadmap" },
 ];
 
