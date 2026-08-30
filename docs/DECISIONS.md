@@ -593,4 +593,4 @@ Folded in three smaller findings from the same audit rather than filing them sep
 Net ~97 fewer lines across the client layer despite gaining behavior (widened rescue list, shared retry helper). Verified against real data: all three clients hit their live APIs successfully post-refactor (standings, shift-chart, HockeyTech seasons, a 307-redirect roster fetch, and a real 404), plus the full existing spec suite (338 examples) unchanged.
 
 ### Project scope / feature set
-**Status:** Open — being tracked as epics/tasks in `planning/`, not just prose here. See `PLANNING.md`.
+**Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.

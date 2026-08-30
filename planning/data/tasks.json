@@ -280,7 +280,7 @@
     "epic_id": "EPIC-3",
     "title": "Model retained rights (drafted-but-unsigned players)",
     "type": "feature",
-    "status": "backlog",
+    "status": "blocked",
     "priority": "low",
     "description": "Wants its own player_rights table, not a roster_spots row \u2014 a rights-held player is not on a roster in a season, and forcing him into one would model a lie. Needs name matching against players who may have no nhl_player_id yet. Unbuilt because no complete source exists: /v1/prospects/{team} returns only drafted-and-unsigned-abroad (4 players for Toronto, all KHL), and /v1/draft/picks/{year}/all carries no playerId, only name and amateur club."
   },
@@ -415,11 +415,11 @@
   {
     "id": "TASK-46",
     "epic_id": "EPIC-8",
-    "title": "Backfill and daily recurring sync for game stats",
+    "title": "Recurring daily sync for game stats",
     "type": "chore",
     "status": "backlog",
     "priority": "medium",
-    "description": "TASK-45's SyncGameStatsJob syncs one game at a time, on demand \u2014 nothing yet calls it for every already-finished game (rake nhl:backfill doesn't touch it) or wires it into recurring.yml alongside SyncDailyScoresJob. One boxscore request per game means a full-season backfill is ~1,300 requests at the client's throttled 1 req/sec (~20+ min) \u2014 worth deciding batching/scope before wiring it in, not just looping every Game.find_each."
+    "description": "Boxscore ingestion (UpsertGameStats/SyncGameStats) can already be run in bulk on demand \u2014 the nhl:backfill_game_stats[team_abbreviation,nhl_season_id] rake task and EPIC-12's admin sync console both drive it per league/season. What's missing is a schedule: recurring.yml syncs standings and daily scores at 9am UTC, but finished games never get their boxscores pulled automatically the next morning the way scores do. Add a recurring daily game_stats sync (a job over yesterday's finished games, or folded into SyncDailyScores' path) at the same cadence. Note the original per-game SyncGameStatsJob wrapper this task was first written around was deleted in TASK-99 \u2014 AdminSyncOrchestrator calls SyncGameStats/UpsertGameStats directly now; a recurring job should do the same rather than resurrect the wrapper."
   },
   {
     "id": "TASK-47",
@@ -720,7 +720,7 @@
     "id": "TASK-71",
     "epic_id": "EPIC-14",
     "title": "League-wide player search page",
-    "description": "New page wiring TASK-69's endpoints through TASK-70's extended DataTable: a search input, filter controls (league/team/position/season), sortable columns spanning basic and advanced stats, and pagination controls. Separate skater/goalie views (tabs or separate routes), not a merged table. Depends on TASK-70.\n\nDone: containers/LeaguePlayersPage at /players with a skaters/goalies SegmentedControl (view in URL; carries league/season/team/q across the switch, drops sort/splits). Body is <ServerDataTable resource=... cellRenderers={player,team}/>. Discovery link on the dashboard.",
+    "description": "New page wiring TASK-69's endpoints through TASK-70's extended DataTable: a search input, filter controls (league/team/position/season), sortable columns spanning basic and advanced stats, and pagination controls. Separate skater/goalie views (tabs or separate routes), not a merged table. Depends on TASK-70.\n\nDone: containers/LeaguePlayersPage at /players with a skaters/goalies SegmentedControl (view in URL; carries league/season/team/q across the switch, drops sort/splits). Body is <ServerDataTable resource=... cellRenderers={player,team}/>. Discovery link on the dashboard.\n\nCorrection (post-ship, commit ec5b925): did NOT ship as a standalone containers/LeaguePlayersPage at /players with a dashboard discovery link. Shipped as a tab on the league page \u2014 /leagues/:slug/stats \u2192 LeagueStatsPage, a skaters/goalies SegmentedControl over <ServerDataTable resource=league_skaters|league_goalies>. League/season are scoped by the league page, not defaulted to nhl. No /players route exists. TASK-68/69's \"defaults to nhl\" notes predate that scoping.",
     "type": "feature",
     "status": "done",
     "priority": "medium"
@@ -1071,5 +1071,251 @@
     "type": "chore",
     "status": "done",
     "priority": "high"
+  },
+  {
+    "id": "TASK-106",
+    "epic_id": "EPIC-18",
+    "title": "Recon: pin the danger-zone boundary definition against real shot coordinates",
+    "description": "Adopt the widely-used \u201chome plate\u201d high-danger/mid-range/long-range shot-danger zone definition (War-on-Ice/Natural Stat Trick/MoneyPuck) rather than inventing our own, per the planning decision. Translate its boundaries into our own x_coord/y_coord coordinate system (feet, half-rink baseline of 89 matching XgFormula::HALF_RINK_X) and validate the resulting buckets against a sample of real shot coordinates from already-ingested games before this feeds anything downstream.",
+    "type": "spike",
+    "status": "backlog",
+    "priority": "high",
+    "acceptance_criteria": [
+      "Danger-zone boundaries documented as constants expressed in our own coordinate system, not just cited from the source definition",
+      "A sample of real high-danger goals (close, in-slot) falls inside the high-danger bucket when checked by hand",
+      "A sample of real long point shots falls inside the long-range bucket when checked by hand"
+    ]
+  },
+  {
+    "id": "TASK-107",
+    "epic_id": "EPIC-18",
+    "title": "DangerZone classifier service",
+    "description": "A service (DangerZone.classify(x_coord:, y_coord:, target_net_x:)) returning :high_danger / :mid_range / :long_range for a shot, built on TASK-106's boundaries. Reuses XgFormula's existing target_net_x/distance/angle normalization rather than duplicating it \u2014 extract the shared normalization step if needed so XgFormula and DangerZone both call it. Pure function, no new schema.\n\nGameEvent.x_coord/y_coord are nullable integers (only populated from real play-by-play). classify must return a defined result for a null-coordinate shot (e.g. nil / :unknown) rather than raising or silently bucketing it \u2014 same nil-tolerance XgFormula.calculate already has (returns 0.0).",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-108",
+    "epic_id": "EPIC-18",
+    "title": "Coordinate-normalized, danger-zone-classified shot query for a team/player/goalie",
+    "description": "A query object returning normalized shot events for a team, player, or goalie, scoped by game/season/strength_state/score_state and classified via TASK-107's DangerZone \u2014 the one shared data shape every heatmap, zone map, and zone chart in EPIC-19 through EPIC-22 consumes, built once instead of per epic. Backed entirely by GameEvent, which already has x_coord/y_coord/zone/shot_type/team/primary_player/strength_state.\n\nx_coord/y_coord/zone/strength_state/home_team_defending_side on GameEvent are all nullable. The query has to decide explicitly whether a coordinate-less shot event is excluded or returned unclassified \u2014 not drop or miscount it by accident.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-109",
+    "epic_id": "EPIC-18",
+    "title": "Reusable rink/zone-chart frontend components",
+    "description": "frontend/package.json has recharts (already used elsewhere in the app) but no d3 or visx. The rink/zone visuals here (hockeyviz/MoneyPuck-style density heatmaps, NHL Edge zone charts) are custom-drawn shapes over a rink background, not standard chart types \u2014 whether that's best hand-rolled in SVG, composed from recharts primitives, or done with a lower-level lib is its own question (TASK-133), not settled here. Deliverable either way: a reusable rink component plus a discrete zone-shaded chart first (closer to the NHL Edge references); a smoothed density heatmap is a stretch follow-up, not a blocker for the first ship. Renders by raw shot count/rate per TASK-106's zones, not xG-weighted color, until TASK-81 lands a trained xG model.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-110",
+    "epic_id": "EPIC-18",
+    "title": "Zone occupancy timeline \u2014 derive continuous zone from per-event GameEvent.zone",
+    "description": "GameEvent.zone is a snapshot at one event's timestamp (period + period_time_seconds), not a continuous signal. Reconstruct each team's zone occupancy over the course of a game by forward-filling each event's zone from its timestamp until the next zone-relevant event for that team, flipping offensive/defensive by home_team_defending_side the same way XgFormula already does per period. This is the prerequisite for real Zone Time (TASK-111) \u2014 without it, zone-time can only be estimated from proxies like zone entries/exits, which the planning decision explicitly rejected in favor of building this for real.\n\nhome_team_defending_side and zone are nullable on GameEvent (real-PBP-only). The forward-fill needs a defined rule for a game or stretch with no zone/side data, not a silent default.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-111",
+    "epic_id": "EPIC-18",
+    "title": "Per-shift Zone Time \u2014 intersect zone occupancy with Shift windows, roll up per game/season",
+    "description": "Using TASK-110's occupancy timeline, compute the % of each shift spent in offensive/neutral/defensive zone per player, matching the shape of the NHL Edge Zone Time visual (offensive/neutral/defensive zone % against a league-average baseline). New rollup, needs its own schema decision \u2014 recommend a PlayerGameZoneTime table plus a season rollup, mirroring the PlayerGameAdvancedStat/PlayerSeasonAdvancedStat pattern already established for every other per-game/per-season advanced stat in this app, rather than inventing a different shape for this one.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-112",
+    "epic_id": "EPIC-18",
+    "title": "Validate derived Zone Time against real games before it feeds any comparison-tool visual",
+    "description": "Matches this repo's own habit of confirming computed stats against real data before trusting them downstream (shot_type/zone fields themselves were confirmed against a live play-by-play response before EPIC-15/17's pipeline work; the season-rollup and score-state splits have their own verification history in DECISIONS.md). Spot-check TASK-111's derived zone-time percentages against a handful of manually-reviewed shifts/games \u2014 particularly around line changes mid-zone-transition, where the forward-fill approach is most likely to attribute a shift's start to the wrong zone.",
+    "type": "spike",
+    "status": "backlog",
+    "acceptance_criteria": [
+      "A manually-reviewed sample of shifts (at least one full game) has derived zone-time percentages that match what actually happened on the ice",
+      "Known edge cases (shift change mid-transition, empty-net situations, a shift with no zone-relevant events in it at all) have a documented, deliberate handling rule rather than silent default behavior"
+    ]
+  },
+  {
+    "id": "TASK-113",
+    "epic_id": "EPIC-19",
+    "title": "Team \u201ctop players\u201d widget on the team page",
+    "description": "A team-scoped points/xG leaders widget on TeamOverviewPage, reusing the sorting LeagueSkaterSearch (EPIC-14) already does league-wide, scoped down to one team instead \u2014 a lighter query, not a new sorting mechanism.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-114",
+    "epic_id": "EPIC-19",
+    "title": "Game-over-game trend chart on the team page",
+    "description": "Corsi%/xG%/goals-for-against per game as a sparkline or small-multiple, built directly off TeamGameAdvancedStat rows \u2014 these already exist, one per game per strength/score-state split, and are currently only ever read one game at a time on GamePage. First genuinely new chart type in this initiative beyond the rink/zone components (EPIC-18 TASK-109); reused as-is by EPIC-22's team comparison (recent-form panel).",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-115",
+    "epic_id": "EPIC-19",
+    "title": "Team shot heatmap on the team page",
+    "description": "Season or single-game team shot heatmap using EPIC-18's normalized shot query (TASK-108) and rink components (TASK-109) \u2014 the piece that most directly matches the \u201cOffensive Zone Unblocked Shots Heat Map\u201d reference image from planning. Raw shot density, not xG-colored, per EPIC-18's decision.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-116",
+    "epic_id": "EPIC-19",
+    "title": "Wire new team-page widgets to the existing strength/score/game-type filters",
+    "description": "TeamStatsPage already has strength_state/score_state/game_type segmented controls wired to its skater/goalie/advanced tables. The top-players widget, trend chart, and heatmap (TASK-113/114/115) should respect the same splits, not introduce a second, inconsistent filter UI on the same page.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-117",
+    "epic_id": "EPIC-20",
+    "title": "N-way skater comparison route",
+    "description": "A comparison route (e.g. /compare/skaters?ids=1,2,3) taking any number of player IDs, with LeagueSkaterSearch-style search as the add-a-player picker. Scoped as N-way per the planning decision, not a fixed pair \u2014 the URL shape and picker need to support adding a third/fourth player from the start, not bolt it on after a 2-up layout is already built.\n\nThe add-a-player picker is net-new UI: EPIC-14 shipped its search/sort inlined in LeagueStatsPage's ServerDataTable, not as an extractable picker component. Reuse is at the query layer (LeagueSkaterSearch) and ServerDataTable; a compact search-and-add control still has to be built.",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "high"
+  },
+  {
+    "id": "TASK-118",
+    "epic_id": "EPIC-20",
+    "title": "N-column comparison layout",
+    "description": "A grid-of-player-cards layout that actually holds up at 3+ players, not just two \u2014 each card showing a shot-location zone map (EPIC-18) and rate-stat panel. This is the layout component EPIC-21's goalie comparison and EPIC-22's team comparison both reuse, so getting the N-way behavior (not just 2-up) right here matters beyond this epic alone.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-119",
+    "epic_id": "EPIC-20",
+    "title": "Rate-stat comparison panel",
+    "description": "Bars or a small radar comparing SkaterSeasonStat/PlayerSeasonAdvancedStat fields (already fully computed \u2014 no new backend work) across every player in the comparison, one panel component reused per player card in TASK-118's layout.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-120",
+    "epic_id": "EPIC-20",
+    "title": "Zone Time panel in the skater comparison view",
+    "description": "The actual NHL Edge-style Zone Time chart, unblocked by EPIC-18's per-shift zone-time rollup (TASK-111). If EPIC-18's zone-time tasks slip, this ships without it and the comparison tool goes out with zone maps + rate stats only, per EPIC-20's description \u2014 not blocked on this specific panel.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-121",
+    "epic_id": "EPIC-20",
+    "title": "Add/remove a player from an in-progress comparison",
+    "description": "State management for genuinely N-way editing \u2014 adding a fourth player or removing the second shouldn't reset the whole comparison, unlike a simpler \u201cswap one of two\u201d interaction a strictly 2-way tool could get away with.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-122",
+    "epic_id": "EPIC-21",
+    "title": "Recon: how is the goalie in net for a given shot resolved today, if at all",
+    "description": "GameEvent doesn't carry a goalie reference, so before any danger-zone or game-state split can be attributed to a specific goalie, this needs answering: does the Shift table include goalies at all (do goalie shift-chart rows exist in already-ingested games), is a mid-game goalie change (pull, injury replacement) tracked anywhere, and can GoalieGameStat's existing starter/time_on_ice_seconds fields resolve \u201cwho was in net\u201d well enough for a first version, or does this need real per-shot attribution against Shift data. Blocks TASK-123 onward \u2014 the rest of this epic shouldn't be scoped in detail until this comes back, same as EPIC-18's TASK-106 blocks the rest of that epic.",
+    "type": "spike",
+    "status": "backlog",
+    "priority": "high",
+    "acceptance_criteria": [
+      "A documented answer for whether goalies appear in the shifts table for already-ingested games",
+      "A documented decision: attribute shots-against via a simple team-starter-for-the-game heuristic, or build real per-shot goalie attribution \u2014 with the reasoning for whichever is chosen"
+    ]
+  },
+  {
+    "id": "TASK-123",
+    "epic_id": "EPIC-21",
+    "title": "GoalieGameAdvancedStat model + migration",
+    "description": "New table mirroring PlayerGameAdvancedStat's row-per-split shape (game_id, player_id, team_id, strength_state, score_state, xg_model_id) with danger-zone shots_against/saves/goals_against columns per bucket (from EPIC-18's DangerZone) plus xg_against via the existing XgModel/XgFormula \u2014 the schema decision from planning, deliberately not new named columns bolted onto GoalieGameStat the way even_strength_*/power_play_*/shorthanded_* already are. Depends on TASK-122's attribution answer.\n\nAgainst EPIC-18's xG hold: the active XgModel is still the v0 placeholder (TASK-81) and produces unrealistic xG. Storing xg_against here for pipeline parity is fine, but it is not display-ready \u2014 no goalie xG-against visual until TASK-81 lands a trained model, same hold EPIC-18 places on every other xG-colored visual.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-124",
+    "epic_id": "EPIC-21",
+    "title": "GoalieSeasonAdvancedStat rollup",
+    "description": "Season-level rollup of TASK-123, mirroring PlayerSeasonAdvancedStat's shape (as_of_game_id, stale flag, strength_state \u00d7 score_state \u00d7 game_type rows) \u2014 same rollup pattern as every other advanced stat in this schema, not a new one invented for goalies.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-125",
+    "epic_id": "EPIC-21",
+    "title": "ComputeGoalieGameAdvancedStats service",
+    "description": "Populates TASK-123's table per game: classifies shots-against via EPIC-18's DangerZone (TASK-107), resolves strength_state directly from GameEvent.strength_state, and reuses the existing score_state \u201cclose\u201d definition already established for PlayerGameAdvancedStat/TeamGameAdvancedStat (within one goal in the 1st/2nd, tied in the 3rd, all of OT counts as close) rather than defining a second one.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-126",
+    "epic_id": "EPIC-21",
+    "title": "Wire goalie advanced stats into the existing recompute/rebuild pipeline",
+    "description": "Hooks TASK-125 into the RebuildAdvancedStatsForGame / RebuildTouchedAdvancedStatsChains-style pipeline so goalie advanced stats get the same recompute-on-correction behavior the skater/team pipeline already has, rather than a one-off script that goes stale the first time a game gets corrected.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-127",
+    "epic_id": "EPIC-21",
+    "title": "Rink zone charts for shots-against/saves-against/save% by danger zone",
+    "description": "Direct build from the \u201cSave % / Saves\u201d and \u201cShots Against / Goals Against\u201d reference images from planning, reusing EPIC-18's rink components (TASK-109) in an against-orientation rather than building a separate chart type.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-128",
+    "epic_id": "EPIC-21",
+    "title": "N-way goalie comparison route",
+    "description": "Same N-way route/layout pattern as EPIC-20's skater comparison (TASK-117/118 reused, not reinvented), comparing goalies' danger-zone save% and game-state splits side by side.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-129",
+    "epic_id": "EPIC-21",
+    "title": "Surface danger-zone/game-state columns in league goalie search",
+    "description": "Extend LeagueGoalieSearch with an advanced-columns toggle once TASK-123/124 exist, consistent with how LeagueSkaterSearch's ADVANCED_COLUMNS (Corsi/Fenwick/xG/zone entries) were added on top of its base columns.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-130",
+    "epic_id": "EPIC-22",
+    "title": "N-way team comparison route",
+    "description": "Same URL/route pattern as the skater/goalie comparison tools (EPIC-20 TASK-117) for consistency, using existing team data (TeamCard, StandingsTable) as the picker \u2014 no new search infrastructure needed at the team level.\n\nSame caveat as TASK-117: \"use existing team data as the picker\" still means building the picker UI \u2014 TeamCard/StandingsTable are display components, not a selection control.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-131",
+    "epic_id": "EPIC-22",
+    "title": "Team comparison layout",
+    "description": "TeamSeasonAdvancedStat summary cards plus the team shot heatmap (EPIC-19 TASK-115) arranged N-up, reusing EPIC-20's N-column layout component (TASK-118) rather than a third bespoke grid.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-132",
+    "epic_id": "EPIC-22",
+    "title": "Recent-form panel in team comparison",
+    "description": "Reuses the game-over-game trend component built for the team analytics page (EPIC-19 TASK-114) per team in the comparison \u2014 not a new chart type, just a second consumer of the same component.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-133",
+    "epic_id": "EPIC-18",
+    "title": "Spike: rink/zone-chart rendering approach (hand-rolled SVG vs recharts vs d3/visx)",
+    "description": "recharts is already a dependency; d3 and visx are not. Before building the rink components (TASK-109), decide the rendering stack for EPIC-18's custom rink/zone visuals: hand-rolled SVG, recharts composed primitives, or adding visx/d3. Not a blocker \u2014 TASK-109's zone-shaded charts are simple enough to start hand-rolled if this stalls. Weigh fit for non-standard shapes (rink outline, home-plate polygons, density shading), bundle cost, and consistency with the existing recharts usage.",
+    "type": "spike",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "A decision recorded in docs/DECISIONS.md on the rendering approach for rink/zone visuals, with trade-off reasoning",
+      "TASK-109 updated to build on the chosen approach"
+    ]
   }
 ]

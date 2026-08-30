@@ -22,7 +22,7 @@ Both epics and tasks share one status lifecycle: `backlog` → `todo` → `in_pr
 
 ## Editing
 
-There's no app reading this yet — it's edited directly as JSON (by hand or by Claude) and is the source of truth for "what's next," replacing ad-hoc backlog notes in `docs/PLANNING.md`. Validate after editing (schema validation plus a referential-integrity check — task `epic_id` exists, epic `project_id` matches — that JSON Schema alone can't express):
+Edited directly as JSON (by hand or by Claude); it's the source of truth for "what's next." `Api::V1::Admin::RoadmapController` serves it to the in-app `/admin/roadmap` page, so keep statuses honest. Validate after editing (schema validation plus a referential-integrity check — task `epic_id` exists, epic `project_id` matches — that JSON Schema alone can't express):
 
 ```
 pip install jsonschema referencing --break-system-packages   # once

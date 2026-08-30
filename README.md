@@ -2,7 +2,7 @@
 
 Multi-tenant hockey analytics dashboard for league and team staff — rosters, games, and player movement across an organization's affiliate chain.
 
-Status: backend and frontend scaffolded; auth works end to end (login, real token revocation on logout, protected routes). See `docs/PLANNING.md` for current phase and the `planning/` board for tickets.
+Status: auth, the league/team/season/player/game domain model, NHL data ingestion, an advanced-stats pipeline, and an admin sync console are in place; current work is analytics and visualization. The `planning/` board is the source of truth for what's next (also viewable in-app at `/admin/roadmap`).
 
 ## Stack
 
@@ -17,7 +17,7 @@ Status: backend and frontend scaffolded; auth works end to end (login, real toke
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — system layout
 - [`docs/STANDARDS.md`](./docs/STANDARDS.md) — comment policy, git workflow, definition of done
 - [`docs/DECISIONS.md`](./docs/DECISIONS.md) — decision log
-- [`docs/PLANNING.md`](./docs/PLANNING.md) — phases, scope status, open questions
+- [`planning/`](./planning/) — epics/tasks board (JSON, schema-validated); the backlog and current scope
 
 ## Setup
 

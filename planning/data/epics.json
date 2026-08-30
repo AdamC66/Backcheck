@@ -12,7 +12,7 @@
     "project_id": "backcheck",
     "title": "League/Team/Season domain model",
     "description": "League, Team, Season as first-class entities, plus TeamAffiliation (NHL/AHL/ECHL affiliate chain).",
-    "status": "done",
+    "status": "backlog",
     "priority": "high"
   },
   {
@@ -20,7 +20,7 @@
     "project_id": "backcheck",
     "title": "Player & roster history",
     "description": "Players as global identities (never a current-team FK), roster_spots for player+team+season so one player can hold rows on all three tiers in a year, and player_external_ids to reconcile sources that carry no NHL player id.",
-    "status": "in_progress",
+    "status": "blocked",
     "priority": "medium"
   },
   {
@@ -52,7 +52,7 @@
     "project_id": "backcheck",
     "title": "Super Admin tools",
     "description": "Manual overrides: move a player between teams, edit records directly, bypassing normal scope checks.",
-    "status": "backlog",
+    "status": "todo",
     "priority": "low"
   },
   {
@@ -92,7 +92,7 @@
     "project_id": "backcheck",
     "title": "Admin data sync console",
     "description": "Superuser-only panel to trigger roster/stats/schedule/standings syncs on demand, scoped to a league, season, or single team, with live progress (e.g. '12/21 teams \u2014 syncing San Jose'). Sits on top of EPIC-8's existing sync services/clients rather than replacing them \u2014 one new AdminSyncOrchestratorJob loops through the resolved scope calling SyncTeamRoster/SyncStandings/etc. directly, tracked via new SyncRun/SyncRunItem rows (see DECISIONS.md, 2026-08-25). Shares the Super Admin surface with EPIC-7 but is a distinct concern: EPIC-7 is manual data overrides, this is operating the ingestion pipeline that already runs automatically via recurring.yml.",
-    "status": "done",
+    "status": "backlog",
     "priority": "medium"
   },
   {
@@ -100,7 +100,7 @@
     "project_id": "backcheck",
     "title": "Advanced analytics schema: play-by-play, shifts, xG, rollups",
     "description": "Extends the existing domain model (League/Team/Season/Player/RosterEntry/Game/TeamStanding/SkaterStatLine/GoalieStatLine) with play-by-play events, shift data, versioned xG coefficients, and cached per-game/per-season advanced-stat rollups with a recalculation pipeline for corrected data. Backend only: schema, models, associations, indexes, and the recompute job structure. NHL API client calls for play-by-play/shift-chart ingestion are explicitly deferred to a later epic \u2014 these tables are built to accept upserts, not to be populated yet. A frontend to surface any of this is anticipated but not yet scoped as its own epic.",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium"
   },
   {
@@ -116,7 +116,7 @@
     "project_id": "backcheck",
     "title": "Play-by-play/shift ingestion; validate and surface advanced stats",
     "description": "Builds the ingestion path EPIC-13 deliberately deferred: a real NHL client for play-by-play and shift-chart data, upserting into game_events/shifts (TASK-58), wired through ComputeGameAdvancedStats (TASK-72) and the existing recompute pipeline (TASK-62) end to end \u2014 closing the composition point TASK-72 was left unwired at. Also validates the whole computation pipeline's accuracy against real data: on-ice attribution, Corsi/Fenwick/xG, and score-state splits (TASK-64) have only ever been exercised against synthetic spec fixtures, never a real game. Frontend: surfaces these now-real advanced stats, which requires building game detail and player detail pages that don't exist yet at all, plus extending the existing team stats page.",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium"
   },
   {
@@ -134,5 +134,45 @@
     "description": "Redundant-work and reliability findings surfaced by actually running full historical NHL backfills against the real API for the first time, not by inspection \u2014 each confirmed against real dev data before being scoped. TASK-85 (done): whole-league per-game sync kinds were fanning out one item per team over the same shared game list, double-processing every game; restructured to run off the season's game list once. TASK-86 (done): RecomputeSeasonStats issued 14-19 separate aggregate queries per player instead of loading its rows once and summing in Ruby. TASK-88 (done): SyncGameStats recomputed a player's season stats once per game-stat row in a bulk sync instead of once per player, ~46x more calls than needed; now batched via RecomputeTouchedSeasonStats. TASK-89 (done): UpsertGameEvents/UpsertShifts re-queried Player/Team per row with no memoization, ~4,600 avoidable queries per game; now memoized per game. TASK-84 (done): dev had no persisted job queue, so an interrupted run couldn't resume, a retried run blindly redid finished work, and concurrent async jobs deadlocked each other on shared rows, plus GVL contention blocked the dashboard mid-sync; fixed via a real Solid Queue worker process (bin/jobs start --mode=async, avoiding a macOS-only fork crash found along the way) and idempotent resume in AdminSyncOrchestrator. TASK-90 (done): one flaky per-game request failed the whole run's status even when almost every game succeeded, and the activity log's fixed cap could hide the one line that explained why \u2014 fixed by recording every failed game on the item directly. TASK-91: the top-level status is still binary (any failure = failed), deliberately deferred as its own cross-stack change. TASK-93 (found live, once the real job queue was actually running): RebuildAdvancedStatsJob rebuilds a player's entire remaining-season advanced-stat chain per triggering game rather than just the new delta \u2014 with ingestion racing ahead of the single-threaded recompute consumer under real async load, this produced a 737-job, 12+ hour backlog blocking new sync runs from even starting. The theme has held all the way through: bulk/historical syncs were built by extending the daily-sync code path without accounting for how differently its costs, concurrency, and failure modes scale at full-season volume \u2014 and fixing the queue infrastructure (TASK-84) is precisely what made TASK-93 visible for the first time. TASK-91 (done): completed_with_errors distinguishes partial from total failure at both item and run level. TASK-94 (done): decoupled bulk ingestion from season-chain rebuild entirely. TASK-95 (done): RecomputeTeamSeasonAdvancedStats' own 11-queries-per-dimension bug, same shape as TASK-86. TASK-96 (done): a resumed run's progress counter had no reset point across a restart and could overcount past 100%. TASK-97 (done): CreateSyncRun's save-then-enqueue wasn't atomic. TASK-98 (done): sync_kinds dedup, batch-tracking-failure isolation, documented single-step cancellation gap. TASK-99 (done): five dead job classes removed. TASK-101 (done): GoalieGamePoints' own two-queries-instead-of-one. TASK-102 (done): goalie season-stat recompute batched the same way as game_stats'. TASK-103 (done): the whole advanced-stats pipeline's row-at-a-time writes replaced with a shared BulkUpsert (Ruby-side validation, one bulk statement), cutting a full per-game sync from ~2,600+ queries to ~120. TASK-104 (done): batch recompute steps gained per-row error isolation instead of one bad player/team crashing the whole run. TASK-100 (done): NhlClient/NhlStatsClient/HockeyTechClient's ~90% duplication extracted into a shared BaseApiClient. Epic complete. Reopened: TASK-105 found the decoupling TASK-94 introduced left a real gap for 2024-25 (fully ingested, season-rollup never separately triggered) \u2014 no follow-up task existed to close that loop. TASK-105 (done): individual/season-stat expansion (faceoffs, shots attempted/missed/blocked) plus a new self-service rebuild_season_stats sync kind, and a second real bug found/fixed along the way (dimension_start_games anchoring on preseason games instead of the right game_type) \u2014 both 2024-25 and 2025-26 now at 100% regular-season advanced-stat coverage. Epic complete.",
     "status": "done",
     "priority": "critical"
+  },
+  {
+    "id": "EPIC-18",
+    "project_id": "backcheck",
+    "title": "Shot-location & danger-zone foundation",
+    "description": "Shared plumbing every other analytics/visualization epic below (EPIC-19 through EPIC-22) draws from, so a team heatmap, a skater zone map, and a goalie zone chart are three consumers of one thing, not three separate builds. Three decisions from planning are locked in here: danger-zone boundaries adopt an existing public standard (the \u201chome plate\u201d high-danger/mid-range/long-range shot-danger zone definition popularized by War-on-Ice and still used by Natural Stat Trick/MoneyPuck) rather than one invented for this app; any xG-colored visual is held back until TASK-81 replaces XgFormula's placeholder distance+angle coefficients with a trained model, so the shot-location/heatmap work here ships by raw shot count/rate, not xG weight; and Zone Time (the NHL Edge-style % of shift time in each zone) gets built for real rather than dropped in favor of the zone_entries/zone_exits counts already tracked on PlayerGameAdvancedStat \u2014 those answer a different question (controlled entries/exits, not time-in-zone) and don't substitute for it.\n\nEverything here reuses geometry XgFormula already established: GameEvent.x_coord/y_coord normalized against target_net_x (resolved from home_team_defending_side, which flips by period), the same distance/angle calculation. Zone Time is the one genuinely new derivation: GameEvent.zone is per-event, not continuous, and Shift only has period/start_time_seconds/end_time_seconds with no zone-at-start field \u2014 so a team's zone occupancy has to be reconstructed by forward-filling each event's zone from its timestamp until the next zone-relevant event, then intersected with each shift's time window to get a per-shift zone split. That's new derived logic on top of data we already have, not a new NHL API call.",
+    "status": "backlog",
+    "priority": "high"
+  },
+  {
+    "id": "EPIC-19",
+    "project_id": "backcheck",
+    "title": "Team analytics page",
+    "description": "Turns the team page from roster/schedule/stat-tables (TeamOverviewPage, TeamRosterPage, TeamSchedulePage, TeamStatsPage) into somewhere there's an actual read on the team: a top-players widget, a game-over-game trend, and the team shot heatmap from the original planning conversation. The trend data already exists and is currently invisible \u2014 TeamGameAdvancedStat has one row per game per team per strength/score-state split, sitting unused for anything but the single-game view on GamePage. Depends on EPIC-18 for the shot heatmap (rendered by raw shot count/rate, not xG, per that epic's decision) and reuses TeamStatsPage's existing strength_state/score_state segmented controls rather than inventing new filter UI.",
+    "status": "backlog",
+    "priority": "medium"
+  },
+  {
+    "id": "EPIC-20",
+    "project_id": "backcheck",
+    "title": "Skater comparison tool",
+    "description": "Player-vs-player comparison, NHL Edge-style, called out directly in planning. Scoped as N-way from the start (not a fixed 2-up), so the comparison route and layout need to actually hold up at 3+ players, not just visually degrade past two. Picker reuses LeagueSkaterSearch's existing search/sort (EPIC-14); per-player panels combine a shot-location zone map and Zone Time chart from EPIC-18 with rate stats already fully computed on SkaterSeasonStat/PlayerSeasonAdvancedStat. Zone Time specifically depends on EPIC-18's per-shift derivation landing first \u2014 without it this ships with zone maps and rate stats only, which is a reasonable partial slice if EPIC-18's zone-time tasks slip.",
+    "status": "backlog",
+    "priority": "medium"
+  },
+  {
+    "id": "EPIC-21",
+    "project_id": "backcheck",
+    "title": "Goalie deep-dive & goalie comparison",
+    "description": "Danger-zone save%/shots-against splits and game-state splits for goalies, plus goalie-vs-goalie comparison (N-way, same as EPIC-20). The schema decision from planning: goalie advanced stats get a row-per-split shape matching PlayerGameAdvancedStat/TeamGameAdvancedStat (new GoalieGameAdvancedStat + GoalieSeasonAdvancedStat tables), not new named columns bolted onto GoalieGameStat the way even_strength_goals_against/power_play_*/shorthanded_* already are \u2014 consistent with how every other advanced-stat shape in this schema works, and the only one of the two options that has a clean place to hang score_state and danger-zone splits without multiplying columns per combination.\n\nCarries the most open questions of the analytics work: GameEvent doesn't carry a goalie reference, so attributing a shot-against to the specific goalie in net (needed for any per-goalie split at all, danger-zone or otherwise) isn't obviously wired today and needs a recon spike before the rest of this epic can be scoped with confidence \u2014 see TASK-122. Depends on EPIC-18's DangerZone classifier for the zone buckets themselves.",
+    "status": "backlog",
+    "priority": "medium"
+  },
+  {
+    "id": "EPIC-22",
+    "project_id": "backcheck",
+    "title": "Team-to-team comparison",
+    "description": "The third leg of the comparison tools from planning, and the cheapest full slice of the four analytics epics \u2014 mostly assembly of what EPIC-18/EPIC-19 already build (TeamSeasonAdvancedStat, standings data, the team shot heatmap and game-over-game trend component) into an N-way side-by-side layout, rather than new schema or ingestion work. Worth shipping early, once EPIC-18 lands, to prove the N-way comparison pattern before it's reused by the heavier skater/goalie comparison epics.",
+    "status": "backlog",
+    "priority": "medium"
   }
 ]

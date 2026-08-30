@@ -6,8 +6,8 @@
 hockey-analytics-dashboard/
 ├── backend/          Rails API-only app
 ├── frontend/         React + TS SPA
-├── docs/             architecture, standards, decisions, planning
-├── planning/         JSON-schema-backed epics/tasks board (see PLANNING.md)
+├── docs/             architecture, standards, decisions
+├── planning/         JSON-schema-backed epics/tasks board (served in-app at /admin/roadmap)
 ├── docker-compose.yml
 └── CLAUDE.md
 ```

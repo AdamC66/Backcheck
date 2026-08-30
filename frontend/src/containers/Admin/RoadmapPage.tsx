@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Row } from "@/components/Row/Row";
+import { SegmentedControl } from "@/components/SegmentedControl/SegmentedControl";
 import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
 import type { Epic, Priority, RoadmapTask, WorkflowStatus } from "@/models/roadmap";
@@ -26,6 +28,13 @@ const PRIORITY_LABELS: Record<Priority, string> = {
   high: "High",
   critical: "Critical",
 };
+
+type Scope = "open" | "all";
+
+const SCOPE_OPTIONS: { value: Scope; label: string }[] = [
+  { value: "open", label: "Open work" },
+  { value: "all", label: "Everything" },
+];
 
 function epicNumber(id: string) {
   return Number(id.split("-")[1] ?? 0);
@@ -68,8 +77,17 @@ function TaskRow({ task }: { task: RoadmapTask }) {
   );
 }
 
-function EpicCard({ epic, tasks }: { epic: Epic; tasks: RoadmapTask[] }) {
+function EpicCard({
+  epic,
+  tasks,
+  visibleTasks,
+}: {
+  epic: Epic;
+  tasks: RoadmapTask[];
+  visibleTasks: RoadmapTask[];
+}) {
   const doneCount = tasks.filter((task) => task.status === "done").length;
+  const hiddenDone = tasks.length - visibleTasks.length;
 
   return (
     <Stack gap="sm" className="border border-slate-200 bg-white p-4">
@@ -81,15 +99,16 @@ function EpicCard({ epic, tasks }: { epic: Epic; tasks: RoadmapTask[] }) {
           {tasks.length === 0 ? null : (
             <Text tone="muted" variant="caption">
               {doneCount}/{tasks.length} tasks done
+              {hiddenDone > 0 ? ` · ${hiddenDone} completed hidden` : ""}
             </Text>
           )}
         </Stack>
         <StatusPill status={epic.status} />
       </Row>
 
-      {tasks.length === 0 ? null : (
+      {visibleTasks.length === 0 ? null : (
         <Stack gap="none">
-          {tasks.map((task) => (
+          {visibleTasks.map((task) => (
             <TaskRow key={task.id} task={task} />
           ))}
         </Stack>
@@ -100,6 +119,7 @@ function EpicCard({ epic, tasks }: { epic: Epic; tasks: RoadmapTask[] }) {
 
 export function RoadmapPage() {
   const roadmap = useRoadmap();
+  const [scope, setScope] = useState<Scope>("open");
 
   if (roadmap.isPending) {
     return <Text tone="muted">Loading roadmap…</Text>;
@@ -112,15 +132,40 @@ export function RoadmapPage() {
   const epics = [...roadmap.data.epics].sort((a, b) => epicNumber(a.id) - epicNumber(b.id));
   const tasksByEpic = groupByEpic(roadmap.data.tasks);
 
+  const cards = epics
+    .map((epic) => {
+      const tasks = tasksByEpic[epic.id] ?? [];
+      const visibleTasks = scope === "all" ? tasks : tasks.filter((task) => task.status !== "done");
+      return { epic, tasks, visibleTasks };
+    })
+    .filter(({ epic, tasks, visibleTasks }) => {
+      if (scope === "all") return true;
+      // Open scope: keep an epic only if it still has work — either it isn't done,
+      // or a task under it isn't (e.g. a blocked follow-up under a shipped epic).
+      return epic.status !== "done" || visibleTasks.length > 0 || tasks.length === 0;
+    });
+
   return (
     <Stack gap="md">
-      <Text variant="subheading">Roadmap</Text>
+      <Row justify="between" align="center">
+        <Text variant="subheading">Roadmap</Text>
+        <SegmentedControl
+          label="Roadmap scope"
+          options={SCOPE_OPTIONS}
+          value={scope}
+          onChange={setScope}
+        />
+      </Row>
 
-      <Stack gap="sm">
-        {epics.map((epic) => (
-          <EpicCard key={epic.id} epic={epic} tasks={tasksByEpic[epic.id] ?? []} />
-        ))}
-      </Stack>
+      {cards.length === 0 ? (
+        <Text tone="muted">No open work — switch to Everything to review completed epics.</Text>
+      ) : (
+        <Stack gap="sm">
+          {cards.map(({ epic, tasks, visibleTasks }) => (
+            <EpicCard key={epic.id} epic={epic} tasks={tasks} visibleTasks={visibleTasks} />
+          ))}
+        </Stack>
+      )}
     </Stack>
   );
 }
