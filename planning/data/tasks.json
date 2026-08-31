@@ -307,7 +307,7 @@
     "epic_id": "EPIC-9",
     "title": "Design Lineup schema and its active/historical visibility rule",
     "type": "spike",
-    "status": "backlog",
+    "status": "done",
     "priority": "medium",
     "description": "Lineup belongs to Team + Game, not roster_spots: starting goalie, forward lines, defense pairings, scratches. Needs an explicit active/historical distinction, history-preserving like roster_spots rather than a single mutable 'current' row. Once a game starts (or ends \u2014 TBD which), the lineup stops being a hidden, team-private draft and becomes a normal visible game record; before that, only members of the owning team can see it. v1 eligibility is gated on roster_spots.team_id alone (current team assignment) \u2014 not a real 23-man Active Roster / Injured Reserve / Non-Roster distinction (Article 16), which is TASK-40. Known simplification, not an oversight \u2014 see docs/DECISIONS.md."
   },
@@ -316,7 +316,7 @@
     "epic_id": "EPIC-9",
     "title": "Coach: set a team's lineup for a game",
     "type": "feature",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium",
     "description": "A coach-role Membership on a team can create/update that team's own Lineup for a game. Depends on TASK-35 (schema) and TASK-3 (authorization foundation). v1 doesn't check whether a named player is actually within the 23-man Active Roster or on Injured Reserve (TASK-40) \u2014 only that he's on the team.",
     "acceptance_criteria": [
@@ -1529,6 +1529,30 @@
     "title": "GameBoxscore frontend components: goal summary, penalty list, period score/shots table",
     "description": "New components alongside GameSkaterStatsTable/GameGoalieStatsTable in GamePage.tsx \u2014 one component per file, per docs/STANDARDS.md. Consumes TASK-150 (goals/penalties), TASK-151 (period score/shots), TASK-152 (goalie decision line). Depends on all three.",
     "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-154",
+    "epic_id": "EPIC-9",
+    "title": "Super Admin can backfill a lineup for a game that's already been played",
+    "description": "TASK-36 ships coach-only, and LineupsController#reject_when_locked blocks every write from scheduled puck drop on \u2014 including Super Admin. Exempt super_admin? from that lock so historical lineups can be hand-entered for past games (there is no upstream feed for deployed line combinations; this is a manual-entry surface). Coaches stay locked out of played games. Small follow-up to TASK-36: skip the before_action for super admins, plus a request spec.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-155",
+    "epic_id": "EPIC-9",
+    "title": "Historical line-combinations view: every forward line / D pair / ST unit a team iced in a season",
+    "description": "Read-only query object + endpoint (GET /api/v1/teams/:team_id/line-combinations?season=), sitting alongside the existing app/queries/ list objects. Reconstructs each unit from lineup_slots grouped by (lineup_id, unit_type, unit_number) across the team's games for the season, then aggregates by the normalized (unordered) player-set: 'Matthews-Marner-Knies: L1 in 34 of 41 games'. This is PLANNED lines from pre-game lineup cards \u2014 not actual on-ice deployment, which is TASK-156. Only as complete as the lineups entered (see TASK-154). Depends on TASK-35 schema.",
+    "type": "feature",
+    "status": "backlog"
+  },
+  {
+    "id": "TASK-156",
+    "epic_id": "EPIC-19",
+    "title": "WOWY and line-combination TOI from shift data",
+    "description": "Actual on-ice pairings, not planned: 'these two D played 190:12 together at 5v5', 'this forward trio's on-ice xGF% when together vs apart'. Derived from concurrent on-ice player sets across shift intervals (shifts table + play-by-play), keyed to strength/score state like the existing advanced-stat splits. Distinct from TASK-155, which reads pre-game lineup cards. Needs a design pass on how combinations are identified and stored (per-game rollup vs on-the-fly), and how it reuses the EPIC-13/15 advanced-stats machinery.",
+    "type": "spike",
     "status": "backlog"
   }
 ]

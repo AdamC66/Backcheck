@@ -13,6 +13,7 @@ class Team < ApplicationRecord
            dependent: :destroy, inverse_of: :parent_team
   has_many :affiliations_as_affiliate, class_name: "TeamAffiliation", foreign_key: :affiliate_team_id,
            dependent: :destroy, inverse_of: :affiliate_team
+  has_many :lineups, dependent: :destroy
   has_many :skater_game_stats, dependent: :restrict_with_error
   has_many :goalie_game_stats, dependent: :restrict_with_error
   has_many :game_events, dependent: :restrict_with_error

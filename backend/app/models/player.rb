@@ -7,6 +7,7 @@ class Player < ApplicationRecord
   has_many :external_ids, class_name: "PlayerExternalId", dependent: :destroy, inverse_of: :player
   has_many :roster_spots, dependent: :destroy
   has_many :roster_statuses, dependent: :destroy
+  has_many :lineup_slots, dependent: :destroy
   has_many :skater_game_stats, dependent: :destroy
   has_many :goalie_game_stats, dependent: :destroy
   has_many :skater_season_stats, dependent: :destroy

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_30_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_30_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -160,6 +160,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_000001) do
     t.datetime "updated_at", null: false
     t.index ["abbreviation"], name: "index_leagues_on_abbreviation", unique: true
     t.index ["slug"], name: "index_leagues_on_slug", unique: true
+  end
+
+  create_table "lineup_slots", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "lineup_id", null: false
+    t.bigint "player_id", null: false
+    t.integer "slot_order"
+    t.integer "unit_number"
+    t.integer "unit_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lineup_id", "player_id", "unit_type"], name: "index_lineup_slots_on_lineup_player_and_unit_type", unique: true
+    t.index ["lineup_id"], name: "index_lineup_slots_on_lineup_id"
+    t.index ["player_id"], name: "index_lineup_slots_on_player_id"
+  end
+
+  create_table "lineups", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "game_id", null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_lineups_on_game_id"
+    t.index ["team_id", "game_id"], name: "index_lineups_on_team_id_and_game_id", unique: true
+    t.index ["team_id"], name: "index_lineups_on_team_id"
   end
 
   create_table "memberships", force: :cascade do |t|
@@ -652,6 +675,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_000001) do
   add_foreign_key "goalie_season_stats", "players"
   add_foreign_key "goalie_season_stats", "seasons"
   add_foreign_key "goalie_season_stats", "teams"
+  add_foreign_key "lineup_slots", "lineups"
+  add_foreign_key "lineup_slots", "players"
+  add_foreign_key "lineups", "games"
+  add_foreign_key "lineups", "teams"
   add_foreign_key "memberships", "roles"
   add_foreign_key "memberships", "users"
   add_foreign_key "player_external_ids", "players"

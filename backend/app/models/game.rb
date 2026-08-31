@@ -6,6 +6,7 @@ class Game < ApplicationRecord
   belongs_to :home_team, class_name: "Team"
   belongs_to :away_team, class_name: "Team"
 
+  has_many :lineups, dependent: :destroy
   has_many :skater_game_stats, dependent: :destroy
   has_many :goalie_game_stats, dependent: :destroy
   has_many :game_events, dependent: :destroy
