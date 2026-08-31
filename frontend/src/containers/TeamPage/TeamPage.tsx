@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { label: "Overview", to: "", end: true },
   { label: "Schedule", to: "schedule" },
   { label: "Roster", to: "roster" },
+  { label: "Lineups", to: "lineups" },
   { label: "Stats", to: "stats" },
 ];
 

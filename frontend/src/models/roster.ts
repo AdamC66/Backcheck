@@ -51,6 +51,11 @@ export interface RosterMeta {
   count: number;
 }
 
-export function fetchTeamRoster(teamId: number): Promise<Envelope<RosterEntry[], RosterMeta>> {
-  return requestWithMeta<RosterEntry[], RosterMeta>(`/teams/${teamId}/roster`);
+export function fetchTeamRoster(
+  teamId: number,
+  season?: string,
+): Promise<Envelope<RosterEntry[], RosterMeta>> {
+  const suffix = season === undefined ? "" : `?season=${encodeURIComponent(season)}`;
+
+  return requestWithMeta<RosterEntry[], RosterMeta>(`/teams/${teamId}/roster${suffix}`);
 }

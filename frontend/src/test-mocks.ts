@@ -10,6 +10,7 @@ import type {
   TeamGameAdvancedStat,
 } from "@/models/gameDetail";
 import type { Game, GamesMeta } from "@/models/games";
+import type { Lineup } from "@/models/lineups";
 import type { League, LeagueWithTeams } from "@/models/leagues";
 import type {
   PlayerAdvancedSeason,
@@ -698,3 +699,30 @@ export const DANGER_ZONES: DangerZoneGeometry = {
   high_danger_crease_radius_ft: 8,
   mid_range_max_distance_ft: 60,
 };
+
+export function lineupFor(overrides: Partial<Lineup> = {}): Lineup {
+  return {
+    team_id: TEAMS[0].id,
+    game_id: 1,
+    historical: false,
+    forward_lines: [
+      [
+        playerFor(11, { last_name: "Knies", position: "left_wing" }),
+        playerFor(12, { last_name: "Matthews", position: "center" }),
+        playerFor(13, { last_name: "Nylander", position: "right_wing" }),
+      ],
+    ],
+    defense_pairs: [
+      [
+        playerFor(21, { last_name: "Rielly", position: "defense" }),
+        playerFor(22, { last_name: "Tanev", position: "defense" }),
+      ],
+    ],
+    power_play_units: [],
+    penalty_kill_units: [],
+    starting_goalie: playerFor(31, { last_name: "Stolarz", position: "goalie" }),
+    backup_goalie: null,
+    scratches: [],
+    ...overrides,
+  };
+}

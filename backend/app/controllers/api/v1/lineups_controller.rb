@@ -44,9 +44,11 @@ module Api
       end
 
       # From scheduled puck drop on, the lineup is a public game record, not an
-      # editable draft — see docs/DECISIONS.md.
+      # editable draft — see docs/DECISIONS.md. Super Admin is exempt so historical
+      # lineups can be hand-entered for games that were played before this existed.
       def reject_when_locked
         return if game.starts_at > Time.current
+        return if current_user.super_admin?
 
         render_error(code: "forbidden", message: "Lineup is locked once the game starts", status: :forbidden)
       end

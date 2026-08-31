@@ -14,6 +14,7 @@ import { TeamPage } from "@/containers/TeamPage/TeamPage";
 import { TeamOverviewPage } from "@/containers/TeamPage/TeamOverviewPage";
 import { TeamSchedulePage } from "@/containers/TeamPage/TeamSchedulePage";
 import { TeamRosterPage } from "@/containers/TeamPage/TeamRosterPage";
+import { TeamLineupsPage } from "@/containers/TeamPage/TeamLineupsPage";
 import { TeamStatsPage } from "@/containers/TeamPage/TeamStatsPage";
 import { AdminPage } from "@/containers/Admin/AdminPage";
 import { SyncDashboardPage } from "@/containers/Admin/SyncDashboardPage";
@@ -82,6 +83,7 @@ export function App() {
         <Route index element={<TeamOverviewPage />} />
         <Route path="schedule" element={<TeamSchedulePage />} />
         <Route path="roster" element={<TeamRosterPage />} />
+        <Route path="lineups" element={<TeamLineupsPage />} />
         <Route path="stats" element={<TeamStatsPage />} />
       </Route>
       <Route

@@ -15,12 +15,20 @@ export const teamKey = (teamId: number) => ["team", teamId] as const;
 export const teamGamesKey = (teamId: number, season?: string, gameType?: string) =>
   ["team-games", teamId, season ?? "current", gameType ?? "all"] as const;
 
-export const teamRosterKey = (teamId: number) => ["team-roster", teamId] as const;
+// Two-element form (no season) stays a prefix of the seasoned form, so invalidating
+// `teamRosterKey(teamId)` still clears every season's roster for the team.
+export const teamRosterKey = (teamId: number, season?: string) =>
+  season === undefined
+    ? (["team-roster", teamId] as const)
+    : (["team-roster", teamId, season] as const);
 
 export const teamStatsKey = (teamId: number, gameType?: string) =>
   ["team-stats", teamId, gameType ?? "regular_season"] as const;
 
 export const teamAffiliationsKey = (teamId: number) => ["team-affiliations", teamId] as const;
+
+export const teamLineupKey = (teamId: number, gameId: number) =>
+  ["team-lineup", teamId, gameId] as const;
 
 // Split so a status change can invalidate every season/page for a team at once,
 // without needing to know which page or season the panel is currently showing.

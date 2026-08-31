@@ -60,4 +60,13 @@ RSpec.describe "Team lineups", type: :request do
 
     expect(response).to have_http_status(:forbidden)
   end
+
+  it "lets a super admin backfill a lineup for a game that's already been played" do
+    game.update!(starts_at: 1.hour.ago)
+
+    put "/api/v1/teams/#{home.id}/lineups/#{game.id}",
+        params: lineup_body, headers: auth_headers(create(:user, is_super_admin: true)), as: :json
+
+    expect(response).to have_http_status(:ok)
+  end
 end

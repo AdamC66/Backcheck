@@ -1537,7 +1537,7 @@
     "title": "Super Admin can backfill a lineup for a game that's already been played",
     "description": "TASK-36 ships coach-only, and LineupsController#reject_when_locked blocks every write from scheduled puck drop on \u2014 including Super Admin. Exempt super_admin? from that lock so historical lineups can be hand-entered for past games (there is no upstream feed for deployed line combinations; this is a manual-entry surface). Coaches stay locked out of played games. Small follow-up to TASK-36: skip the before_action for super admins, plus a request spec.",
     "type": "feature",
-    "status": "backlog"
+    "status": "done"
   },
   {
     "id": "TASK-155",
