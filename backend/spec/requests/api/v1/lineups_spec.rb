@@ -69,4 +69,25 @@ RSpec.describe "Team lineups", type: :request do
 
     expect(response).to have_http_status(:ok)
   end
+
+  describe "GET .../lineups/:game_id/previous" do
+    it "returns the team's most recent lineup from before the given game" do
+      earlier = create(:game, season: season, home_team: home, away_team: away, starts_at: 2.days.ago)
+      starter = roster_player
+      create(:lineup_slot, lineup: create(:lineup, game: earlier, team: home),
+                           player: starter, unit_type: :goalie, unit_number: 1)
+
+      get "/api/v1/teams/#{home.id}/lineups/#{game.id}/previous", headers: auth_headers(coach_for(home))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.dig("data", "game_id")).to eq(earlier.id)
+      expect(response.parsed_body.dig("data", "starting_goalie", "id")).to eq(starter.id)
+    end
+
+    it "404s when the team has no earlier lineup" do
+      get "/api/v1/teams/#{home.id}/lineups/#{game.id}/previous", headers: auth_headers(coach_for(home))
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end

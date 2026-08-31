@@ -14,6 +14,7 @@ import { isTeamCoach } from "@/lib/membership";
 import { recentTeamGames, upcomingTeamGames } from "@/lib/teamSchedule";
 import type { Game } from "@/models/games";
 import { useLineup } from "@/models/useLineup";
+import { usePreviousLineup } from "@/models/usePreviousLineup";
 import { useSeasons } from "@/models/useSeasons";
 import { useSetLineup } from "@/models/useSetLineup";
 import { useTeam } from "@/models/useTeam";
@@ -21,6 +22,7 @@ import { useTeamGames } from "@/models/useTeamGames";
 import { useTeamRoster } from "@/models/useTeamRoster";
 
 const FINISHED_STATES = ["FINAL", "OFF"];
+const DISCARD_PROMPT = "You have unsaved lineup changes. Leave without saving?";
 
 // A valid :id is guaranteed by TeamPage, which redirects before this ever renders.
 export function TeamLineupsPage() {
@@ -30,6 +32,7 @@ export function TeamLineupsPage() {
   const { user } = useAuth();
 
   const [editing, setEditing] = useState(false);
+  const [editorDirty, setEditorDirty] = useState(false);
 
   const team = useTeam(teamId);
   const seasons = useSeasons(team.data?.league?.slug ?? null);
@@ -47,11 +50,28 @@ export function TeamLineupsPage() {
 
   const canEdit = user !== null && (user.is_super_admin || (upcoming && isTeamCoach(user, teamId)));
   const roster = useTeamRoster(editing && canEdit ? teamId : null, resolvedSeason);
+  const previousLineup = usePreviousLineup(teamId, selectedGameId, editing && canEdit);
+  const templateGame =
+    previousLineup.data && gameList.find((game) => game.id === previousLineup.data.game_id);
+
+  // The app is on a non-data <BrowserRouter>, so useBlocker isn't available for in-app
+  // nav; guard the actions that would drop the editor's state, and let beforeunload
+  // (in LineupEditor) cover a full-page leave.
+  function confirmLeave(): boolean {
+    return !editorDirty || window.confirm(DISCARD_PROMPT);
+  }
 
   function patchParams(next: Record<string, string>) {
     const merged = new URLSearchParams(searchParams);
     for (const [key, value] of Object.entries(next)) merged.set(key, value);
-    setSearchParams(merged, { replace: true });
+
+    // Re-set even on cancel: the native <select> has already moved to the new option,
+    // and re-navigating (here to the unchanged URL) forces it back to the real value.
+    setSearchParams(confirmLeave() ? merged : new URLSearchParams(searchParams), { replace: true });
+  }
+
+  function stopEditing() {
+    if (confirmLeave()) setEditing(false);
   }
 
   return (
@@ -109,7 +129,7 @@ export function TeamLineupsPage() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() => setEditing((value) => !value)}
+                onClick={() => (editing ? stopEditing() : setEditing(true))}
               >
                 {editing ? "Done editing" : "Edit lineup"}
               </Button>
@@ -142,6 +162,9 @@ export function TeamLineupsPage() {
                 roster={roster.data?.data ?? []}
                 isSaving={setLineup.isPending}
                 onSave={(input) => setLineup.mutate(input)}
+                templateLineup={previousLineup.data ?? null}
+                templateLabel={templateGame ? gameLabel(templateGame, teamId) : undefined}
+                onDirtyChange={setEditorDirty}
               />
             )
           ) : null}

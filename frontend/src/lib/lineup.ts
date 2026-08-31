@@ -1,4 +1,5 @@
 import type { Lineup, LineupInput } from "@/models/lineups";
+import type { Position } from "@/models/roster";
 
 export const FORWARD_LINE_COUNT = 4;
 export const FORWARD_LINE_SIZE = 3;
@@ -14,6 +15,91 @@ export const DEFENSE_SLOT_LABELS = ["LD", "RD"];
 
 export type SkaterGroup = "forward_lines" | "defense_pairs";
 export type UnitGroup = SkaterGroup | "power_play_units" | "penalty_kill_units";
+
+export type PositionGroup = "forward" | "defense" | "goalie";
+
+// forward/left_wing/right_wing/center all read as "forward" — wing vs centre is loose
+// enough in a lineup that we don't split on it; goalie is the only hard line.
+export type SlotKind = PositionGroup | "skater";
+
+const POSITION_ABBREV: Record<Position, string> = {
+  center: "C",
+  left_wing: "LW",
+  right_wing: "RW",
+  forward: "F",
+  defense: "D",
+  goalie: "G",
+};
+
+export function positionAbbrev(position: Position): string {
+  return POSITION_ABBREV[position];
+}
+
+export function positionGroup(position: Position): PositionGroup {
+  if (position === "goalie") return "goalie";
+  if (position === "defense") return "defense";
+
+  return "forward";
+}
+
+export function slotKindFor(target: SlotTarget): SlotKind {
+  if ("goalie" in target) return "goalie";
+  if (target.group === "forward_lines") return "forward";
+  if (target.group === "defense_pairs") return "defense";
+
+  return "skater";
+}
+
+export type PositionFilterValue = Position | "all";
+
+export interface PositionFilter {
+  options: { value: PositionFilterValue; label: string }[];
+  initial: PositionFilterValue;
+}
+
+const FORWARD_SLOT_POSITIONS: Position[] = ["left_wing", "center", "right_wing"];
+
+// The exact position a slot wants, used to preselect the picker's filter chip.
+export function slotPositionHint(target: SlotTarget): Position | undefined {
+  if ("goalie" in target) return "goalie";
+  if (target.group === "forward_lines") return FORWARD_SLOT_POSITIONS[target.slotIndex];
+  if (target.group === "defense_pairs") return "defense";
+
+  return undefined;
+}
+
+// The picker's position chips. A goalie slot has nothing to filter (goalies only);
+// a scratch (undefined slotKind) can be anyone, so it keeps the goalie chip.
+export function positionFilterFor(
+  slotKind: SlotKind | undefined,
+  hint?: Position,
+): PositionFilter | null {
+  if (slotKind === "goalie") return null;
+
+  const options: PositionFilter["options"] = [
+    { value: "all", label: "All" },
+    { value: "center", label: "C" },
+    { value: "left_wing", label: "LW" },
+    { value: "right_wing", label: "RW" },
+    { value: "defense", label: "D" },
+  ];
+  if (slotKind === undefined) options.push({ value: "goalie", label: "G" });
+
+  return {
+    options,
+    initial: hint && options.some((option) => option.value === hint) ? hint : "all",
+  };
+}
+
+// A generically-listed forward has an unknown wing, so he shows under any forward chip.
+export function matchesPositionFilter(position: Position, filter: PositionFilterValue): boolean {
+  if (filter === "all" || position === filter) return true;
+
+  return (
+    position === "forward" &&
+    (filter === "center" || filter === "left_wing" || filter === "right_wing")
+  );
+}
 
 export interface LineupDraft {
   forward_lines: (number | null)[][];

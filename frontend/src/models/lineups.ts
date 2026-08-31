@@ -29,6 +29,12 @@ export function fetchLineup(teamId: number, gameId: number): Promise<Lineup> {
   return request<Lineup>(`/teams/${teamId}/lineups/${gameId}`);
 }
 
+// The team's most recent lineup from a game before this one — a starting point when a
+// new game's lineup is a small edit of the last one. 404s when there is no earlier one.
+export function fetchPreviousLineup(teamId: number, gameId: number): Promise<Lineup> {
+  return request<Lineup>(`/teams/${teamId}/lineups/${gameId}/previous`);
+}
+
 export function setLineup(teamId: number, gameId: number, input: LineupInput): Promise<Lineup> {
   return request<Lineup>(`/teams/${teamId}/lineups/${gameId}`, {
     method: "PUT",

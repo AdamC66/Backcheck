@@ -21,6 +21,19 @@ module Api
         render_data(LineupSerializer.new(lineup).as_json)
       end
 
+      # The team's most recent lineup from another game, to seed the editor — night to
+      # night a lineup is a small edit of the last one, not a fresh build. Inclusive of
+      # the same start time so a home-and-home's other leg counts.
+      def previous
+        lineup = Lineup.includes(slots: :player).joins(:game)
+                       .where(team: team).where.not(game_id: game.id)
+                       .where(games: { starts_at: ..game.starts_at })
+                       .order("games.starts_at DESC", "games.id DESC").first
+        return render_not_found_lineup if lineup.nil? || !visible?(lineup)
+
+        render_data(LineupSerializer.new(lineup).as_json)
+      end
+
       private
 
       attr_reader :team, :game

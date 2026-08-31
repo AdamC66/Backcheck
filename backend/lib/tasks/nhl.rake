@@ -21,8 +21,8 @@ namespace :nhl do
         puts "Standings #{season.label}: skipped, season ends #{season.ends_on}"
       end
 
-      next if season.starts_on.future?
-
+      # No future-season guard: the NHL publishes a full schedule in the offseason, and
+      # an all-FUT season is exactly what speculative lineup planning needs.
       puts "Schedules #{season.label} (#{league.teams.count} teams, one request each)…"
       missing = []
       league.teams.alphabetical.each do |team|

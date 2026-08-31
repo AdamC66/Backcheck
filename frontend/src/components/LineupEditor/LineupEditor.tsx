@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/Button/Button";
 import { Card } from "@/components/Card/Card";
 import { Row } from "@/components/Row/Row";
@@ -11,7 +11,9 @@ import {
   draftFromLineup,
   draftToInput,
   isDraftDirty,
+  slotKindFor,
   slotPlayerId,
+  slotPositionHint,
   withPlayerAt,
   withScratch,
   withSlotCleared,
@@ -30,9 +32,20 @@ export interface LineupEditorProps {
   roster: RosterEntry[];
   isSaving: boolean;
   onSave: (input: LineupInput) => void;
+  templateLineup?: Lineup | null;
+  templateLabel?: string;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-export function LineupEditor({ initialLineup, roster, isSaving, onSave }: LineupEditorProps) {
+export function LineupEditor({
+  initialLineup,
+  roster,
+  isSaving,
+  onSave,
+  templateLineup,
+  templateLabel,
+  onDirtyChange,
+}: LineupEditorProps) {
   const [original] = useState(() => draftFromLineup(initialLineup));
   const [draft, setDraft] = useState(original);
   const [picker, setPicker] = useState<PickerState>(null);
@@ -42,6 +55,23 @@ export function LineupEditor({ initialLineup, roster, isSaving, onSave }: Lineup
     [roster],
   );
   const dirty = isDraftDirty(draft, original);
+  const canSeedFromTemplate =
+    initialLineup === null && !dirty && templateLineup != null && templateLabel !== undefined;
+
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
+
+  useEffect(() => {
+    if (!dirty) return;
+
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   function nameFor(playerId: number | null): string | null {
     if (playerId === null) return null;
@@ -62,6 +92,22 @@ export function LineupEditor({ initialLineup, roster, isSaving, onSave }: Lineup
 
   return (
     <Stack gap="md">
+      {canSeedFromTemplate ? (
+        <Row justify="between" align="center" gap="sm" className="bg-slate-50 px-3 py-2">
+          <Text variant="caption" tone="muted">
+            Nothing set for this game yet.
+          </Text>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setDraft(draftFromLineup(templateLineup ?? null))}
+          >
+            Start from {templateLabel}
+          </Button>
+        </Row>
+      ) : null}
+
       <GridSection
         title="Forward Lines"
         group="forward_lines"
@@ -174,6 +220,8 @@ export function LineupEditor({ initialLineup, roster, isSaving, onSave }: Lineup
           title={pickerTitle(picker)}
           roster={roster}
           draft={draft}
+          slotKind={slotKindFor(picker)}
+          defaultPosition={slotPositionHint(picker)}
           filledPlayerId={slotPlayerId(draft, picker)}
           onPick={(playerId) => {
             setDraft(withPlayerAt(draft, picker, playerId));

@@ -1554,5 +1554,13 @@
     "description": "Actual on-ice pairings, not planned: 'these two D played 190:12 together at 5v5', 'this forward trio's on-ice xGF% when together vs apart'. Derived from concurrent on-ice player sets across shift intervals (shifts table + play-by-play), keyed to strength/score state like the existing advanced-stat splits. Distinct from TASK-155, which reads pre-game lineup cards. Needs a design pass on how combinations are identified and stored (per-game rollup vs on-the-fly), and how it reuses the EPIC-13/15 advanced-stats machinery.",
     "type": "spike",
     "status": "backlog"
+  },
+  {
+    "id": "TASK-157",
+    "epic_id": "EPIC-8",
+    "title": "Participation-based historical roster backfill from club-stats",
+    "description": "Past-season roster_spots are near-empty (Toronto 2025-26: 10 rows, all contract_level unknown / inferred_from_stats) because the roster sync only ever writes the *current* org from /v1/roster/{team}/current, and a past season's rows lapse as contracts end. The fix, already scoped in docs/DECISIONS.md ('club-stats/{team}/{season}/{gameType} for historical membership') and repeatedly shelved: a rake task that pulls club-stats per team/season/gameType (types 2 and 3 are separate calls) and writes roster_spots once from who actually dressed, then leaves them alone. Needed to make historical lineup backfill (TASK-154) usable and to make TASK-155 accurate for past seasons. Speculative 2026-27 lineups don't need it — the current roster is healthy.",
+    "type": "feature",
+    "status": "backlog"
   }
 ]

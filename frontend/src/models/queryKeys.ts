@@ -30,6 +30,9 @@ export const teamAffiliationsKey = (teamId: number) => ["team-affiliations", tea
 export const teamLineupKey = (teamId: number, gameId: number) =>
   ["team-lineup", teamId, gameId] as const;
 
+export const teamPreviousLineupKey = (teamId: number, gameId: number) =>
+  ["team-lineup-previous", teamId, gameId] as const;
+
 // Split so a status change can invalidate every season/page for a team at once,
 // without needing to know which page or season the panel is currently showing.
 export const rosterTransactionsTeamKey = (teamId: number) =>

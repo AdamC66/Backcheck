@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { fetchCurrentUser } from "@/models/auth";
 import { fetchTeamGames } from "@/models/games";
-import { fetchLineup, setLineup } from "@/models/lineups";
+import { fetchLineup, fetchPreviousLineup, setLineup } from "@/models/lineups";
 import { fetchTeamRoster } from "@/models/roster";
 import { fetchSeasons } from "@/models/seasons";
 import { fetchTeam } from "@/models/teams";
@@ -17,7 +17,7 @@ import {
   TEAMS,
   lineupFor,
 } from "@/test-mocks";
-import { renderWithProviders, screen } from "@/test-utils";
+import { renderWithProviders, screen, within } from "@/test-utils";
 import { TeamPage } from "../TeamPage";
 import { TeamLineupsPage } from "../TeamLineupsPage";
 
@@ -49,6 +49,9 @@ describe("TeamLineupsPage", () => {
     vi.mocked(fetchTeamGames).mockResolvedValue(TEAM_GAMES);
     vi.mocked(fetchTeamRoster).mockResolvedValue(TEAM_ROSTER);
     vi.mocked(fetchSeasons).mockResolvedValue([]);
+    vi.mocked(fetchPreviousLineup).mockRejectedValue(
+      new ApiError("not_found", "Lineup not found", 404),
+    );
   });
 
   it("shows the selected game's lineup", async () => {
@@ -79,5 +82,38 @@ describe("TeamLineupsPage", () => {
 
     // The editor's slot buttons replace the read-only sheet.
     expect(await screen.findByRole("button", { name: "L1 LW — add player" })).toBeInTheDocument();
+  });
+
+  it("offers to seed a new lineup from the team's previous game", async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchLineup).mockRejectedValue(new ApiError("not_found", "Lineup not found", 404));
+    vi.mocked(fetchPreviousLineup).mockResolvedValue(lineupFor({ game_id: TEAM_GAMES.data[0].id }));
+
+    renderLineups();
+
+    await user.click(await screen.findByRole("button", { name: "Edit lineup" }));
+
+    expect(await screen.findByRole("button", { name: /^Start from / })).toBeInTheDocument();
+  });
+
+  it("warns before leaving the editor with unsaved changes and stays put if declined", async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchLineup).mockRejectedValue(new ApiError("not_found", "Lineup not found", 404));
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    renderLineups();
+
+    await user.click(await screen.findByRole("button", { name: "Edit lineup" }));
+    await user.click(await screen.findByRole("button", { name: "L1 LW — add player" }));
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: /Easton Cowan/ }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Done editing" }));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Done editing" })).toBeInTheDocument();
+
+    confirmSpy.mockRestore();
   });
 });
