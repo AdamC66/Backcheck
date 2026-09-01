@@ -316,9 +316,9 @@
     "epic_id": "EPIC-9",
     "title": "Coach: set a team's lineup for a game",
     "type": "feature",
-    "status": "in_progress",
+    "status": "done",
     "priority": "medium",
-    "description": "A coach-role Membership on a team can create/update that team's own Lineup for a game. Depends on TASK-35 (schema) and TASK-3 (authorization foundation). v1 doesn't check whether a named player is actually within the 23-man Active Roster or on Injured Reserve (TASK-40) \u2014 only that he's on the team.",
+    "description": "A coach-role Membership (or Super Admin) creates/updates that team's own Lineup for a game: full teamsheet editor on the team page \u2014 4 forward lines, 3 D pairs, 2 PP units, 2 PK units, starter/backup, scratches \u2014 with a position-filtered player picker, seeding from the previous game's lineup, and an unsaved-changes guard. GET .../lineups/:game_id/previous backs the seeding. Eligibility is season-grained: on roster_spots for the game's season and not on an open roster_status (IR / non-roster, TASK-40). Still no 23-man max or roster-shape enforcement. Depends on TASK-35, TASK-3.",
     "acceptance_criteria": [
       "A coach can set/edit their own team's lineup for a game",
       "A coach on one team cannot edit another team's lineup, including a same-league opponent",
@@ -365,7 +365,7 @@
     "type": "feature",
     "status": "done",
     "priority": "medium",
-    "description": "roster_statuses (player, team, season, status: injured_reserve/non_roster, started_on, ended_on) \u2014 day-scoped and history-preserving like the rest of the roster domain. 'active' is never stored; a player with no open period is active by default, so the common case needs no row at all. A GM sets it via PATCH /teams/:id/roster_statuses/:player_id (role_key: gm, TASK-3), for a player already on that team's roster (found via roster_spots, which also supplies the season). started_on/ended_on can be backdated to today or earlier \u2014 real IR placements are often reported after the fact \u2014 but never future-dated. Moved from EPIC-3 to EPIC-9 once scoped: no external feed reports this, so it's a role action, not ingestion. Does NOT yet enforce the 23-man Active Roster max (16.4) or wire into TASK-36's lineup eligibility or EPIC-10's cap accounting \u2014 the table exists, nothing consumes it yet."
+    "description": "roster_statuses (player, team, season, status: injured_reserve/non_roster, started_on, ended_on) \u2014 day-scoped and history-preserving like the rest of the roster domain. 'active' is never stored; a player with no open period is active by default, so the common case needs no row at all. A GM sets it via PATCH /teams/:id/roster_statuses/:player_id (role_key: gm, TASK-3), for a player already on that team's roster (found via roster_spots, which also supplies the season). started_on/ended_on can be backdated to today or earlier \u2014 real IR placements are often reported after the fact \u2014 but never future-dated. Moved from EPIC-3 to EPIC-9 once scoped: no external feed reports this, so it's a role action, not ingestion. TASK-36's lineup eligibility now consumes it (an open IR/non-roster period blocks dressing the player, season-grained). Still does NOT enforce the 23-man Active Roster max (16.4) or feed EPIC-10's cap accounting."
   },
   {
     "id": "TASK-41",

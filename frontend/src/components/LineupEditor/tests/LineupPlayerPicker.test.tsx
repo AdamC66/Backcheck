@@ -11,6 +11,10 @@ const ROSTER = [
   rosterEntryFor({ player: playerFor(3, { last_name: "Swingman", position: "forward" }) }),
   rosterEntryFor({ player: playerFor(4, { last_name: "Blueline", position: "defense" }) }),
   rosterEntryFor({ player: playerFor(5, { last_name: "Netminder", position: "goalie" }) }),
+  rosterEntryFor({
+    player: playerFor(6, { last_name: "Hurt", position: "center" }),
+    roster_status: { status: "injured_reserve", started_on: "2026-01-01" },
+  }),
 ];
 
 function renderPicker(overrides: Partial<LineupPlayerPickerProps>) {
@@ -55,5 +59,16 @@ describe("LineupPlayerPicker", () => {
     await user.click(screen.getByRole("button", { name: "All" }));
     expect(screen.getByText("Test Blueline")).toBeInTheDocument();
     expect(screen.queryByText("Test Netminder")).not.toBeInTheDocument();
+  });
+
+  it("never lists a player who is on injured reserve", async () => {
+    const user = userEvent.setup();
+    renderPicker({ slotKind: "forward", defaultPosition: "center" });
+
+    expect(screen.getByText("Test Pivot")).toBeInTheDocument();
+    expect(screen.queryByText("Test Hurt")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "All" }));
+    expect(screen.queryByText("Test Hurt")).not.toBeInTheDocument();
   });
 });

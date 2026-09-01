@@ -48,6 +48,9 @@ export function LineupPlayerPicker({
   const matches = useMemo(() => {
     return roster
       .filter((entry) => {
+        // Injured-reserve / non-roster players can't dress; the backend rejects them too.
+        if (entry.roster_status.status !== "active") return false;
+
         const playerPosition = entry.player.position;
         if (slotKind === "goalie") return playerPosition === "goalie";
         if (slotKind !== undefined && playerPosition === "goalie") return false;

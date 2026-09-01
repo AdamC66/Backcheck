@@ -18,7 +18,7 @@ class LineupSlot < ApplicationRecord
   validates :player_id, uniqueness: { scope: [ :lineup_id, :unit_type ] }
   validates :unit_number, absence: true, if: :scratch?
   validate :unit_number_within_range, unless: :scratch?
-  validate :player_is_on_the_team
+  validate :player_is_eligible
 
   private
 
@@ -30,12 +30,20 @@ class LineupSlot < ApplicationRecord
     errors.add(:unit_number, "must be between #{range.first} and #{range.last} for a #{unit_type}")
   end
 
-  # v1 eligibility is current team assignment only — a roster_spot for this team in the
-  # game's season. The 23-man Active Roster / IR distinction (Article 16) is TASK-40.
-  def player_is_on_the_team
+  # Season-grained, matching roster_spots itself: on this team's roster for the game's
+  # season, and not currently on IR or non-roster (TASK-40). Still no 23-man Active
+  # Roster max (Article 16) and no game-date precision — date-accurate history waits on
+  # the participation backfill (TASK-157).
+  def player_is_eligible
     return if lineup.blank? || player_id.blank?
 
-    on_team = RosterSpot.exists?(player_id: player_id, team_id: lineup.team_id, season_id: lineup.game.season_id)
-    errors.add(:player, "is not on this team's roster for the season") unless on_team
+    scope = { player_id: player_id, team_id: lineup.team_id, season_id: lineup.game.season_id }
+
+    unless RosterSpot.exists?(scope)
+      errors.add(:player, "is not on this team's roster for the season")
+      return
+    end
+
+    errors.add(:player, "is on injured reserve or non-roster") if RosterStatus.open.exists?(scope)
   end
 end
