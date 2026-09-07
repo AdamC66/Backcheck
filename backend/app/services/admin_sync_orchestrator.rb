@@ -1,9 +1,12 @@
 class AdminSyncOrchestrator
   # These track progress per game rather than per team — one item can mean 82 games.
-  PER_GAME_KINDS = %i[game_stats advanced_stats rebuild_season_stats].freeze
-  # Both also batch a season-chain rebuild (PlayerSeasonAdvancedStat/TeamSeasonAdvancedStat)
-  # once per item instead of once per game (TASK-94, TASK-105).
-  CHAIN_REBUILD_KINDS = %i[advanced_stats rebuild_season_stats].freeze
+  PER_GAME_KINDS = %i[game_stats advanced_stats rebuild_season_stats rebuild_advanced_stats].freeze
+  # Kinds that touch the individual counting stats and so batch a season-stat recompute
+  # (RecomputeTouchedSeasonStats). rebuild_advanced_stats only moves xG, so it's excluded.
+  SEASON_STAT_REBUILD_KINDS = %i[game_stats advanced_stats rebuild_season_stats].freeze
+  # Kinds that also batch a season-chain rebuild (PlayerSeasonAdvancedStat/
+  # TeamSeasonAdvancedStat) once per item instead of once per game (TASK-94, TASK-105).
+  CHAIN_REBUILD_KINDS = %i[advanced_stats rebuild_season_stats rebuild_advanced_stats].freeze
 
   def initialize(sync_run:)
     @sync_run = sync_run
@@ -125,7 +128,7 @@ class AdminSyncOrchestrator
     failed_games = []
     # Batched once per distinct player/team touched across the item, not once per
     # game (TASK-88/94/102).
-    recompute_batch = RecomputeTouchedSeasonStats.new(season: sync_run.season) if PER_GAME_KINDS.include?(item.kind_name)
+    recompute_batch = RecomputeTouchedSeasonStats.new(season: sync_run.season) if SEASON_STAT_REBUILD_KINDS.include?(item.kind_name)
     chain_batch = RebuildTouchedAdvancedStatsChains.new(season: sync_run.season) if CHAIN_REBUILD_KINDS.include?(item.kind_name)
 
     games.each_with_index do |game, index|
@@ -204,6 +207,9 @@ class AdminSyncOrchestrator
       sync.goalie_stats + sync.skater_stats
     when :rebuild_season_stats
       ComputeIndividualGameStats.new(game: game, recompute: :skip).call
+    when :rebuild_advanced_stats
+      ComputeGameAdvancedStats.new(game: game).call
+      []
     end
   end
 

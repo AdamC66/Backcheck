@@ -15,7 +15,11 @@ module SyncKindRegistry
     advanced_stats: { service: SyncGameEvents, scope: [ :team, :season ] },
     # No NHL API call — recomputes from game_events already ingested, re-runnable
     # whenever a new stat calc needs backfilling into an already-synced season (TASK-105).
-    rebuild_season_stats: { service: ComputeIndividualGameStats, scope: [ :team, :season ] }
+    rebuild_season_stats: { service: ComputeIndividualGameStats, scope: [ :team, :season ] },
+    # No NHL API call — recomputes player/team_game_advanced_stats (and the season
+    # chains) from stored events against the active XgModel, to backfill history onto
+    # a newly trained model (TASK-145).
+    rebuild_advanced_stats: { service: ComputeGameAdvancedStats, scope: [ :team, :season ] }
   }.freeze
 
   def self.for(kind)

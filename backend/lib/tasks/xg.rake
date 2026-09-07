@@ -26,4 +26,16 @@ namespace :xg do
     puts "  features: #{run.feature_set.join(', ')}"
     puts "  Brier #{metrics['brier']}  log loss #{metrics['log_loss']}"
   end
+
+  desc "Promote a fitted training run to a new active XgModel. " \
+       "Usage: rake 'xg:activate[v1-full]' or rake 'xg:activate[v1-full,v1]' to set the version explicitly"
+  task :activate, [ :label, :version ] => :environment do |_task, args|
+    abort("Usage: rake 'xg:activate[label]'") if args[:label].blank?
+
+    model = ActivateXgModel.new(label: args[:label], version: args[:version]).call
+
+    puts "Activated XgModel #{model.version} (##{model.id}) — #{model.coefficients.size} coefficients"
+    puts "Historical player/team advanced-stat rows still carry the previous model — " \
+         "run the TASK-145 backfill to bring them onto #{model.version}."
+  end
 end

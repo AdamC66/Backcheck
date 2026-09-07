@@ -169,6 +169,34 @@ RSpec.describe AdminSyncOrchestrator do
     expect(run.total_steps).to eq(1)
   end
 
+  # TASK-145: rebuild_advanced_stats recomputes xG from stored events against the
+  # active model and batches the season-chain rebuild — no NHL API, no counting-stat recompute.
+  it "recomputes advanced stats for a rebuild_advanced_stats item, no NHL API call" do
+    season = create(:season, league: league)
+    games = Array.new(2) do |n|
+      create(:game, season: season, home_team: team, away_team: create(:team, league: league),
+             starts_at: Time.utc(2025, 10, 8 + n))
+    end
+    run = create(:sync_run, team: team, season: season,
+                 sync_kinds: [ SyncRun::SYNC_KINDS[:rebuild_advanced_stats] ])
+    touched = []
+    allow(ComputeGameAdvancedStats).to receive(:new) do |game:, **|
+      touched << game
+      instance_double(ComputeGameAdvancedStats, call: [])
+    end
+    allow(RecomputeTouchedSeasonStats).to receive(:new).and_call_original
+    chain_batch = instance_double(RebuildTouchedAdvancedStatsChains, track: nil, call: nil, failures: [])
+    allow(RebuildTouchedAdvancedStatsChains).to receive(:new).and_return(chain_batch)
+
+    described_class.new(sync_run: run).call
+
+    run.reload
+    expect(touched).to match_array(games)
+    expect(RecomputeTouchedSeasonStats).not_to have_received(:new)
+    expect(chain_batch).to have_received(:track).twice
+    expect(run.status).to eq(SyncRun::STATUSES[:completed])
+  end
+
   # Regression guard for TASK-84: a resumed job (Solid Queue re-running a job whose
   # worker died mid-run) must not redo already-completed items from scratch.
   it "skips already-completed items on a resumed run, and re-runs the rest" do

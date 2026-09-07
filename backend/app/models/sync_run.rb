@@ -9,7 +9,8 @@ class SyncRun < ApplicationRecord
     daily_scores: 4,
     game_stats: 5,
     advanced_stats: 6,
-    rebuild_season_stats: 7
+    rebuild_season_stats: 7,
+    rebuild_advanced_stats: 8
   }.freeze
 
   # SyncRunItem#status validates against this same set rather than defining its own.

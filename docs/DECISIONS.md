@@ -829,5 +829,29 @@ is defended: every coordinate-derived feature folds onto the attacking net via
 `target_net_x`). `ComputeGameAdvancedStats` builds one `ReboundShots` per game and
 passes the flag per event.
 
+### Activating a trained xG model + backfilling history (EPIC-23 / TASK-144, TASK-145)
+**Status:** Settled
+
+**TASK-144 — `rake xg:activate[label]`** (`ActivateXgModel`) reads a fitted
+`XgTrainingRun`, creates an `XgModel` from its coefficients verbatim (never
+hand-typed), and calls the existing `XgModel.activate!` for the atomic single-active
+swap. The run is marked `promoted` and linked to the model. The old model row stays
+(`dependent: :restrict_with_error` — historical rows still reference it). Rake-only, no
+admin button: activation is the trigger for a multi-hour backfill, not a casual click.
+
+**TASK-145 — a new `rebuild_advanced_stats` sync kind**, sibling to `rebuild_season_stats`
+(TASK-105): no NHL API, recomputes `player_game_advanced_stats` / `team_game_advanced_stats`
+from already-ingested events against the now-active `XgModel`, then batches the
+season-chain rebuild (`RebuildTouchedAdvancedStatsChains`, TASK-94) once per item. It
+runs through the existing `AdminSyncOrchestrator` — progress, activity log, resumability
+and the `/admin/sync` UI for free — rather than a new script. Scoped `[:team, :season]`
+like its sibling, so a full-history backfill is one run per season (three, currently),
+triggered from `/admin/sync/new`.
+
+It differs from `rebuild_season_stats` in one way: the individual counting stats
+(faceoffs, hits, blocked shots) don't change when only the xG model changes, so
+`rebuild_advanced_stats` is left out of the orchestrator's `SEASON_STAT_REBUILD_KINDS` —
+it batches the chain rebuild but skips `RecomputeTouchedSeasonStats`.
+
 ### Project scope / feature set
 **Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.

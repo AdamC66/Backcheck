@@ -1440,7 +1440,7 @@
     "title": "Activate the trained model",
     "description": "Insert TASK-142's fitted coefficients as a new XgModel row (version, coefficients, trained_at) via a rake task reading the training script's actual output \u2014 not hand-typed. XgModel.activate!(version) atomically swaps it in (already built, TASK-59). No other application code changes needed once TASK-143 lands, per XgModel's existing design.",
     "type": "chore",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium",
     "acceptance_criteria": [
       "The new XgModel row is inserted from the training script's actual output file, not hand-transcribed",
@@ -1453,7 +1453,7 @@
     "title": "Backfill historical advanced stats against the trained model",
     "description": "player_game_advanced_stats/team_game_advanced_stats rows carry xg_model_id, tagging them to whichever model version produced them \u2014 activating a new XgModel doesn't retroactively change already-computed rows. Scoped in during TASK-81's scoping: every historical game's advanced-stat rows should get recomputed against the newly active model, riding TASK-62's existing recompute-chain machinery (RebuildPlayerAdvancedStatsChain / RecomputeTeamSeasonAdvancedStats) rather than a new mechanism. Likely the longest-running step here \u2014 worth checking whether TASK-94's bulk/batch recompute path applies directly or needs adapting for a full-history run rather than a per-sync-run scope.",
     "type": "chore",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium",
     "acceptance_criteria": [
       "Every historical game with existing player_game_advanced_stats/team_game_advanced_stats rows is recomputed against the newly active XgModel",
@@ -1562,5 +1562,21 @@
     "description": "Past-season roster_spots are near-empty (Toronto 2025-26: 10 rows, all contract_level unknown / inferred_from_stats) because the roster sync only ever writes the *current* org from /v1/roster/{team}/current, and a past season's rows lapse as contracts end. The fix, already scoped in docs/DECISIONS.md ('club-stats/{team}/{season}/{gameType} for historical membership') and repeatedly shelved: a rake task that pulls club-stats per team/season/gameType (types 2 and 3 are separate calls) and writes roster_spots once from who actually dressed, then leaves them alone. Needed to make historical lineup backfill (TASK-154) usable and to make TASK-155 accurate for past seasons. Speculative 2026-27 lineups don't need it \u2014 the current roster is healthy.",
     "type": "feature",
     "status": "backlog"
+  },
+  {
+    "id": "TASK-158",
+    "epic_id": "EPIC-23",
+    "title": "Individual xG (ixG) per skater \u2014 own-shot expected goals",
+    "description": "player_game_advanced_stats.xg_for currently means on-ice team xG while the skater is on the ice. Add individual xG: the summed xG of the unblocked shot attempts the skater personally took (goal/shot/missed_shot, never blocked \u2014 same Fenwick rule as team xG). Shooter only, matching MoneyPuck's 'ixG'; the common downstream read is ixG minus goals as a finishing-skill measure. Scope from the 2026-09-07 discussion: a new decimal ixg column on player_game_advanced_stats and player_season_advanced_stats (not the team_* tables \u2014 team ixG just equals team xg_for); ComputeGameAdvancedStats credits event.primary_player with the shot's already-computed xG into an ixg bucket per strength/score split (~5 lines); :ixg added to RebuildPlayerAdvancedStatsChain::SUMMABLE_COLUMNS and the touched-batch equivalent (the chain rollup is generic over that list); one 'ixG' column in the skater advanced-stat tables/serializers. Historical backfill is free \u2014 the EPIC-23 rebuild_advanced_stats sync run re-runs ComputeGameAdvancedStats. Only meaningful once EPIC-23 lands a real trained model (placeholder ixG would be as inflated as the on-ice numbers were).",
+    "type": "feature",
+    "status": "backlog",
+    "priority": "medium",
+    "acceptance_criteria": [
+      "player_game_advanced_stats and player_season_advanced_stats gain an ixg column; team advanced-stat tables are unchanged",
+      "ComputeGameAdvancedStats sums each shooter's own unblocked-attempt xG into ixg, in the same strength_state/score_state buckets as the on-ice totals, and a spec proves a non-shooting on-ice skater gets ixg 0",
+      "The season chain and touched-batch rollups carry ixg through without a bespoke code path",
+      "ixG shows as its own column alongside on-ice xGF in the skater advanced-stat tables",
+      "Recomputing a historical game against the active model fills ixg for that game with no separate backfill mechanism"
+    ]
   }
 ]
