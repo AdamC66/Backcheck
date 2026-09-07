@@ -21,7 +21,7 @@ class ImportXgTrainingRun
       csv_path: export.csv_path,
       csv_sha256: export.csv_sha256,
       row_count: fit["trained_rows"] || export.row_count,
-      goal_count: export.goal_count,
+      goal_count: fit["trained_goals"] || export.goal_count,
       manifest: export.manifest,
       feature_set: fit["feature_set"],
       coefficients: fit["coefficients"],

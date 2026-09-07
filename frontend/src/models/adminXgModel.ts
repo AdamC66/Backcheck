@@ -28,7 +28,6 @@ export interface XgTrainingRunMetrics {
   brier?: number;
   log_loss?: number;
   by_season?: Record<string, { brier: number; log_loss: number }>;
-  baseline_brier?: number;
   goal_rate?: number;
   game_xg_summary?: XgGameXgSummary;
 }

@@ -6,14 +6,8 @@
 # Known gaps, left for a later task (see docs/DECISIONS.md): zone_entries/zone_exits
 # stay at their column default, and toi_seconds is only computed for the all/all bucket.
 class ComputeGameAdvancedStats
-  CORSI_EVENT_TYPES = [
-    GameEvent::EVENT_TYPES[:goal], GameEvent::EVENT_TYPES[:shot],
-    GameEvent::EVENT_TYPES[:missed_shot], GameEvent::EVENT_TYPES[:blocked_shot]
-  ].freeze
-
-  # xG is scored on unblocked attempts only — a blocked shot's recorded coordinates
-  # are the blocker's position, not the shooter's release point.
-  FENWICK_EVENT_TYPES = (CORSI_EVENT_TYPES - [ GameEvent::EVENT_TYPES[:blocked_shot] ]).freeze
+  CORSI_EVENT_TYPES = GameEvent::CORSI_EVENT_TYPES
+  FENWICK_EVENT_TYPES = GameEvent::FENWICK_EVENT_TYPES
 
   STRENGTH_STATE_MAP = {
     GameEvent::STRENGTH_STATES[:even_strength] => PlayerGameAdvancedStat::STRENGTH_STATES[:five_v_five],

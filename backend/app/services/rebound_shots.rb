@@ -7,7 +7,7 @@ class ReboundShots
   REBOUND_WINDOW_SECONDS = 3
 
   TRIGGER_EVENT_TYPES = GameEvent::EVENT_TYPES.values_at(:shot, :missed_shot).freeze
-  FENWICK_EVENT_TYPES = GameEvent::EVENT_TYPES.values_at(:goal, :shot, :missed_shot).freeze
+  FENWICK_EVENT_TYPES = GameEvent::FENWICK_EVENT_TYPES
 
   def initialize(game)
     @game = game

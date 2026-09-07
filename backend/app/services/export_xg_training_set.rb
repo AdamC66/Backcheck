@@ -2,8 +2,8 @@
 # byte-identical file (TASK-140). Every column is a number or a controlled-vocabulary
 # token, so rows need no CSV quoting.
 class ExportXgTrainingSet
-  FENWICK_EVENT_TYPES = GameEvent::EVENT_TYPES.values_at(:goal, :shot, :missed_shot).freeze
-  GOAL = GameEvent::EVENT_TYPES[:goal].freeze
+  FENWICK_EVENT_TYPES = GameEvent::FENWICK_EVENT_TYPES
+  GOAL = GameEvent::EVENT_TYPES[:goal]
   COORD_PRECISION = 4
 
   COLUMNS = %i[
@@ -58,9 +58,8 @@ class ExportXgTrainingSet
       fenwick_events(game).each do |event|
         next if shootout?(game, event)
 
-        geometry = ShotGeometry.new(x_coord: event.x_coord, y_coord: event.y_coord,
-                                    target_net_x: event.target_net_x)
-        next unless geometry.present?
+        features = ShotFeatures.new(event: event, rebound: rebounds.rebound?(event))
+        next unless features.present?
 
         yield({
           game_id: game.id,
@@ -68,13 +67,12 @@ class ExportXgTrainingSet
           season: game.season.label,
           game_type: Game::GAME_TYPES.key(game.game_type).to_s,
           event_id: event.id,
-          distance: geometry.distance.round(COORD_PRECISION),
-          angle: geometry.angle.round(COORD_PRECISION),
-          shot_type: GameEvent::SHOT_TYPES.key(event.shot_type)&.to_s || "unknown",
-          strength_state: GameEvent::STRENGTH_STATES.key(event.strength_state)&.to_s || "unknown",
-          danger_zone: DangerZone.classify(x_coord: event.x_coord, y_coord: event.y_coord,
-                                           target_net_x: event.target_net_x).to_s,
-          rebound: rebounds.rebound?(event) ? 1 : 0,
+          distance: features.distance.round(COORD_PRECISION),
+          angle: features.angle.round(COORD_PRECISION),
+          shot_type: features.shot_type_name,
+          strength_state: features.strength_state_name,
+          danger_zone: features.danger_zone.to_s,
+          rebound: features.rebound? ? 1 : 0,
           is_goal: event.event_type == GOAL ? 1 : 0
         })
       end
@@ -86,8 +84,12 @@ class ExportXgTrainingSet
         .includes(:season).order(:id)
   end
 
+  # The game is already loaded, so set the association rather than let ShotFeatures'
+  # event.target_net_x re-fetch it once per row.
   def fenwick_events(game)
-    GameEvent.where(game: game, event_type: FENWICK_EVENT_TYPES).order(:id).preload(:game)
+    events = GameEvent.where(game: game, event_type: FENWICK_EVENT_TYPES).order(:id).to_a
+    events.each { |event| event.association(:game).target = game }
+    events
   end
 
   # A regular-season / preseason shootout is recorded as period 5; playoff period 5+

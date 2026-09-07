@@ -18,8 +18,10 @@ class ActivateXgModel
     resolved_version = version.presence || label
 
     XgModel.transaction do
-      model = XgModel.create!(version: resolved_version, coefficients: run.coefficients,
-                              trained_at: run.created_at)
+      # Re-running activate for the same version (a rollback, or a repeated run) updates
+      # the existing row rather than failing the uniqueness check.
+      model = XgModel.find_or_initialize_by(version: resolved_version)
+      model.update!(coefficients: run.coefficients, trained_at: run.created_at)
       model = XgModel.activate!(model.version)
       run.update!(status: XgTrainingRun::STATUSES[:promoted], xg_model: model)
       model

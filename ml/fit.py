@@ -135,6 +135,7 @@ def main():
         "feature_set": list(X.columns),
         "csv_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
         "trained_rows": int(len(df)),
+        "trained_goals": int(y.sum()),
         "coefficients": coefficients,
         "metrics": {
             "brier": float(brier_score_loss(y, oof)),

@@ -26,7 +26,12 @@ class DangerZone
 
   # :high_danger / :mid_range / :long_range, or nil for a shot with no coordinates.
   def self.classify(x_coord:, y_coord:, target_net_x:)
-    geometry = ShotGeometry.new(x_coord: x_coord, y_coord: y_coord, target_net_x: target_net_x)
+    classify_geometry(ShotGeometry.new(x_coord: x_coord, y_coord: y_coord, target_net_x: target_net_x))
+  end
+
+  # Same result from an already-built ShotGeometry, so a caller that needs distance/angle
+  # too (XgFormula, ExportXgTrainingSet) does not build the geometry twice.
+  def self.classify_geometry(geometry)
     return unless geometry.present?
 
     return :high_danger if geometry.distance <= HIGH_DANGER_CREASE_RADIUS_FT

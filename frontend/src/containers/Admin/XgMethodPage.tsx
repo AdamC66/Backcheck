@@ -1,58 +1,8 @@
-import type { ReactNode } from "react";
-import { Card } from "@/components/Card/Card";
+import { InlineCode } from "@/components/InlineCode/InlineCode";
+import { List } from "@/components/List/List";
 import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <Card padding="lg">
-      <Stack gap="sm">
-        <Text variant="title">{title}</Text>
-        {children}
-      </Stack>
-    </Card>
-  );
-}
-
-function P({ children }: { children: ReactNode }) {
-  return (
-    <Text tone="muted" variant="body">
-      {children}
-    </Text>
-  );
-}
-
-function Bullets({ items }: { items: ReactNode[] }) {
-  return (
-    <ul className="list-disc space-y-1 pl-5">
-      {items.map((item, index) => (
-        <li key={index}>
-          <Text tone="muted" variant="body">
-            {item}
-          </Text>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function Steps({ items }: { items: ReactNode[] }) {
-  return (
-    <ol className="list-decimal space-y-1 pl-5">
-      {items.map((item, index) => (
-        <li key={index}>
-          <Text tone="muted" variant="body">
-            {item}
-          </Text>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function Code({ children }: { children: ReactNode }) {
-  return <code className="bg-slate-100 px-1 font-mono text-[0.9em]">{children}</code>;
-}
+import { TitledCard } from "@/components/TitledCard/TitledCard";
 
 export function XgMethodPage() {
   return (
@@ -65,32 +15,34 @@ export function XgMethodPage() {
         </Text>
       </Stack>
 
-      <Section title="What expected goals measures">
-        <P>
+      <TitledCard title="What expected goals measures">
+        <Text tone="muted" variant="body">
           Expected goals (xG) is the probability that a shot becomes a goal. The value is between 0
           and 1. A shot from the slot might score 0.20. A shot from the point might score 0.02.
-        </P>
-        <P>
+        </Text>
+        <Text tone="muted" variant="body">
           To get a team&apos;s xG for a game, add the xG of every shot the team took. A team with
           3.1 xG created chances worth about 3 goals.
-        </P>
-      </Section>
+        </Text>
+      </TitledCard>
 
-      <Section title="The data">
-        <P>
+      <TitledCard title="The data">
+        <Text tone="muted" variant="body">
           The model learns from shots that already happened. The training set has about 373,000
           shots across 3 NHL seasons (2023-24 to 2025-26). About 27,000 of them were goals.
-        </P>
-        <P>
+        </Text>
+        <Text tone="muted" variant="body">
           Each shot comes from the ingested play-by-play data. The model uses three event types:
           goal, shot on goal, and missed shot. It does not use blocked shots. A blocked shot&apos;s
           recorded position is the blocker, not the shooter.
-        </P>
-      </Section>
+        </Text>
+      </TitledCard>
 
-      <Section title="What the model looks at">
-        <P>Each shot becomes a row of features:</P>
-        <Bullets
+      <TitledCard title="What the model looks at">
+        <Text tone="muted" variant="body">
+          Each shot becomes a row of features:
+        </Text>
+        <List
           items={[
             <>
               <strong>Distance</strong> — feet from the shot to the attacking net.
@@ -115,79 +67,84 @@ export function XgMethodPage() {
             </>,
           ]}
         />
-        <P>
+        <Text tone="muted" variant="body">
           Distance, angle, and danger zone fold onto one end of the rink first. The same physical
           shot gets the same features on both ends.
-        </P>
-      </Section>
+        </Text>
+      </TitledCard>
 
-      <Section title="The model: logistic regression">
-        <P>
+      <TitledCard title="The model: logistic regression">
+        <Text tone="muted" variant="body">
           The model is a logistic regression. It gives each feature a weight, called a coefficient.
           To score a shot:
-        </P>
-        <Steps
+        </Text>
+        <List
+          ordered
           items={[
             "Multiply each feature by its coefficient.",
             <>
               Add the results together, plus a start value called the intercept. Call the total{" "}
-              <Code>z</Code>.
+              <InlineCode>z</InlineCode>.
             </>,
             <>
-              Convert <Code>z</Code> to a probability with the logistic function:{" "}
-              <Code>p = 1 / (1 + e^(-z))</Code>.
+              Convert <InlineCode>z</InlineCode> to a probability with the logistic function:{" "}
+              <InlineCode>p = 1 / (1 + e^(-z))</InlineCode>.
             </>,
           ]}
         />
-        <P>
-          The logistic function keeps the output between 0 and 1. A large <Code>z</Code> gives a
-          probability near 1. A large negative <Code>z</Code> gives a probability near 0.
-        </P>
-        <P>The sign of a coefficient shows direction:</P>
-        <Bullets
+        <Text tone="muted" variant="body">
+          The logistic function keeps the output between 0 and 1. A large <InlineCode>z</InlineCode>{" "}
+          gives a probability near 1. A large negative <InlineCode>z</InlineCode> gives a
+          probability near 0.
+        </Text>
+        <Text tone="muted" variant="body">
+          The sign of a coefficient shows direction:
+        </Text>
+        <List
           items={[
             "Distance has a negative coefficient. A longer shot has a lower probability.",
             "A wide angle has a negative coefficient. A sharp-angle shot has a lower probability.",
           ]}
         />
-        <P>
+        <Text tone="muted" variant="body">
           Text categories such as shot type become one column per value. One value in each category
           is the reference. Its effect is part of the intercept.
-        </P>
-        <P>
+        </Text>
+        <Text tone="muted" variant="body">
           The model is linear, so the app stores it as a short list of coefficients and applies it
           with simple arithmetic. A tree model would score better but needs a different serving
           design. That is a future option, not the current model.
-        </P>
-      </Section>
+        </Text>
+      </TitledCard>
 
-      <Section title="How training works">
-        <P>
+      <TitledCard title="How training works">
+        <Text tone="muted" variant="body">
           Training runs once, by hand, when new data needs a new fit. It is not automatic. The
           training data does not change between fits.
-        </P>
-        <Steps
+        </Text>
+        <List
+          ordered
           items={[
             "A Rails rake task reads the shots from the database and writes a CSV file. The same data always produces the same file.",
             <>
-              A Python script (<Code>ml/fit.py</Code>) reads the CSV. It uses pandas and
+              A Python script (<InlineCode>ml/fit.py</InlineCode>) reads the CSV. It uses pandas and
               scikit-learn.
             </>,
             "The script fits the logistic regression and writes the coefficients to a JSON file.",
             "A second rake task loads the JSON into the app. The model then appears in this admin section.",
           ]}
         />
-        <P>
+        <Text tone="muted" variant="body">
           Python never connects to the database. Rails never runs the fit. Each side does one job.
-        </P>
-      </Section>
+        </Text>
+      </TitledCard>
 
-      <Section title="How we check the model">
-        <P>
+      <TitledCard title="How we check the model">
+        <Text tone="muted" variant="body">
           A model that fits its own training data well can still fail on new data. Four checks guard
           against that.
-        </P>
-        <Bullets
+        </Text>
+        <List
           items={[
             <>
               <strong>Held-out seasons.</strong> The script trains on 2 seasons and predicts the
@@ -210,32 +167,36 @@ export function XgMethodPage() {
             </>,
           ]}
         />
-      </Section>
+      </TitledCard>
 
-      <Section title="How the model runs in the app">
-        <P>
-          The coefficients live as JSON on an <Code>XgModel</Code> database row. One row is active
-          at a time.
-        </P>
-        <P>
-          For each shot, <Code>XgFormula</Code> builds the feature vector from the event and applies
-          the active model&apos;s coefficients. When the active model does not carry a coefficient,
-          that feature adds nothing. An old model with only distance and angle still works in the
-          same code.
-        </P>
-        <P>To activate a new model:</P>
-        <Steps
+      <TitledCard title="How the model runs in the app">
+        <Text tone="muted" variant="body">
+          The coefficients live as JSON on an <InlineCode>XgModel</InlineCode> database row. One row
+          is active at a time.
+        </Text>
+        <Text tone="muted" variant="body">
+          For each shot, <InlineCode>XgFormula</InlineCode> builds the feature vector from the event
+          and applies the active model&apos;s coefficients. When the active model does not carry a
+          coefficient, that feature adds nothing. An old model with only distance and angle still
+          works in the same code.
+        </Text>
+        <Text tone="muted" variant="body">
+          To activate a new model:
+        </Text>
+        <List
+          ordered
           items={[
             <>
-              A rake task inserts the fitted coefficients as a new <Code>XgModel</Code> row.
+              A rake task inserts the fitted coefficients as a new <InlineCode>XgModel</InlineCode>{" "}
+              row.
             </>,
             <>
-              <Code>activate!</Code> makes it the only active model in one atomic step.
+              <InlineCode>activate!</InlineCode> makes it the only active model in one atomic step.
             </>,
             "A backfill sync run recomputes every historical game's advanced stats against the new model.",
           ]}
         />
-      </Section>
+      </TitledCard>
     </Stack>
   );
 }

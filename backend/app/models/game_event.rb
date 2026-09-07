@@ -9,6 +9,11 @@ class GameEvent < ApplicationRecord
   PENALTY_TYPES = { minor: "minor", major: "major", bench_minor: "bench-minor", misconduct: "misconduct",
                     game_misconduct: "game-misconduct", match: "match", penalty_shot: "penalty-shot" }.freeze
 
+  # Shot attempts: Fenwick is unblocked (never blocked_shot — its coordinates are the
+  # blocker's position, not the release point), Corsi adds blocked shots.
+  FENWICK_EVENT_TYPES = EVENT_TYPES.values_at(:goal, :shot, :missed_shot).freeze
+  CORSI_EVENT_TYPES = (FENWICK_EVENT_TYPES + [ EVENT_TYPES[:blocked_shot] ]).freeze
+
   belongs_to :game
   belongs_to :team, optional: true
   belongs_to :primary_player, class_name: "Player", inverse_of: :primary_game_events

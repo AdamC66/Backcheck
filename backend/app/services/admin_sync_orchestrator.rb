@@ -209,7 +209,7 @@ class AdminSyncOrchestrator
       ComputeIndividualGameStats.new(game: game, recompute: :skip).call
     when :rebuild_advanced_stats
       ComputeGameAdvancedStats.new(game: game).call
-      []
+      [] # nothing to track for a season-stat recompute; chain_batch.track(game) covers the chain
     end
   end
 

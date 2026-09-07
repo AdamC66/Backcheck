@@ -23,7 +23,7 @@ namespace :xg do
     metrics = run.metrics || {}
 
     puts "xg_training_runs ##{run.id} (#{run.status_name}) — #{run.label}"
-    puts "  features: #{run.feature_set.join(', ')}"
+    puts "  features: #{run.feature_set&.join(', ')}"
     puts "  Brier #{metrics['brier']}  log loss #{metrics['log_loss']}"
   end
 
