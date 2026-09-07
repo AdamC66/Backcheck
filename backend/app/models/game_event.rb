@@ -6,6 +6,8 @@ class GameEvent < ApplicationRecord
   ZONES = { offensive: 1, defensive: 2, neutral: 3 }.freeze
   STRENGTH_STATES = { even_strength: 1, power_play: 2, short_handed: 3 }.freeze
   DEFENDING_SIDES = { left: "left", right: "right" }.freeze
+  PENALTY_TYPES = { minor: "minor", major: "major", bench_minor: "bench-minor", misconduct: "misconduct",
+                    game_misconduct: "game-misconduct", match: "match", penalty_shot: "penalty-shot" }.freeze
 
   belongs_to :game
   belongs_to :team, optional: true
@@ -20,6 +22,8 @@ class GameEvent < ApplicationRecord
   validates :zone, inclusion: { in: ZONES.values }, allow_nil: true
   validates :strength_state, inclusion: { in: STRENGTH_STATES.values }, allow_nil: true
   validates :home_team_defending_side, inclusion: { in: DEFENDING_SIDES.values }, allow_nil: true
+  validates :penalty_type, inclusion: { in: PENALTY_TYPES.values }, allow_nil: true
+  validates :penalty_minutes, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validate :team_played_in_game
 
   def target_net_x

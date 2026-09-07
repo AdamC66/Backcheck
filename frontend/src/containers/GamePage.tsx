@@ -1,5 +1,9 @@
 import { useParams } from "react-router";
+import { GameGoalieDecisionLine } from "@/components/GameGoalieDecisionLine/GameGoalieDecisionLine";
 import { GameGoalieStatsTable } from "@/components/GameGoalieStatsTable/GameGoalieStatsTable";
+import { GameGoalSummary } from "@/components/GameGoalSummary/GameGoalSummary";
+import { GamePenaltyList } from "@/components/GamePenaltyList/GamePenaltyList";
+import { GamePeriodScoreTable } from "@/components/GamePeriodScoreTable/GamePeriodScoreTable";
 import { GameSkaterStatsTable } from "@/components/GameSkaterStatsTable/GameSkaterStatsTable";
 import { GameZoneShareBar } from "@/components/GameZoneShareBar/GameZoneShareBar";
 import { PageShell } from "@/components/PageShell/PageShell";
@@ -123,8 +127,21 @@ export function GamePage() {
     );
   }
 
-  const { game, skaters, goalies, advanced, zone_time: zoneTime } = detail.data.data;
+  const {
+    game,
+    skaters,
+    goalies,
+    goals,
+    penalties,
+    advanced,
+    zone_time: zoneTime,
+    period_summary: periodSummary,
+  } = detail.data.data;
   const statsSyncing = detail.data.meta?.stats_syncing === true;
+  const teamAbbrevById: Record<number, string> = {
+    [game.away.team.id]: game.away.team.abbreviation,
+    [game.home.team.id]: game.home.team.abbreviation,
+  };
 
   return (
     <PageShell actions={<UserMenu />} width="wide">
@@ -172,6 +189,35 @@ export function GamePage() {
           </div>
         )}
 
+        {periodSummary.periods.length === 0 ? null : (
+          <Stack gap="sm">
+            <Text variant="label" className="font-bold tracking-wide text-slate-500 uppercase">
+              Scoring by period
+            </Text>
+            <div className="overflow-x-auto">
+              <GamePeriodScoreTable
+                summary={periodSummary}
+                awayLabel={game.away.team.abbreviation}
+                homeLabel={game.home.team.abbreviation}
+              />
+            </div>
+          </Stack>
+        )}
+
+        <Stack gap="sm">
+          <Text variant="label" className="font-bold tracking-wide text-slate-500 uppercase">
+            Goal summary
+          </Text>
+          <GameGoalSummary goals={goals} teamAbbrevById={teamAbbrevById} />
+        </Stack>
+
+        <Stack gap="sm">
+          <Text variant="label" className="font-bold tracking-wide text-slate-500 uppercase">
+            Penalties
+          </Text>
+          <GamePenaltyList penalties={penalties} teamAbbrevById={teamAbbrevById} />
+        </Stack>
+
         <Stack gap="sm">
           <Text variant="label" className="font-bold tracking-wide text-slate-500 uppercase">
             Skaters
@@ -194,6 +240,7 @@ export function GamePage() {
             <Text tone="muted">No goalie stats recorded for this game yet.</Text>
           ) : (
             <Stack gap="md">
+              <GameGoalieDecisionLine goalies={goalies} />
               <GameGoalieStatsTable stats={bySide(goalies, game.away.team.id)} />
               <GameGoalieStatsTable stats={bySide(goalies, game.home.team.id)} />
             </Stack>

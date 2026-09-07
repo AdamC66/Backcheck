@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { buildColumns } from "@/lib/buildColumns";
-import { formatToi } from "@/lib/format";
+import { formatSavePctg, formatToi } from "@/lib/format";
 import type { GoalieGameStat } from "@/models/gameDetail";
 
 export interface GameGoalieStatsTableProps {
@@ -9,11 +9,6 @@ export interface GameGoalieStatsTableProps {
 }
 
 const columnHelper = createColumnHelper<GoalieGameStat>();
-
-// A ".921" reads as a save percentage; "0.921" or "92.1%" don't, on any stats site.
-function formatSavePctg(value: number | null): string {
-  return value === null ? "—" : value.toFixed(3).replace(/^0/, "");
-}
 
 const DECISION_LABELS: Record<string, string> = { W: "W", L: "L", O: "OTL" };
 

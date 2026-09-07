@@ -14,6 +14,25 @@ export function ordinal(n: number): string {
   }
 }
 
+// A ".921" reads as a save percentage; "0.921" or "92.1%" don't, on any stats site.
+export function formatSavePctg(value: number | null): string {
+  return value === null ? "—" : value.toFixed(3).replace(/^0/, "");
+}
+
+// "7:24" — a period clock (minutes:seconds elapsed), not an average, so no games divisor.
+export function formatClock(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${(seconds % 60).toString().padStart(2, "0")}`;
+}
+
+// Regulation periods read as "1st/2nd/3rd"; anything past that is overtime ("OT", "2OT", …).
+// A regular-season shootout is stored as its own period and would show as the next "OT" —
+// acceptable, since no game_type reaches this call.
+export function periodLabel(period: number): string {
+  if (period <= 3) return ordinal(period);
+  return period === 4 ? "OT" : `${period - 3}OT`;
+}
+
 // A "YYYY-MM-DD" date has no time of day, so new Date(date) parses it as UTC midnight —
 // which prints as the previous day anywhere west of UTC. Forcing local midnight is what
 // every date-only formatter below needs, so it's the one place that trick lives.

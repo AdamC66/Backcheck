@@ -659,5 +659,43 @@ Revisit only for the deferred smoothed-density heatmap — kernel-density contou
 - *Period with no defending-side / zone data at all* — no segments; its shifts contribute 0 seconds and are excluded from the coverage denominator (not recorded as "defensive: 0"). The report's `no data` line surfaces the volume.
 - *Empty-net / late-game* — those events carry coordinates like any other and flow through unchanged; no special-casing (negligible volume, same call as the danger-zone far-end note).
 
+### NHL boxscore summary object has moved off the boxscore endpoint (TASK-149)
+**Status:** Settled
+
+Spike for EPIC-25. The epic's premise — "`NhlClient#boxscore` (`/v1/gamecenter/{id}/boxscore`) hits the same endpoint that publicly carries a `summary` object (scoring/penalties/linescore/three-stars)" — is stale. The NHL reorganised the gamecenter API since those community references were written. Hit live on 2026-09-01 against `nhl_game_id 2025020003` (COL @ LAK, 2025-10-07, `gameState: "OFF"`).
+
+**`/v1/gamecenter/{id}/boxscore` has no `summary` key at all.** Top-level keys: `id`, `season`, `gameType`, `limitedScoring`, `gameDate`, `venue`, `venueLocation`, `startTimeUTC`, `easternUTCOffset`, `venueUTCOffset`, `tvBroadcasts`, `gameState`, `gameScheduleState`, `periodDescriptor`, `regPeriods`, `awayTeam`, `homeTeam`, `clock`, `playerByGameStats`, `gameOutcome`. `awayTeam`/`homeTeam` carry whole-game `score` and `sog` only. Nothing per-goal, per-penalty, or per-period. This is the endpoint `SyncGameStats` already calls, and `UpsertGameStats` already reads all of `playerByGameStats` — there is no unused richer part of this response to mine.
+
+**`summary` now lives on `/v1/gamecenter/{id}/landing`**, with keys `scoring`, `threeStars`, `penalties` — no `linescore`, no `shotsByPeriod`.
+- `summary.scoring` — array by period `{ periodDescriptor, goals: [...] }`. Each goal: `eventId`, `situationCode`, `strength` (`"ev"|"pp"|"sh"`), `playerId`, `teamAbbrev`, `timeInPeriod` (`"MM:SS"`), `shotType`, `goalModifier` (`"none"|"empty-net"|…`), `awayScore`/`homeScore` (running), `goalsToDate`, `assists: [{ playerId, name, assistsToDate, sweaterNumber }]`, plus headshot/highlight-clip URLs.
+- `summary.penalties` — array by period `{ periodDescriptor, penalties: [...] }`. Each penalty: `timeInPeriod`, `type` (`"MIN"|"MAJ"|"BEN"|"MIS"|"GM"`), `duration` (minutes, int), `descKey` (infraction slug, e.g. `"unsportsmanlike-conduct"`), `teamAbbrev`, `committedByPlayer`/`drawnBy`/`servedBy` — **identified by `{ firstName, lastName, sweaterNumber }` or a `"K. Fiala"` name string, no `playerId`.**
+- `summary.threeStars` — `[{ star, playerId, teamAbbrev, name, sweaterNo, position, goals, assists, points }]`.
+
+**`linescore` and `shotsByPeriod` live on `/v1/gamecenter/{id}/right-rail`** (keys: `seasonSeries`, `seasonSeriesWins`, `gameInfo`, `gameVideo`, `linescore`, `shotsByPeriod`, `teamGameStats`, `gameReports`).
+- `linescore` — `{ byPeriod: [{ periodDescriptor, away, home }], totals: { away, home } }` (goals per period).
+- `shotsByPeriod` — `[{ periodDescriptor, away, home }]` (SOG per period).
+- `teamGameStats` — `[{ category, awayValue, homeValue }]`: `sog`, `faceoffWinningPctg`, `faceoffWins` (`"27/60"`), `powerPlay` (`"1/6"`), `powerPlayPctg`, `pim`, `hits`, `blockedShots`, `giveaways`, `takeaways`.
+
+**Play-by-play already carries the penalty detail `GameEvent` drops.** A `penalty` play's `details` has `typeCode` (`"MIN"`), `descKey` (`"unsportsmanlike-conduct"`), `duration` (`2`) alongside `committedByPlayerId`/`drawnByPlayerId`/`servedByPlayerId`/`eventOwnerTeamId` — **all by `playerId`**. `UpsertGameEvents` already builds a `GameEvent` from these plays; it just doesn't persist `typeCode`/`descKey`/`duration`.
+
+**Decisions for the downstream tasks:**
+- **TASK-150 penalty infraction/duration → play-by-play + new `game_events` columns**, not the landing `summary`. The play-by-play detail is keyed by `playerId` and flows through the ingestion path `UpsertGameEvents` already runs; `summary.penalties` identifies players by name+sweater only (strictly worse to match) and would be a second ingestion path for data already in the feed we parse. Add `infraction` / `penalty_type` / `duration_minutes` to `game_events`, set in `build_event` for penalty rows.
+- **TASK-150 goal detail → existing `GameEvent`** (`strength_state`, `period`, `period_time_seconds`, scorer/assist players, running score by ordering). Only `goalModifier` (empty-net) is not stored today — small optional column if the boxscore UI wants an "EN" marker. TASK-150 is otherwise a serializer + a new `show` key, same pattern as `zone_time`.
+- **TASK-151 period score/SOG → derive from `GameEvent`**, no new ingestion. Grouping by `period` + `team`: score = count of `goal` events; SOG = count of `shot` + count of `goal` events (a goal is **not** also recorded as a `shot-on-goal` play — verified: `shot-on-goal` + `goal` play counts sum to 23/25, matching `right-rail` `teamGameStats.sog` and `boxscore` `awayTeam.sog`/`homeTeam.sog` exactly). Wiring `right-rail` into `NhlClient` + a sync path + storage is not worth it for data this directly derivable; revisit only if a discrepancy surfaces.
+- **`/landing` and `/right-rail` are not being added to `NhlClient` for this epic.** Noted here so a future task knows where `linescore`/`threeStars`/`teamGameStats` are if the product ever wants them.
+
+### Full game boxscore shipped off GameEvent, no new ingestion path (EPIC-25)
+**Status:** Settled
+
+Implemented per the TASK-149 spike's decisions. `game_events` gained `infraction` / `penalty_type` / `penalty_minutes`, filled in `UpsertGameEvents#build_event` from the play-by-play `penalty` play's `details` (`descKey` / `typeCode` / `duration`) — the feed that service already parses. `penalty_type` is normalised to a slug via `GameEvent::PENALTY_TYPES` (`MIN` → `minor`, …); an unlisted code stores `nil` rather than failing ingestion, same as `SHOT_TYPE_MAP`. Bench minors (no `committedByPlayerId`, only `servedByPlayerId`) were being silently dropped since `primary_player` is `NOT NULL` — `build_event` now falls back to the serving player for penalty rows so they're captured.
+
+`GET /api/v1/games/:id` gained three keys, all derived, none needing a new NHL fetch:
+- `goals` / `penalties` — ordered `GameEvent` rows via `GameEventSerializer` (branches on event type: scorer+assists vs committed-by/drawn-by+infraction).
+- `period_summary` — `GamePeriodSummarySerializer` groups goal/shot events by period+team in one `GROUP BY` query. SOG per period = `goal` + `shot` event counts (a goal is a separate play from shot-on-goal; verified the sum matches the boxscore's own SOG).
+
+Frontend: `GameGoalSummary`, `GamePenaltyList`, `GamePeriodScoreTable`, `GameGoalieDecisionLine` (the last formats the already-served `goalies` rows into a W/L/OTL line, no backend change — TASK-152). `formatClock` / `periodLabel` / `formatSavePctg` added to `lib/format.ts`; `lib/penalties.ts` maps the NHL `descKey` slug to a display label (`delaying-game-puck-over-glass` → "Delay of game (puck over glass)", `-double-minor` / `ps-` handled), sentence-casing anything unlisted. `right-rail` / `landing` were not wired into `NhlClient`.
+
+Existing `game_events` rows predate the new penalty columns — `BulkUpsert` uses `upsert_all` (ON CONFLICT DO UPDATE over every column), so re-running the `advanced_stats` sync for a team/season backfills `infraction` / `penalty_type` / `penalty_minutes` in place.
+
 ### Project scope / feature set
 **Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.

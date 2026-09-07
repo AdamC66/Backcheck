@@ -1494,7 +1494,7 @@
     "title": "Spike: confirm live shape of the NHL boxscore endpoint's summary object",
     "description": "NhlClient#boxscore (/v1/gamecenter/{id}/boxscore) is already called by SyncGameStats for skater/goalie stat lines, but nothing in this codebase has read its summary key. Hit it live for a real completed game and record what's actually there \u2014 same discipline as docs/DECISIONS.md's existing boxscore-field confirmations. Answers: does summary.scoring carry per-goal detail (scorer/assists/time/strength) redundant with or richer than GameEvent's goal events; does summary.penalties carry infraction type and duration (which GameEvent does not store today); does summary.linescore give period-by-period score/SOG directly. The answer decides whether TASK-150/151 read off GameEvent, off a new boxscore-summary field, or both.",
     "type": "spike",
-    "status": "backlog",
+    "status": "done",
     "acceptance_criteria": [
       "Result (the actual response shape, or a link/paste of it) recorded in docs/DECISIONS.md, matching how the existing boxscore field-scope confirmation is documented"
     ]
@@ -1505,7 +1505,7 @@
     "title": "GameEventSerializer + goal/penalty detail on GET /api/v1/games/:id",
     "description": "Goal and penalty events are already fully ingested and attributed (see EPIC-25 description) \u2014 add a serializer and a new key on Api::V1::GamesController#show, same pattern as zone_time was added. Penalty infraction/duration depends on TASK-149's answer: either read off GameEvent (if a migration adds the column, sourced from play-by-play) or off the boxscore summary (if TASK-149 finds it there) \u2014 don't guess the source before that spike lands.",
     "type": "feature",
-    "status": "backlog"
+    "status": "done"
   },
   {
     "id": "TASK-151",
@@ -1513,7 +1513,7 @@
     "title": "Period-by-period score and shots-on-goal",
     "description": "Derivable today by grouping existing GameEvent rows (goal for score, goal+shot for shots-on-goal) by period and team \u2014 no new ingestion required unless TASK-149 finds summary.linescore is a cheaper, more authoritative source. Depends on TASK-149.",
     "type": "feature",
-    "status": "backlog"
+    "status": "done"
   },
   {
     "id": "TASK-152",
@@ -1521,7 +1521,7 @@
     "title": "Goalie decision line in boxscore",
     "description": "GoalieGameStat.decision/starter/saves/shots_against/pim are already computed and already returned by GET /api/v1/games/:id (goalies key, GoalieGameStatSerializer). No backend change \u2014 this is formatting the existing goalie rows into a W/L/OT boxscore line on the frontend.",
     "type": "feature",
-    "status": "backlog"
+    "status": "done"
   },
   {
     "id": "TASK-153",
@@ -1529,7 +1529,7 @@
     "title": "GameBoxscore frontend components: goal summary, penalty list, period score/shots table",
     "description": "New components alongside GameSkaterStatsTable/GameGoalieStatsTable in GamePage.tsx \u2014 one component per file, per docs/STANDARDS.md. Consumes TASK-150 (goals/penalties), TASK-151 (period score/shots), TASK-152 (goalie decision line). Depends on all three.",
     "type": "feature",
-    "status": "backlog"
+    "status": "done"
   },
   {
     "id": "TASK-154",

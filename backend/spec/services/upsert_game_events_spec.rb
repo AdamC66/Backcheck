@@ -32,6 +32,17 @@ RSpec.describe UpsertGameEvents do
     expect(goal.home_team_defending_side).to eq("right")
   end
 
+  it "stores a penalty's infraction, type, and duration alongside committed-by / drawn-by" do
+    upsert.call
+
+    penalty = GameEvent.find_by(game: game, event_type: GameEvent::EVENT_TYPES[:penalty])
+    expect(penalty.primary_player.last_name).to eq("Liljegren")
+    expect(penalty.secondary_player.last_name).to eq("Monahan")
+    expect(penalty.infraction).to eq("tripping")
+    expect(penalty.penalty_type).to eq(GameEvent::PENALTY_TYPES[:minor])
+    expect(penalty.penalty_minutes).to eq(2)
+  end
+
   it "skips play types this schema doesn't model" do
     sync = upsert
     events = sync.call

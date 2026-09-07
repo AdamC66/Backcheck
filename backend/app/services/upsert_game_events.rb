@@ -28,6 +28,16 @@ class UpsertGameEvents
   ZONE_MAP = { "O" => GameEvent::ZONES[:offensive], "D" => GameEvent::ZONES[:defensive],
                "N" => GameEvent::ZONES[:neutral] }.freeze
 
+  PENALTY_TYPE_MAP = {
+    "MIN" => GameEvent::PENALTY_TYPES[:minor],
+    "MAJ" => GameEvent::PENALTY_TYPES[:major],
+    "BEN" => GameEvent::PENALTY_TYPES[:bench_minor],
+    "MIS" => GameEvent::PENALTY_TYPES[:misconduct],
+    "GM" => GameEvent::PENALTY_TYPES[:game_misconduct],
+    "MAT" => GameEvent::PENALTY_TYPES[:match],
+    "PS" => GameEvent::PENALTY_TYPES[:penalty_shot]
+  }.freeze
+
   # Which JSON fields carry the primary/secondary/tertiary player for each type — a goal's
   # tertiary is its second assist, the only type that ever needs a third player.
   PLAYER_FIELDS = {
@@ -73,6 +83,7 @@ class UpsertGameEvents
 
     details = play.fetch("details", {})
     primary_id, secondary_id, tertiary_id = PLAYER_FIELDS.fetch(type_key, []).map { |field| details[field] }
+    primary_id ||= details["servedByPlayerId"] if type_key == "penalty"
     primary_player = player_for(primary_id)
     return if primary_player.nil?
 
@@ -92,7 +103,10 @@ class UpsertGameEvents
       primary_player: primary_player,
       secondary_player: player_for(secondary_id),
       tertiary_player: player_for(tertiary_id),
-      home_team_defending_side: play["homeTeamDefendingSide"]
+      home_team_defending_side: play["homeTeamDefendingSide"],
+      infraction: details["descKey"],
+      penalty_type: PENALTY_TYPE_MAP[details["typeCode"]],
+      penalty_minutes: details["duration"]
     )
   end
 

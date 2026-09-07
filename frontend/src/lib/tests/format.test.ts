@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatClock,
   formatFullDate,
   formatGameDateTime,
   formatMonthDay,
   formatMonthYear,
+  formatSavePctg,
   formatShortDay,
   formatTime,
   formatWeekday,
   ordinal,
+  periodLabel,
   toIsoDate,
 } from "../format";
 
@@ -24,6 +27,30 @@ describe("ordinal", () => {
     expect(ordinal(12)).toBe("12th");
     expect(ordinal(13)).toBe("13th");
     expect(ordinal(21)).toBe("21st");
+  });
+});
+
+describe("formatClock", () => {
+  it("formats elapsed seconds as m:ss with a zero-padded seconds field", () => {
+    expect(formatClock(0)).toBe("0:00");
+    expect(formatClock(65)).toBe("1:05");
+    expect(formatClock(1199)).toBe("19:59");
+  });
+});
+
+describe("periodLabel", () => {
+  it("labels regulation periods as ordinals and anything past them as overtime", () => {
+    expect(periodLabel(1)).toBe("1st");
+    expect(periodLabel(3)).toBe("3rd");
+    expect(periodLabel(4)).toBe("OT");
+    expect(periodLabel(6)).toBe("3OT");
+  });
+});
+
+describe("formatSavePctg", () => {
+  it("drops the leading zero and shows three decimals, or an em dash for null", () => {
+    expect(formatSavePctg(0.9375)).toBe(".938");
+    expect(formatSavePctg(null)).toBe("—");
   });
 });
 

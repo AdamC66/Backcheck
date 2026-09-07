@@ -50,6 +50,48 @@ RSpec.describe "GET /api/v1/games/:id", type: :request do
     expect(zone_time.dig("skaters", 0, "seconds", "neutral")).to eq(55)
   end
 
+  it "includes goal and penalty events with their attribution detail" do
+    scorer = create(:player, last_name: "Marner")
+    assist = create(:player, last_name: "Tavares")
+    create(:game_event, game: game, team: home_team, primary_player: scorer, secondary_player: assist,
+           event_type: GameEvent::EVENT_TYPES[:goal], period: 1, period_time_seconds: 120,
+           strength_state: GameEvent::STRENGTH_STATES[:power_play])
+    penalized = create(:player, last_name: "Reaves")
+    create(:game_event, game: game, team: away_team, primary_player: penalized,
+           event_type: GameEvent::EVENT_TYPES[:penalty], period: 2, period_time_seconds: 300,
+           infraction: "roughing", penalty_type: GameEvent::PENALTY_TYPES[:minor], penalty_minutes: 2)
+
+    get "/api/v1/games/#{game.id}", headers: auth_headers(super_admin)
+
+    goal = response.parsed_body.dig("data", "goals").first
+    expect(goal.dig("scorer", "last_name")).to eq("Marner")
+    expect(goal.dig("assists", 0, "last_name")).to eq("Tavares")
+    expect(goal["strength_state"]).to eq("power_play")
+
+    penalty = response.parsed_body.dig("data", "penalties").first
+    expect(penalty.dig("committed_by", "last_name")).to eq("Reaves")
+    expect(penalty["infraction"]).to eq("roughing")
+    expect(penalty["penalty_minutes"]).to eq(2)
+  end
+
+  it "derives period-by-period score and shots-on-goal from game events" do
+    shooter = create(:player, last_name: "Nylander")
+    create(:game_event, game: game, team: home_team, primary_player: shooter,
+           event_type: GameEvent::EVENT_TYPES[:goal], period: 1, period_time_seconds: 60)
+    create(:game_event, game: game, team: home_team, primary_player: shooter,
+           event_type: GameEvent::EVENT_TYPES[:shot], period: 1, period_time_seconds: 120)
+    create(:game_event, game: game, team: away_team, primary_player: shooter,
+           event_type: GameEvent::EVENT_TYPES[:shot], period: 2, period_time_seconds: 30)
+
+    get "/api/v1/games/#{game.id}", headers: auth_headers(super_admin)
+
+    summary = response.parsed_body.dig("data", "period_summary")
+    expect(summary.dig("periods", 0, "period")).to eq(1)
+    expect(summary.dig("periods", 0, "home")).to eq("goals" => 1, "shots_on_goal" => 2)
+    expect(summary.dig("totals", "home", "shots_on_goal")).to eq(2)
+    expect(summary.dig("totals", "away", "shots_on_goal")).to eq(1)
+  end
+
   it "includes meta.stats_syncing only when the game is mid-recalculation" do
     get "/api/v1/games/#{game.id}", headers: auth_headers(super_admin)
     expect(response.parsed_body["meta"]).not_to have_key("stats_syncing")

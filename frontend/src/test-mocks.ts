@@ -4,7 +4,9 @@ import type { DangerZoneGeometry } from "@/models/dangerZones";
 import type {
   GameDetail,
   GameDetailMeta,
+  GoalEvent,
   GoalieGameStat,
+  PenaltyEvent,
   PlayerGameAdvancedStat,
   SkaterGameStat,
   TeamGameAdvancedStat,
@@ -329,6 +331,33 @@ export const GAME_DETAIL: Envelope<GameDetail, GameDetailMeta> = {
         team_id: TEAMS[0].id,
       }),
     ],
+    goals: [
+      {
+        id: 1,
+        type: "goal",
+        period: 1,
+        period_time_seconds: 444,
+        team_id: TEAMS[0].id,
+        strength_state: "power_play",
+        scorer: playerFor(1, { first_name: "Auston", last_name: "Matthews" }),
+        assists: [playerFor(4, { first_name: "Mitch", last_name: "Marner" })],
+      } satisfies GoalEvent,
+    ],
+    penalties: [
+      {
+        id: 2,
+        type: "penalty",
+        period: 2,
+        period_time_seconds: 605,
+        team_id: TEAMS[1].id,
+        strength_state: "even_strength",
+        committed_by: playerFor(2, { first_name: "William", last_name: "Nylander" }),
+        drawn_by: playerFor(1, { first_name: "Auston", last_name: "Matthews" }),
+        infraction: "tripping",
+        penalty_type: "minor",
+        penalty_minutes: 2,
+      } satisfies PenaltyEvent,
+    ],
     advanced: {
       players: [
         playerGameAdvancedStatFor({
@@ -368,6 +397,16 @@ export const GAME_DETAIL: Envelope<GameDetail, GameDetailMeta> = {
           seconds: { offensive: 300, neutral: 210, defensive: 480 },
         },
       ],
+    },
+    period_summary: {
+      periods: [
+        { period: 1, away: { goals: 0, shots_on_goal: 8 }, home: { goals: 1, shots_on_goal: 12 } },
+        { period: 2, away: { goals: 1, shots_on_goal: 11 }, home: { goals: 1, shots_on_goal: 9 } },
+      ],
+      totals: {
+        away: { goals: 1, shots_on_goal: 19 },
+        home: { goals: 2, shots_on_goal: 21 },
+      },
     },
   },
   meta: {},

@@ -109,15 +109,62 @@ export interface GameZoneTime {
   skaters: ZoneTimeSkater[];
 }
 
+export type EventStrengthState = "even_strength" | "power_play" | "short_handed";
+
+export interface GoalEvent {
+  id: number;
+  type: "goal";
+  period: number;
+  period_time_seconds: number;
+  team_id: number;
+  strength_state: EventStrengthState | null;
+  scorer: RosterPlayer;
+  assists: RosterPlayer[];
+}
+
+export type PenaltyType =
+  "minor" | "major" | "bench-minor" | "misconduct" | "game-misconduct" | "match" | "penalty-shot";
+
+export interface PenaltyEvent {
+  id: number;
+  type: "penalty";
+  period: number;
+  period_time_seconds: number;
+  team_id: number;
+  strength_state: EventStrengthState | null;
+  committed_by: RosterPlayer | null;
+  drawn_by: RosterPlayer | null;
+  infraction: string | null;
+  penalty_type: PenaltyType | null;
+  penalty_minutes: number | null;
+}
+
+export interface PeriodSummaryLine {
+  period: number;
+  home: { goals: number; shots_on_goal: number };
+  away: { goals: number; shots_on_goal: number };
+}
+
+export interface GamePeriodSummary {
+  periods: PeriodSummaryLine[];
+  totals: {
+    home: { goals: number; shots_on_goal: number };
+    away: { goals: number; shots_on_goal: number };
+  };
+}
+
 export interface GameDetail {
   game: Game;
   skaters: SkaterGameStat[];
   goalies: GoalieGameStat[];
+  goals: GoalEvent[];
+  penalties: PenaltyEvent[];
   advanced: {
     players: PlayerGameAdvancedStat[];
     teams: TeamGameAdvancedStat[];
   };
   zone_time: GameZoneTime;
+  period_summary: GamePeriodSummary;
 }
 
 export interface GameDetailMeta {

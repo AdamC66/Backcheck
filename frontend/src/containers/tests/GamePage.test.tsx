@@ -25,8 +25,8 @@ describe("GamePage", () => {
   it("shows the matchup, basic stats, and advanced stats for both teams", async () => {
     renderGame();
 
-    // Appears in the skater table, the per-player advanced table, and the zone-time table.
-    expect((await screen.findAllByText("Auston Matthews")).length).toBe(3);
+    // Appears in the skater table, per-player advanced table, zone-time table, and goal summary.
+    expect((await screen.findAllByText("Auston Matthews")).length).toBe(4);
     expect(screen.getAllByText("William Nylander").length).toBeGreaterThan(0);
     expect(screen.getByText("Anthony Stolarz")).toBeInTheDocument();
     expect(screen.getAllByText(TEAMS[0].abbreviation).length).toBeGreaterThan(0);
@@ -37,6 +37,17 @@ describe("GamePage", () => {
 
     expect(await screen.findByText("Zone time")).toBeInTheDocument();
     expect(screen.getByText("P1")).toBeInTheDocument();
+  });
+
+  it("shows the boxscore: goal summary, penalties, scoring by period, and a goalie decision line", async () => {
+    renderGame();
+
+    expect(await screen.findByText("Goal summary")).toBeInTheDocument();
+    expect(screen.getByText("Penalties")).toBeInTheDocument();
+    expect(screen.getByText("Scoring by period")).toBeInTheDocument();
+    expect(screen.getByText(/\(M\. Marner\)/)).toBeInTheDocument();
+    expect(screen.getByText(/2 min, Tripping/)).toBeInTheDocument();
+    expect(screen.getByText(/28\/31 saves/)).toBeInTheDocument();
   });
 
   it("shows a syncing notice when the game is mid-recalculation", async () => {
