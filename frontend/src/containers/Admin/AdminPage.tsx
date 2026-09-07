@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { label: "Data", to: "data" },
   { label: "Danger zones", to: "rink" },
   { label: "xG model", to: "xg-model" },
+  { label: "How xG works", to: "xg-method" },
   { label: "Roadmap", to: "roadmap" },
 ];
 

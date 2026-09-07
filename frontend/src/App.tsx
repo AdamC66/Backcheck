@@ -28,6 +28,7 @@ import { DataCoveragePage } from "@/containers/Admin/DataCoveragePage";
 import { CoverageGapPage } from "@/containers/Admin/CoverageGapPage";
 import { RoadmapPage } from "@/containers/Admin/RoadmapPage";
 import { XgModelPage } from "@/containers/Admin/XgModelPage";
+import { XgMethodPage } from "@/containers/Admin/XgMethodPage";
 import { RinkGlossaryPage } from "@/containers/Admin/RinkGlossaryPage";
 
 export function App() {
@@ -111,6 +112,7 @@ export function App() {
         <Route path="data/:seasonId/:kind" element={<CoverageGapPage />} />
         <Route path="roadmap" element={<RoadmapPage />} />
         <Route path="xg-model" element={<XgModelPage />} />
+        <Route path="xg-method" element={<XgMethodPage />} />
         <Route path="rink" element={<RinkGlossaryPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
