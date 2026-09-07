@@ -13,4 +13,17 @@ namespace :xg do
       puts "  #{season}  #{counts['shots']} shots / #{counts['goals']} goals"
     end
   end
+
+  desc "Load ml/fit.py's JSON output into a fitted xg_training_runs row so it shows on " \
+       "the /admin/xg-model page. Usage: rake 'xg:import_run[../ml/out/baseline.json]'"
+  task :import_run, [ :path ] => :environment do |_task, args|
+    abort("Usage: rake 'xg:import_run[path/to/fit.json]'") if args[:path].blank?
+
+    run = ImportXgTrainingRun.new(path: args[:path]).call
+    metrics = run.metrics || {}
+
+    puts "xg_training_runs ##{run.id} (#{run.status_name}) — #{run.label}"
+    puts "  features: #{run.feature_set.join(', ')}"
+    puts "  Brier #{metrics['brier']}  log loss #{metrics['log_loss']}"
+  end
 end

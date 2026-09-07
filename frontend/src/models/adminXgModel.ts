@@ -16,11 +16,21 @@ export interface XgTrainingRunManifest {
   exported_at?: string;
 }
 
+export interface XgGameXgSummary {
+  mean: number;
+  p05: number;
+  p95: number;
+  min: number;
+  max: number;
+}
+
 export interface XgTrainingRunMetrics {
   brier?: number;
   log_loss?: number;
   by_season?: Record<string, { brier: number; log_loss: number }>;
   baseline_brier?: number;
+  goal_rate?: number;
+  game_xg_summary?: XgGameXgSummary;
 }
 
 export interface XgCalibrationBin {

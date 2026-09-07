@@ -128,6 +128,15 @@ function Metrics({ run }: { run: XgTrainingRun }) {
           ))}
         </Stack>
       ) : null}
+      {metrics.game_xg_summary ? (
+        <Text tone="muted" variant="caption">
+          per-team-per-game xG: mean {metrics.game_xg_summary.mean.toFixed(2)}, 90% within [
+          {metrics.game_xg_summary.p05.toFixed(2)}, {metrics.game_xg_summary.p95.toFixed(2)}]
+          {metrics.goal_rate !== undefined
+            ? ` · goal rate ${(100 * metrics.goal_rate).toFixed(2)}%`
+            : ""}
+        </Text>
+      ) : null}
     </Stack>
   );
 }

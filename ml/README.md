@@ -36,14 +36,19 @@ cd ../backend && bin/rails 'xg:export_training_set'
 cd ../ml && .venv/bin/python fit.py --features baseline   --label baseline
              .venv/bin/python fit.py --features full       --label v1-full
 
-# 3. Import the fit back into the xg_training_runs row (status: fitted). The admin
-#    page then renders its calibration curve, Brier/log-loss, and sample games.
+# 3. Import the fit into a fitted xg_training_runs row (matched to the export by CSV
+#    checksum). The admin page then renders its calibration curve, Brier/log-loss,
+#    and held-out sample games.
 cd ../backend && bin/rails 'xg:import_run[../ml/out/v1-full.json]'
 
 # 4. Activate — promotes the run to a new XgModel row and swaps it in atomically,
-#    then enqueues the historical backfill as a SyncRun.
+#    then enqueues the historical backfill as a SyncRun. (TASK-144, not built yet.)
 bin/rails 'xg:activate[v1-full]'
 ```
+
+The `bin/rails` calls need the dev database env — either run them through the repo
+`Makefile` targets, or prefix `DATABASE_HOST=localhost DATABASE_USERNAME=postgres
+DATABASE_PASSWORD=postgres` (see `backend/.env`).
 
 ## Files
 

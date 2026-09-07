@@ -1398,7 +1398,7 @@
     "title": "Fit and validate the baseline model (distance + angle only)",
     "description": "Direct, apples-to-apples replacement for the v0-placeholder coefficients (intercept: 0.2, distance: -0.05, angle: -0.02) \u2014 confirmed wrong live (TOR @ ANA, 2026-03-30: 10.55-12.10 combined team xG against a realistic 2-4). Fits a logistic regression on distance/angle only from TASK-140's export, split by season, not by shot (shots within a season aren't independent \u2014 a random split leaks and overstates the fit). Purpose is proving the pipeline mechanics end to end \u2014 real data in, real coefficients out, realistic totals \u2014 before widening the feature set adds complexity.",
     "type": "spike",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium",
     "acceptance_criteria": [
       "Season-held-out validation, not a random shot-level split",

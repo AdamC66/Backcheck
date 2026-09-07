@@ -763,5 +763,32 @@ Known small edge, not worth guarding: a shootout (period 5 of a regular-season g
 can produce spurious rebound flags between attempts. TASK-140's export excludes
 shootout rows, so it never reaches training.
 
+### xG fit: unregularised logistic regression, season-held-out validation (EPIC-23 / TASK-141+)
+**Status:** Settled
+
+`ml/fit.py` fits `sklearn.linear_model.LogisticRegression(penalty=None)` on the raw
+`distance`/`angle` columns (baseline) — no feature scaling, because `XgFormula` applies
+the coefficients to raw feet/radians and a scaled fit would need unscaling. Preseason
+rows are dropped (AHL/tryout lineups); shootout rows are already excluded by the export.
+
+**Validation is season-held-out, not a random shot split.** For each of the three
+ingested seasons the model trains on the other two and predicts the held-out one; the
+out-of-fold predictions are pooled for one calibration curve (`pd.qcut` deciles), Brier
+score and log loss. Shots within a season share goalies, rule environment and scorer
+effects, so a random split leaks and overstates the fit. The deployed coefficients come
+from a final fit on all three seasons.
+
+Baseline result (TASK-141, proving the pipeline end to end): Brier 0.0637 / log loss
+0.242 against a 0.0657 no-skill baseline, stable across held-out seasons (0.0628–0.0648),
+per-team-per-game xG mean 3.05 with 90% of team-games in [1.95, 4.35] — realistic, and a
+direct replacement for the `v0-placeholder` coefficients confirmed wrong live. The wider
+v1 feature set is TASK-142.
+
+Output is `ml/out/<label>.json` (coefficients as flat keys, metrics, calibration bins,
+held-out sample games); `rake xg:import_run` loads it into a fitted `XgTrainingRun` — the
+one that matches the export's CSV checksum — and the `/admin/xg-model` page renders it.
+`fit.py` and the import never touch each other's layer: Python has no DB, Rails has no
+sklearn.
+
 ### Project scope / feature set
 **Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.
