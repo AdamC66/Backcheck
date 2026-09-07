@@ -139,8 +139,11 @@ class ComputeGameAdvancedStats
   end
 
   def xg_for(event)
-    XgFormula.calculate(coefficients: xg_model.coefficients, x_coord: event.x_coord, y_coord: event.y_coord,
-                        target_net_x: event.target_net_x)
+    XgFormula.calculate(coefficients: xg_model.coefficients, event: event, rebound: rebounds.rebound?(event))
+  end
+
+  def rebounds
+    @rebounds ||= ReboundShots.new(game)
   end
 
   # The object, not just the id — lets each row's team_played_in_game validate

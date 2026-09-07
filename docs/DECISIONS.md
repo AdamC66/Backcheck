@@ -790,5 +790,44 @@ one that matches the export's CSV checksum — and the `/admin/xg-model` page re
 `fit.py` and the import never touch each other's layer: Python has no DB, Rails has no
 sklearn.
 
+### xG v1: full feature set and the widened XgFormula (EPIC-23 / TASK-142, TASK-143)
+**Status:** Settled
+
+The v1 fit adds to the baseline: `rebound` (0/1), one-hot `shot_type`, one-hot
+`strength_state`, one-hot `danger_zone`. Each categorical drops a reference level into
+the intercept — `shot_type` drops `wrist`, `strength_state` drops `even_strength`,
+`danger_zone` drops `long_range` — so the coefficient set stays identifiable and every
+term is a plain `coef * feature` through the same sigmoid. 16 features, all still a
+linear combination, so `XgModel.coefficients` needs no shape change.
+
+**Measurably better than baseline** (TASK-142 AC): pooled out-of-fold Brier 0.0629 vs
+0.0637, log loss 0.234 vs 0.242, better in every held-out season, and better calibrated
+across the curve (it spreads predictions wider — top decile mean prediction 0.20 vs
+0.16 — without losing calibration). Per-team-per-game xG stays realistic: end-to-end on
+a sample of real games, combined xG averages 6.15/game (range 4.6–8.2) against the
+NHL's ~6.1 actual — versus the `v0-placeholder`'s 10–12.
+
+Two coefficient observations, kept as-is because the aggregate fit and calibration are
+sound:
+- **`rebound` lands near zero (≈ −0.02).** The raw rebound goal-rate lift (TASK-139) is
+  almost entirely a location effect — rebounds happen in tight — and once distance,
+  angle and danger-zone are in the model there's little left. It stays in the feature
+  set (settled in scoping) but it is not doing much work.
+- **`danger_zone` overlaps `distance`/`angle`** — the bucket is derived from the same
+  coordinates — so its one-hot terms partly fight the continuous ones and the
+  `mid_range`/`long_range` split isn't monotonic in isolation. Net effect on Brier is
+  still positive; a future fit could drop the continuous terms or the bucket, not both.
+
+**TASK-143 — `XgFormula` widened to serve it.** `XgFormula.calculate` now takes
+`(coefficients:, event:, rebound:)` and builds the feature vector from the `GameEvent`:
+`distance`/`angle` from `ShotGeometry`, the danger-zone bucket from `DangerZone`, and
+one-hot `shot_type_*` / `strength_state_*` / `danger_zone_*` keys matching `fit.py`. A
+coefficient the active model doesn't carry contributes nothing, so `v0-placeholder`
+(intercept/distance/angle only) runs through the same code unchanged — proven by spec,
+as is the TASK-75 invariant (a physical shot scores identically regardless of which end
+is defended: every coordinate-derived feature folds onto the attacking net via
+`target_net_x`). `ComputeGameAdvancedStats` builds one `ReboundShots` per game and
+passes the flag per event.
+
 ### Project scope / feature set
 **Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.

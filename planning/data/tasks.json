@@ -1412,7 +1412,7 @@
     "title": "Fit and validate the full v1 model (+ shot_type, strength_state, danger-zone, rebound/rush)",
     "description": "Widens TASK-141's baseline to the full v1 feature set settled during TASK-81's scoping: shot_type (one-hot), strength_state, DangerZone bucket, and TASK-139's rebound/rush flag, all reducible to a linear combination of features so the fit still matches XgModel.coefficients' existing weighted-sum-through-sigmoid shape (logistic regression, not a tree ensemble \u2014 a gradient-boosted model doesn't fit that storage/serving design and is a deferred future option, not v1 scope). Velocity is deliberately excluded \u2014 confirmed unavailable per-shot from any NHL data source, public or Edge, during TASK-81's scoping. Same validation bar as TASK-141, compared side by side to confirm the wider feature set is actually an improvement.",
     "type": "feature",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium",
     "acceptance_criteria": [
       "Calibration (Brier score/log loss) is measurably better than TASK-141's baseline, not just different",
@@ -1426,7 +1426,7 @@
     "title": "Extend XgFormula/XgModel to serve the widened feature set",
     "description": "XgFormula.calculate(coefficients:, x_coord:, y_coord:, target_net_x:) currently only ever weights distance and angle (intercept + distance*coef + angle*coef, through a sigmoid). TASK-142's fit needs shot_type/strength_state/danger-zone/rebound-rush terms represented and weighted too \u2014 real application code, not a training-script concern. XgModel.coefficients is already a flexible jsonb, so this is about XgFormula (and its caller, ComputeGameAdvancedStats) knowing how to build the full feature vector for a given GameEvent and apply the wider coefficient set, not a schema change. Needs its own specs proving the same physical shot scores identically regardless of which end is defended \u2014 the existing invariant TASK-75 already proved for distance/angle \u2014 still holds with the new terms.",
     "type": "feature",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium",
     "acceptance_criteria": [
       "XgFormula (or a caller) builds the full v1 feature vector from a GameEvent and applies all of TASK-142's coefficient terms, not just distance/angle",
