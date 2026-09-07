@@ -697,5 +697,30 @@ Frontend: `GameGoalSummary`, `GamePenaltyList`, `GamePeriodScoreTable`, `GameGoa
 
 Existing `game_events` rows predate the new penalty columns — `BulkUpsert` uses `upsert_all` (ON CONFLICT DO UPDATE over every column), so re-running the `advanced_stats` sync for a team/season backfills `infraction` / `penalty_type` / `penalty_minutes` in place.
 
+### xG model training: Python, CSV-only, one-off (EPIC-23 / TASK-138)
+**Status:** Settled
+
+Fitting the real xG model (EPIC-23) needs pandas + scikit-learn — the first non-Ruby
+tooling in this repo. It lives in a top-level `ml/` directory: a hand-run script, not a
+Docker service, not a CI dependency. `requirements.txt` is a full transitive lock
+(pinned on Python 3.9) so a re-run reproduces the fit exactly.
+
+**Python never connects to Postgres.** TASK-138 as originally written listed
+psycopg2/sqlalchemy and a "point the script at dev Postgres" step; that is deliberately
+dropped. Instead a Rails rake task (`xg:export_training_set`, TASK-140) owns every
+database read and emits `ml/data/training_set.csv` plus a manifest; Python reads only the
+CSV and writes only JSON. This keeps the export deterministic and coverable by an RSpec
+smoke test, keeps `ml/` a pure fit function with no DB credentials, and matches how the
+model is actually retrained — by hand, season-to-season, against data that is static
+between ingestion runs. Direct DB access from Python can be revisited if training ever
+needs to be automated, which is not in EPIC-23's scope.
+
+Training artifacts are visible in-app, not left on a laptop: `xg:export_training_set`
+creates an `xg_training_runs` row (status `exported`) the moment it runs, the fit's JSON
+is imported back into that row (status `fitted`), and a new `/admin/xg-model` page
+renders each run's coefficients, calibration curve, Brier/log-loss, and held-out
+sample-game xG totals. The historical backfill (TASK-145) rides the existing `SyncRun`
+progress machinery rather than a new one.
+
 ### Project scope / feature set
 **Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.

@@ -27,6 +27,11 @@ node_modules/
 # --- Docker ---
 *.pid
 
+# --- ML training (one-off, see ml/README.md) ---
+/ml/.venv
+/ml/data/*.csv
+/ml/out/*.json
+
 # --- OS / editor ---
 .DS_Store
 Thumbs.db

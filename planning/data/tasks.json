@@ -1356,7 +1356,7 @@
     "title": "Stand up the one-off Python training environment",
     "description": "First Python in this repo \u2014 docker-compose.yml is two Ruby services (backend, worker) plus Postgres, no requirements.txt/Pipfile anywhere (confirmed during TASK-81's scoping). A standalone script, not a new Docker service or CI dependency: lives outside backend/frontend (e.g. a new top-level ml/ or scripts/xg_training/ directory), pinned dependencies (pandas, scikit-learn, psycopg2 or sqlalchemy) via requirements.txt, a short README covering how to run it against the dev Postgres instance and what it outputs. Logged in docs/DECISIONS.md per the 'ask before an architectural call, log it once made' rule.",
     "type": "chore",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium",
     "acceptance_criteria": [
       "A pinned requirements.txt (or equivalent) lists every dependency the training script needs, no unpinned versions",
@@ -1559,7 +1559,7 @@
     "id": "TASK-157",
     "epic_id": "EPIC-8",
     "title": "Participation-based historical roster backfill from club-stats",
-    "description": "Past-season roster_spots are near-empty (Toronto 2025-26: 10 rows, all contract_level unknown / inferred_from_stats) because the roster sync only ever writes the *current* org from /v1/roster/{team}/current, and a past season's rows lapse as contracts end. The fix, already scoped in docs/DECISIONS.md ('club-stats/{team}/{season}/{gameType} for historical membership') and repeatedly shelved: a rake task that pulls club-stats per team/season/gameType (types 2 and 3 are separate calls) and writes roster_spots once from who actually dressed, then leaves them alone. Needed to make historical lineup backfill (TASK-154) usable and to make TASK-155 accurate for past seasons. Speculative 2026-27 lineups don't need it — the current roster is healthy.",
+    "description": "Past-season roster_spots are near-empty (Toronto 2025-26: 10 rows, all contract_level unknown / inferred_from_stats) because the roster sync only ever writes the *current* org from /v1/roster/{team}/current, and a past season's rows lapse as contracts end. The fix, already scoped in docs/DECISIONS.md ('club-stats/{team}/{season}/{gameType} for historical membership') and repeatedly shelved: a rake task that pulls club-stats per team/season/gameType (types 2 and 3 are separate calls) and writes roster_spots once from who actually dressed, then leaves them alone. Needed to make historical lineup backfill (TASK-154) usable and to make TASK-155 accurate for past seasons. Speculative 2026-27 lineups don't need it \u2014 the current roster is healthy.",
     "type": "feature",
     "status": "backlog"
   }
