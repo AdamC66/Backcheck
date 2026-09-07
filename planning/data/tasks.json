@@ -1453,7 +1453,7 @@
     "title": "Backfill historical advanced stats against the trained model",
     "description": "player_game_advanced_stats/team_game_advanced_stats rows carry xg_model_id, tagging them to whichever model version produced them \u2014 activating a new XgModel doesn't retroactively change already-computed rows. Scoped in during TASK-81's scoping: every historical game's advanced-stat rows should get recomputed against the newly active model, riding TASK-62's existing recompute-chain machinery (RebuildPlayerAdvancedStatsChain / RecomputeTeamSeasonAdvancedStats) rather than a new mechanism. Likely the longest-running step here \u2014 worth checking whether TASK-94's bulk/batch recompute path applies directly or needs adapting for a full-history run rather than a per-sync-run scope.",
     "type": "chore",
-    "status": "in_progress",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "Every historical game with existing player_game_advanced_stats/team_game_advanced_stats rows is recomputed against the newly active XgModel",
@@ -1569,7 +1569,7 @@
     "title": "Individual xG (ixG) per skater \u2014 own-shot expected goals",
     "description": "player_game_advanced_stats.xg_for currently means on-ice team xG while the skater is on the ice. Add individual xG: the summed xG of the unblocked shot attempts the skater personally took (goal/shot/missed_shot, never blocked \u2014 same Fenwick rule as team xG). Shooter only, matching MoneyPuck's 'ixG'; the common downstream read is ixG minus goals as a finishing-skill measure. Scope from the 2026-09-07 discussion: a new decimal ixg column on player_game_advanced_stats and player_season_advanced_stats (not the team_* tables \u2014 team ixG just equals team xg_for); ComputeGameAdvancedStats credits event.primary_player with the shot's already-computed xG into an ixg bucket per strength/score split (~5 lines); :ixg added to RebuildPlayerAdvancedStatsChain::SUMMABLE_COLUMNS and the touched-batch equivalent (the chain rollup is generic over that list); one 'ixG' column in the skater advanced-stat tables/serializers. Historical backfill is free \u2014 the EPIC-23 rebuild_advanced_stats sync run re-runs ComputeGameAdvancedStats. Only meaningful once EPIC-23 lands a real trained model (placeholder ixG would be as inflated as the on-ice numbers were).",
     "type": "feature",
-    "status": "in_progress",
+    "status": "done",
     "priority": "medium",
     "acceptance_criteria": [
       "player_game_advanced_stats and player_season_advanced_stats gain an ixg column; team advanced-stat tables are unchanged",

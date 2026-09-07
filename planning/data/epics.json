@@ -180,7 +180,7 @@
     "project_id": "backcheck",
     "title": "Train and land a real xG model",
     "description": "TASK-81 (originally under EPIC-15) turned out to be many tasks once actually scoped \u2014 broken out here. Recon done 2026-08-30 (see project scoping doc): 4,420 games / ~375k Fenwick shot events / ~27k goals already ingested and validated (TASK-106's rake task), enough to fit against today, no new ingestion needed. The active XgModel is v0-placeholder, made-up coefficients, confirmed wrong live (TOR @ ANA 2026-03-30: 10.55-12.10 combined team xG against a realistic 2-4). Four decisions settled during scoping: velocity is dropped from the feature set entirely \u2014 NHL Edge (confirmed reachable, unauthenticated, same api-web.nhle.com host) only exposes season-level aggregates/top-10-hardest-shot per player, never a value for an arbitrary shot, so there's no path to a velocity column on every game_events row; training tooling is a one-off Python script (pandas + scikit-learn), the first Python in this repo, not a new service; the model family is logistic regression, matching XgModel.coefficients' existing weighted-sum-through-sigmoid shape exactly (a gradient-boosted model would need a real serving redesign and is a future option, not v1); and historical player_game_advanced_stats/team_game_advanced_stats get backfilled against the new model once it activates, riding TASK-62's existing recompute-chain machinery. Unblocks six backlog items explicitly held on this: TASK-109, TASK-115, TASK-123, TASK-129, TASK-134.",
-    "status": "in_progress",
+    "status": "done",
     "priority": "high"
   },
   {
