@@ -148,7 +148,7 @@
     "project_id": "backcheck",
     "title": "Team analytics page",
     "description": "Turns the team page from roster/schedule/stat-tables (TeamOverviewPage, TeamRosterPage, TeamSchedulePage, TeamStatsPage) into somewhere there's an actual read on the team: a top-players widget, a game-over-game trend, and the team shot heatmap from the original planning conversation. The trend data already exists and is currently invisible \u2014 TeamGameAdvancedStat has one row per game per team per strength/score-state split, sitting unused for anything but the single-game view on GamePage. Depends on EPIC-18 for the shot heatmap (rendered by raw shot count/rate, not xG, per that epic's decision) and reuses TeamStatsPage's existing strength_state/score_state segmented controls rather than inventing new filter UI.",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium"
   },
   {

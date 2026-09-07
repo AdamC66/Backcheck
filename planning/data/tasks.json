@@ -1324,7 +1324,7 @@
     "title": "Weighted single-game shot scatter",
     "description": "MoneyPuck-style shot map for one game: a full-rink view with one circle per unblocked shot, both teams plotted at their attacking ends, circle area scaled by a shot-quality proxy (1/distance-to-net for now \u2014 one of the two xG inputs; swaps to real xG once TASK-81 trains a model, at which point this becomes the true MoneyPuck chart), goals marked distinctly, hover tooltip with shot detail. Built on ShotLocationList (TASK-108). No new dependencies \u2014 hand-rolled SVG per TASK-133. Needs a full-rink variant of the Rink component (currently offensive-half only) or a sibling. Placement open: a game picker on the team analytics page, or the existing GamePage.",
     "type": "feature",
-    "status": "backlog"
+    "status": "done"
   },
   {
     "id": "TASK-135",

@@ -68,5 +68,7 @@ export const tableRowsKey = (resource: string, query: string) =>
 
 export const gameDetailKey = (gameId: number) => ["game-detail", gameId] as const;
 
+export const gameShotsKey = (gameId: number) => ["game-shots", gameId] as const;
+
 export const playerDetailKey = (playerId: number, gameType?: string) =>
   ["player-detail", playerId, gameType ?? "regular_season"] as const;

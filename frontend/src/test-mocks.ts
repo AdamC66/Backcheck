@@ -12,6 +12,7 @@ import type {
   TeamGameAdvancedStat,
 } from "@/models/gameDetail";
 import type { Game, GamesMeta } from "@/models/games";
+import type { GameShot, GameShotsMeta } from "@/models/gameShots";
 import type { Lineup } from "@/models/lineups";
 import type { League, LeagueWithTeams } from "@/models/leagues";
 import type {
@@ -411,6 +412,38 @@ export const GAME_DETAIL: Envelope<GameDetail, GameDetailMeta> = {
     },
   },
   meta: {},
+};
+
+export const GAME_SHOTS: Envelope<GameShot[], GameShotsMeta> = {
+  data: [
+    {
+      x: 74,
+      y: 6,
+      team_side: "home",
+      is_goal: true,
+      shot_type: "wrist",
+      distance: 16.2,
+      xg: 0.31,
+      shooter_id: 1,
+      shooter_name: "Auston Matthews",
+      period: 1,
+      period_time_seconds: 444,
+    },
+    {
+      x: -68,
+      y: -10,
+      team_side: "away",
+      is_goal: false,
+      shot_type: "slap",
+      distance: 24.4,
+      xg: 0.05,
+      shooter_id: 2,
+      shooter_name: "William Nylander",
+      period: 2,
+      period_time_seconds: 122,
+    },
+  ],
+  meta: { unlocated_count: 3 },
 };
 
 export function playerFor(id: number, overrides: Partial<RosterPlayer> = {}): RosterPlayer {

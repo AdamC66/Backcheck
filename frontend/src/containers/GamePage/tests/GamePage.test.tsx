@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { fetchGameDetail } from "@/models/gameDetail";
-import { GAME_DETAIL, TEAMS } from "@/test-mocks";
+import { fetchGameShots } from "@/models/gameShots";
+import { GAME_DETAIL, GAME_SHOTS, TEAMS } from "@/test-mocks";
 import { renderWithProviders, screen } from "@/test-utils";
 import { GamePage } from "../GamePage";
 import { GameSheetPage } from "../GameSheetPage";
@@ -11,6 +12,7 @@ import { GameAdvancedStatsPage } from "../GameAdvancedStatsPage";
 import { GameChartsPage } from "../GameChartsPage";
 
 vi.mock("@/models/gameDetail");
+vi.mock("@/models/gameShots");
 
 function renderGame(route = `/games/${GAME_DETAIL.data.game.id}`) {
   renderWithProviders(
@@ -30,6 +32,7 @@ describe("GamePage", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(fetchGameDetail).mockResolvedValue(GAME_DETAIL);
+    vi.mocked(fetchGameShots).mockResolvedValue(GAME_SHOTS);
   });
 
   it("shows the matchup header and the gamesheet tab by default", async () => {
@@ -67,12 +70,27 @@ describe("GamePage", () => {
     expect(screen.getByText("Corsi for")).toBeInTheDocument();
   });
 
-  it("shows the zone-time charts on the charts tab", async () => {
+  it("shows the shot map and zone-time charts on the charts tab", async () => {
     renderGame(`/games/${GAME_DETAIL.data.game.id}/charts`);
 
-    expect(await screen.findByRole("heading", { name: "Zone Time Share" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Shot Map" })).toBeInTheDocument();
+    expect(await screen.findByText(/circle size = shot quality/)).toBeInTheDocument();
+    expect(screen.getByText("3 without coordinates")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Zone Time Share" })).toBeInTheDocument();
     expect(screen.getByText("P1")).toBeInTheDocument();
     expect(screen.getAllByText(TEAMS[0].abbreviation).length).toBeGreaterThan(0);
+  });
+
+  it("filters the shot map to one team", async () => {
+    renderGame(`/games/${GAME_DETAIL.data.game.id}/charts`);
+
+    expect(await screen.findByLabelText(/Auston Matthews/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/William Nylander/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: TEAMS[0].abbreviation }));
+
+    expect(screen.getByLabelText(/Auston Matthews/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/William Nylander/)).not.toBeInTheDocument();
   });
 
   it("shows a syncing notice when the game is mid-recalculation", async () => {

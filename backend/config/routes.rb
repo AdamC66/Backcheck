@@ -18,7 +18,9 @@ Rails.application.routes.draw do
         resources :seasons, only: [ :index ]
       end
 
-      resources :games, only: [ :show ]
+      resources :games, only: [ :show ] do
+        resources :shots, only: [ :index ], controller: "game_shots"
+      end
 
       resources :players, only: [ :show ]
 

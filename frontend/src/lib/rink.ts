@@ -29,6 +29,32 @@ export const svgX = (feet: number) => (feet - RINK.originX) * PX_PER_FOOT;
 export const svgY = (feet: number) => (RINK.halfWidth - feet) * PX_PER_FOOT;
 export const svgLength = (feet: number) => feet * PX_PER_FOOT;
 
+// Full sheet, center ice at x = 0, x ranging -endBoardsX..endBoardsX. y is unchanged,
+// so svgY works in both frames.
+export const RINK_FULL_VIEW = {
+  width: RINK.endBoardsX * 2 * PX_PER_FOOT,
+  height: RINK.halfWidth * 2 * PX_PER_FOOT,
+};
+
+export const fullSvgX = (feet: number) => (feet + RINK.endBoardsX) * PX_PER_FOOT;
+
+export function fullBoardsPath(): string {
+  const { endBoardsX: e, halfWidth: h, cornerRadius: r } = RINK;
+
+  return [
+    `M ${fullSvgX(-e + r)},${svgY(h)}`,
+    `L ${fullSvgX(e - r)},${svgY(h)}`,
+    `Q ${fullSvgX(e)},${svgY(h)} ${fullSvgX(e)},${svgY(h - r)}`,
+    `L ${fullSvgX(e)},${svgY(-h + r)}`,
+    `Q ${fullSvgX(e)},${svgY(-h)} ${fullSvgX(e - r)},${svgY(-h)}`,
+    `L ${fullSvgX(-e + r)},${svgY(-h)}`,
+    `Q ${fullSvgX(-e)},${svgY(-h)} ${fullSvgX(-e)},${svgY(-h + r)}`,
+    `L ${fullSvgX(-e)},${svgY(h - r)}`,
+    `Q ${fullSvgX(-e)},${svgY(h)} ${fullSvgX(-e + r)},${svgY(h)}`,
+    "Z",
+  ].join(" ");
+}
+
 export function boardsPath(): string {
   const { endBoardsX, halfWidth, cornerRadius: r } = RINK;
 
