@@ -722,5 +722,46 @@ renders each run's coefficients, calibration curve, Brier/log-loss, and held-out
 sample-game xG totals. The historical backfill (TASK-145) rides the existing `SyncRun`
 progress machinery rather than a new one.
 
+### Rebound flag: 3-second window, off a shot or missed shot (EPIC-23 / TASK-139)
+**Status:** Settled
+
+`game_events` stores no shot-sequencing field. `ReboundShots` (`app/services/`, one
+instance per game, mirrors `GameScoreTimeline`'s shape) derives a rebound flag per
+unblocked shot attempt from `period` + `period_time_seconds` + `team_id` alone: a shot
+is a rebound if the same team's previous unblocked attempt **in the same period** was at
+most `REBOUND_WINDOW_SECONDS` (3) earlier.
+
+The threshold and rules were picked from every ingested Fenwick event (2023-24 →
+2025-26), not guessed. Goal rate by the gap to the same team's previous Fenwick event
+(baseline goal rate ≈ 7%):
+
+| gap (s) | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+|---|---|---|---|---|---|---|---|---|
+| goal % | 19.1 | 4.3 | 15.0 | 18.7 | 8.3 | 4.8 | 4.7 | ≈ baseline |
+
+The lift is concentrated at ≤ 3s; by 4s it is nearly gone. Broken out by the previous
+event's type, gap 0-3s:
+
+| previous event | goal % (0-3s) | baseline | n |
+|---|---|---|---|
+| shot on goal | 12.3 | 6.5 | 24,225 |
+| missed shot | 10.3 | 7.2 | 7,650 |
+| goal | 25.2 | 6.3 | 500 |
+
+- **Window = 3s.** Matches where the signal actually is; the `3-5s` hint in the task was
+  a range to check, and the data puts the cut at 3.
+- **Trigger = previous `shot` or `missed_shot`, never `goal`.** A shot or a missed shot
+  both leave a live puck and both show a real rebound lift, so one boolean covers both.
+  After a goal the whistle blows — the 25.2%/n=500 row is timestamp-collision noise
+  (a goal and its own shot-on-goal play recorded a second apart), not a rebound chance,
+  so a `goal` does not arm the window. `blocked_shot` is excluded on both sides (it
+  isn't Fenwick and its coordinates are the blocker's, per the existing xG rule).
+- **Rush is not derived for v1** — deferred until it can be derived properly (EPIC-23
+  scoping).
+
+Known small edge, not worth guarding: a shootout (period 5 of a regular-season game)
+can produce spurious rebound flags between attempts. TASK-140's export excludes
+shootout rows, so it never reaches training.
+
 ### Project scope / feature set
 **Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.

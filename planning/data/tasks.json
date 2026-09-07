@@ -1370,7 +1370,7 @@
     "title": "Derive a rebound/rush shot-quality flag",
     "description": "GameEvent has no stored sequencing field for 'was this shot within N seconds of the same team's previous shot attempt' \u2014 confirmed absent from schema during TASK-81's scoping. Derivable at query time from existing columns: period_time_seconds + team_id + game_id, self-joined to find the immediately preceding Fenwick event (goal/shot/missed_shot) by the same team in the same period, if any, within a short window (needs a real threshold decision, e.g. 3-5 seconds for 'rebound' \u2014 check against a sample of real sequences before fixing a number rather than guessing). No new ingestion or schema change. Output: a flag per Fenwick event, consumed by TASK-140's training-set export.",
     "type": "spike",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium",
     "acceptance_criteria": [
       "A query/service derives a rebound (and optionally rush) flag per Fenwick event using only existing columns, no new ingestion",
@@ -1384,7 +1384,7 @@
     "title": "Build the xG training-set export",
     "description": "A read-only rake task pulling every Fenwick event (goal/shot/missed_shot \u2014 never blocked_shot, whose coordinates are the blocker's position not the release point, per the existing DECISIONS.md rule) joined to ShotGeometry's distance/angle, shot_type, strength_state, DangerZone.classify's bucket, TASK-139's rebound/rush flag, season_id, and label = event_type == goal. Exports to CSV for TASK-138's Python script. ~375k rows already available per TASK-106's validation run, no new ingestion required. Depends on TASK-138 (where the script lives) and TASK-139 (rebound/rush column).",
     "type": "feature",
-    "status": "backlog",
+    "status": "in_progress",
     "priority": "medium",
     "acceptance_criteria": [
       "Export includes one row per Fenwick shot event with distance, angle, shot_type, strength_state, danger-zone bucket, rebound/rush flag, season_id, and goal/no-goal label",

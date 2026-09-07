@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_07_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -662,6 +662,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000000) do
     t.index ["version"], name: "index_xg_models_on_version", unique: true
   end
 
+  create_table "xg_training_runs", force: :cascade do |t|
+    t.jsonb "calibration"
+    t.jsonb "coefficients"
+    t.datetime "created_at", null: false
+    t.string "csv_path", null: false
+    t.string "csv_sha256", null: false
+    t.jsonb "feature_set"
+    t.integer "goal_count", default: 0, null: false
+    t.string "label"
+    t.jsonb "manifest", default: {}, null: false
+    t.jsonb "metrics"
+    t.text "notes"
+    t.integer "row_count", default: 0, null: false
+    t.jsonb "sample_games"
+    t.string "source_file"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "xg_model_id"
+    t.index ["status"], name: "index_xg_training_runs_on_status"
+    t.index ["xg_model_id"], name: "index_xg_training_runs_on_xg_model_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "game_events", "games"
@@ -734,4 +756,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000000) do
   add_foreign_key "team_standings", "seasons"
   add_foreign_key "team_standings", "teams"
   add_foreign_key "teams", "leagues"
+  add_foreign_key "xg_training_runs", "xg_models"
 end
