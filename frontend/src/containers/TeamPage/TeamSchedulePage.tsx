@@ -2,10 +2,13 @@ import { useParams, useSearchParams } from "react-router";
 import { Row } from "@/components/Row/Row";
 import { ScheduleList } from "@/components/ScheduleList/ScheduleList";
 import { SegmentedControl } from "@/components/SegmentedControl/SegmentedControl";
+import { Select } from "@/components/Select/Select";
 import { Stack } from "@/components/Stack/Stack";
 import { Text } from "@/components/Text/Text";
 import { groupByMonth } from "@/lib/teamSchedule";
 import type { GameType } from "@/models/games";
+import { useSeasons } from "@/models/useSeasons";
+import { useTeam } from "@/models/useTeam";
 import { useTeamGames } from "@/models/useTeamGames";
 
 const TYPE_OPTIONS = [
@@ -20,12 +23,21 @@ export function TeamSchedulePage() {
   const teamId = Number(id);
 
   const type = searchParams.get("type") === "regular_season" ? "regular_season" : "all";
+  const team = useTeam(teamId);
+  const seasons = useSeasons(team.data?.league?.slug ?? null);
   const games = useTeamGames(teamId, {
+    season: searchParams.get("season") ?? undefined,
     gameType: type === "all" ? undefined : (type as GameType),
   });
+  const resolvedSeason = games.data?.meta?.season;
 
-  function selectType(next: string) {
-    setSearchParams(next === "all" ? {} : { type: next }, { replace: true });
+  function patchParams(next: Record<string, string | null>) {
+    const merged = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(next)) {
+      if (value === null) merged.delete(key);
+      else merged.set(key, value);
+    }
+    setSearchParams(merged, { replace: true });
   }
 
   const months = groupByMonth(games.data?.data ?? [], teamId);
@@ -43,13 +55,26 @@ export function TeamSchedulePage() {
         )}
       </Row>
 
-      <SegmentedControl
-        options={TYPE_OPTIONS}
-        value={type}
-        onChange={selectType}
-        label="Game type"
-        themed
-      />
+      <Row gap="sm" wrap align="end">
+        {seasons.data && seasons.data.length > 0 ? (
+          <Select
+            id="schedule-season"
+            label="Season"
+            value={resolvedSeason ?? ""}
+            onChange={(event) => patchParams({ season: event.target.value })}
+            options={seasons.data.map((season) => ({ value: season.label, label: season.label }))}
+            className="max-w-40"
+          />
+        ) : null}
+
+        <SegmentedControl
+          options={TYPE_OPTIONS}
+          value={type}
+          onChange={(next) => patchParams({ type: next === "all" ? null : next })}
+          label="Game type"
+          themed
+        />
+      </Row>
 
       {games.isPending ? <Text tone="muted">Loading schedule…</Text> : null}
       {games.isError ? <Text tone="danger">Could not load this schedule.</Text> : null}
