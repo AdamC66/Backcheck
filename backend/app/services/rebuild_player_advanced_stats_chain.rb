@@ -4,7 +4,7 @@
 class RebuildPlayerAdvancedStatsChain
   SUMMABLE_COLUMNS = %i[
     corsi_for corsi_against fenwick_for fenwick_against
-    xg_for xg_against zone_entries zone_exits toi_seconds
+    xg_for xg_against ixg zone_entries zone_exits toi_seconds
   ].freeze
 
   def initialize(player:, from_game:)

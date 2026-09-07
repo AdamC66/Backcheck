@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_07_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_07_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -219,6 +219,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_000000) do
     t.integer "fenwick_against", default: 0, null: false
     t.integer "fenwick_for", default: 0, null: false
     t.bigint "game_id", null: false
+    t.decimal "ixg", precision: 6, scale: 3, default: "0.0", null: false
     t.bigint "player_id", null: false
     t.string "score_state", default: "all", null: false
     t.string "strength_state", default: "all", null: false
@@ -265,6 +266,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_000000) do
     t.integer "fenwick_for", default: 0, null: false
     t.integer "game_type", null: false
     t.integer "games_played", default: 0, null: false
+    t.decimal "ixg", precision: 6, scale: 3, default: "0.0", null: false
     t.bigint "player_id", null: false
     t.string "score_state", default: "all", null: false
     t.bigint "season_id", null: false

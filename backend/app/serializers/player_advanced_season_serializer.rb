@@ -16,6 +16,7 @@ class PlayerAdvancedSeasonSerializer
       fenwick_against: stat.fenwick_against,
       xg_for: stat.xg_for.to_f,
       xg_against: stat.xg_against.to_f,
+      ixg: stat.ixg.to_f,
       zone_entries: stat.zone_entries,
       zone_exits: stat.zone_exits,
       toi_seconds: stat.toi_seconds

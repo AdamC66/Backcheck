@@ -34,6 +34,7 @@ RSpec.describe RebuildPlayerAdvancedStatsChain do
     snapshots = PlayerSeasonAdvancedStat.where(player: player).joins(:as_of_game).order("games.starts_at")
     expect(snapshots.map(&:games_played)).to eq([ 1, 2, 3 ])
     expect(snapshots.map(&:corsi_for)).to eq([ 10, 20, 30 ])
+    expect(snapshots.map(&:ixg).map(&:to_f)).to eq([ 0.6, 1.2, 1.8 ])
     expect(snapshots.map(&:team)).to eq([ team_a, team_b, team_a ])
   end
 

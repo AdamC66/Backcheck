@@ -66,6 +66,7 @@ export interface PlayerAdvancedSeason {
   fenwick_against: number;
   xg_for: number;
   xg_against: number;
+  ixg: number;
   zone_entries: number;
   zone_exits: number;
   toi_seconds: number;

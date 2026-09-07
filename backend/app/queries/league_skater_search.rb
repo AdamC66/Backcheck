@@ -7,7 +7,7 @@ class LeagueSkaterSearch
   ].freeze
 
   ADVANCED_COLUMNS = %w[
-    corsi_for corsi_against fenwick_for fenwick_against xg_for xg_against zone_entries zone_exits
+    corsi_for corsi_against fenwick_for fenwick_against xg_for xg_against ixg zone_entries zone_exits
   ].freeze
 
   POSITION_FILTER = %w[center left_wing right_wing forward defense].freeze
@@ -44,6 +44,7 @@ class LeagueSkaterSearch
     { key: :fenwick_against, label: "FA", title: "Fenwick against", format: :int, group: :advanced },
     { key: :xg_for, label: "xGF", title: "Expected goals for", format: :decimal2, group: :advanced },
     { key: :xg_against, label: "xGA", title: "Expected goals against", format: :decimal2, group: :advanced },
+    { key: :ixg, label: "ixG", title: "Individual expected goals (own shots)", format: :decimal2, group: :advanced },
     { key: :zone_entries, label: "ZE", title: "Zone entries", format: :int, group: :advanced },
     { key: :zone_exits, label: "ZX", title: "Zone exits", format: :int, group: :advanced }
   ])

@@ -853,5 +853,24 @@ It differs from `rebuild_season_stats` in one way: the individual counting stats
 `rebuild_advanced_stats` is left out of the orchestrator's `SEASON_STAT_REBUILD_KINDS` —
 it batches the chain rebuild but skips `RecomputeTouchedSeasonStats`.
 
+### Individual xG (ixG) per skater (EPIC-23 / TASK-158)
+**Status:** Settled
+
+`player_game_advanced_stats.xg_for` is on-ice team xG. `ixg` is a separate column: the
+summed xG of the unblocked shot attempts the skater personally took (shooter =
+`GameEvent#primary_player`, matching MoneyPuck's "ixG"). `ComputeGameAdvancedStats`
+credits it in `accumulate_event` alongside the on-ice credit, into the same
+strength/score buckets. It rides the season chain through
+`RebuildPlayerAdvancedStatsChain::SUMMABLE_COLUMNS` — that one list is the whole rollup
+change.
+
+`team_game_advanced_stats` / `team_season_advanced_stats` get no `ixg` column — team ixG
+would just equal team `xg_for`. `zero_totals` carries `ixg` for both stores and
+`persist_team_rows` drops it with `totals.except(:ixg)`.
+
+Existing advanced-stat rows have `ixg` at its column default (0) until recomputed. A
+`rebuild_advanced_stats` sync run (TASK-145) fills them — no API, since it only needs
+stored events.
+
 ### Project scope / feature set
 **Status:** Open — tracked as epics/tasks in `planning/` (schema-validated JSON, served in-app at `/admin/roadmap`), not as prose here.

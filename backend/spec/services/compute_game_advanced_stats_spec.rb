@@ -57,6 +57,14 @@ RSpec.describe ComputeGameAdvancedStats do
       expect(stat_for(away_skater).xg_against.to_f).to eq(0.5)
     end
 
+    it "credits individual xG to the shooter only, not to other on-ice skaters" do
+      described_class.new(game: game).call
+
+      expect(stat_for(home_skater_a).ixg.to_f).to eq(0.5)
+      expect(stat_for(home_skater_b).ixg.to_f).to eq(0.0)
+      expect(stat_for(away_skater).ixg.to_f).to eq(0.0)
+    end
+
     it "buckets the same totals into the event's strength_state alongside all" do
       described_class.new(game: game).call
 

@@ -47,9 +47,11 @@ class ComputeGameAdvancedStats
 
   attr_reader :game, :xg_model, :player_totals, :team_totals
 
+  # ixg is credited to the shooter only, so it stays 0 in every team_totals row and is
+  # dropped in persist_team_rows.
   def zero_totals
     { corsi_for: 0, corsi_against: 0, fenwick_for: 0, fenwick_against: 0, xg_for: 0.0, xg_against: 0.0,
-      toi_seconds: 0 }
+      ixg: 0.0, toi_seconds: 0 }
   end
 
   def skater_shifts
@@ -101,8 +103,17 @@ class ComputeGameAdvancedStats
       score_buckets.each do |score_state|
         credit_bucket(strength_state, score_state, for_team_id, against_team_id, on_ice,
                       fenwick: fenwick, xg_value: xg_value)
+        credit_individual_xg(strength_state, score_state, event.primary_player_id, xg_value) if fenwick
       end
     end
+  end
+
+  # Individual xG: the shooter's own unblocked-attempt xG. Skip a shooter with no shift
+  # in this game — persist_player_rows resolves each row's team from skater_shifts.
+  def credit_individual_xg(strength_state, score_state, shooter_id, xg_value)
+    return unless player_team_ids.key?(shooter_id)
+
+    player_totals[[ shooter_id, strength_state, score_state ]][:ixg] += xg_value
   end
 
   def credit_bucket(strength_state, score_state, for_team_id, against_team_id, on_ice, fenwick:, xg_value:)
@@ -173,7 +184,8 @@ class ComputeGameAdvancedStats
     bulk = BulkUpsert.new(model: TeamGameAdvancedStat, unique_by: %i[game_id team_id strength_state score_state])
     team_totals.each do |(team_id, strength_state, score_state), totals|
       bulk.add(TeamGameAdvancedStat.new(game: game, team: teams_by_id.fetch(team_id),
-                                        strength_state: strength_state, score_state: score_state, **totals))
+                                        strength_state: strength_state, score_state: score_state,
+                                        **totals.except(:ixg)))
     end
     bulk.call
     failures.concat(bulk.failures)

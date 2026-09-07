@@ -51,6 +51,12 @@ const COLUMNS = buildColumns(columnHelper, [
     cell: (info) => info.getValue().toFixed(2),
   },
   {
+    name: "ixg",
+    header: "ixG",
+    title: "Individual expected goals (own shots)",
+    cell: (info) => info.getValue().toFixed(2),
+  },
+  {
     name: "toi_seconds",
     header: "TOI",
     title: "Time on ice",
