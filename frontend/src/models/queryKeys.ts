@@ -47,6 +47,8 @@ export const syncRunKey = (id: number) => ["sync-run", id] as const;
 
 export const ROADMAP_KEY = ["roadmap"] as const;
 
+export const XG_MODEL_KEY = ["xg-model"] as const;
+
 export const SYNC_KINDS_KEY = ["sync-kinds"] as const;
 
 export const DANGER_ZONES_KEY = ["danger-zones"] as const;

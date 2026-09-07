@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { label: "Sync Runs", to: "", end: true },
   { label: "Data", to: "data" },
   { label: "Danger zones", to: "rink" },
+  { label: "xG model", to: "xg-model" },
   { label: "Roadmap", to: "roadmap" },
 ];
 
