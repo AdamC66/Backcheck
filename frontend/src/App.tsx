@@ -4,7 +4,11 @@ import { RedirectIfAuthenticated } from "@/auth/RedirectIfAuthenticated";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { RequireSuperAdmin } from "@/auth/RequireSuperAdmin";
 import { DashboardPage } from "@/containers/DashboardPage";
-import { GamePage } from "@/containers/GamePage";
+import { GamePage } from "@/containers/GamePage/GamePage";
+import { GameSheetPage } from "@/containers/GamePage/GameSheetPage";
+import { GameStatsPage } from "@/containers/GamePage/GameStatsPage";
+import { GameAdvancedStatsPage } from "@/containers/GamePage/GameAdvancedStatsPage";
+import { GameChartsPage } from "@/containers/GamePage/GameChartsPage";
 import { LeaguePage } from "@/containers/LeaguePage/LeaguePage";
 import { LeagueOverviewPage } from "@/containers/LeaguePage/LeagueOverviewPage";
 import { LeagueStandingsPage } from "@/containers/LeaguePage/LeagueStandingsPage";
@@ -63,7 +67,12 @@ export function App() {
             <GamePage />
           </RequireAuth>
         }
-      />
+      >
+        <Route index element={<GameSheetPage />} />
+        <Route path="stats" element={<GameStatsPage />} />
+        <Route path="advanced" element={<GameAdvancedStatsPage />} />
+        <Route path="charts" element={<GameChartsPage />} />
+      </Route>
       <Route
         path="/players/:id"
         element={
