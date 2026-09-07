@@ -69,7 +69,17 @@ function GameCard({ game }: { game: Game }) {
     <div className="flex w-44 shrink-0 flex-col justify-center border-r border-slate-100 px-3">
       <span className="flex items-baseline justify-between text-[11px] text-slate-500">
         <span className="truncate">{type ?? ""}</span>
-        <span className="shrink-0">{statusOf(game)}</span>
+        {decided ? (
+          <Link
+            to={`/games/${game.id}`}
+            aria-label={`Box score: ${game.away.team.abbreviation} ${game.away.score ?? 0}, ${game.home.team.abbreviation} ${game.home.score ?? 0}`}
+            className="shrink-0 font-medium text-slate-600 hover:text-slate-900 hover:underline"
+          >
+            {statusOf(game)} ›
+          </Link>
+        ) : (
+          <span className="shrink-0">{statusOf(game)}</span>
+        )}
       </span>
 
       <span className="mt-0.5 flex flex-col gap-0.5 text-sm">

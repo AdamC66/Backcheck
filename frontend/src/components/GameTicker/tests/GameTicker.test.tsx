@@ -84,6 +84,14 @@ describe("GameTicker", () => {
     expect(screen.getAllByRole("link", { name: "ANA" })).toHaveLength(2);
   });
 
+  it("links a finished game to its box score, but not one that hasn't been played", () => {
+    renderTicker();
+
+    const boxScore = screen.getByRole("link", { name: /^Box score:/ });
+    expect(boxScore).toHaveAttribute("href", "/games/10");
+    expect(screen.getAllByRole("link", { name: /^Box score:/ })).toHaveLength(1);
+  });
+
   it("asks for more games once an arrow is pressed at the end of what's loaded", async () => {
     const { onReachStart, onReachEnd } = renderTicker({ hasEarlier: true, hasLater: true });
 
