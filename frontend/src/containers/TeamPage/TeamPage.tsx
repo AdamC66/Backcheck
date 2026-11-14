@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: "Roster", to: "roster" },
   { label: "Lineups", to: "lineups" },
   { label: "Stats", to: "stats" },
+  { label: "Shot Map", to: "shots" },
 ];
 
 export function TeamPage() {

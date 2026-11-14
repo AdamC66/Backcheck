@@ -13,6 +13,7 @@ import type {
 } from "@/models/gameDetail";
 import type { Game, GamesMeta } from "@/models/games";
 import type { GameShot, GameShotsMeta } from "@/models/gameShots";
+import type { TeamShotLocations, TeamShotLocationsMeta } from "@/models/teamShotLocations";
 import type { Lineup } from "@/models/lineups";
 import type { League, LeagueWithTeams } from "@/models/leagues";
 import type {
@@ -444,6 +445,29 @@ export const GAME_SHOTS: Envelope<GameShot[], GameShotsMeta> = {
     },
   ],
   meta: { unlocated_count: 3 },
+};
+
+function shotGrid(isGoalEvery: number): TeamShotLocations["for"] {
+  const shots: TeamShotLocations["for"] = [];
+  let n = 0;
+  for (let x = 55; x <= 85; x += 6) {
+    for (let y = -18; y <= 18; y += 6) {
+      const strength = n % 3 === 0 ? "power_play" : "even_strength";
+      shots.push({ x, y, is_goal: n % isGoalEvery === 0, strength_state: strength });
+      n += 1;
+    }
+  }
+  return shots;
+}
+
+export const TEAM_SHOT_LOCATIONS: Envelope<TeamShotLocations, TeamShotLocationsMeta> = {
+  data: { for: shotGrid(7), against: shotGrid(9) },
+  meta: {
+    season: "2025-26",
+    game_type: "regular_season",
+    unlocated_for: 12,
+    unlocated_against: 8,
+  },
 };
 
 export function playerFor(id: number, overrides: Partial<RosterPlayer> = {}): RosterPlayer {

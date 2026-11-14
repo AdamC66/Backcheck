@@ -40,3 +40,4 @@ Thumbs.db
 *.swp
 .claude/settings.local.json
 /graphify-out
+.work/

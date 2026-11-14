@@ -20,6 +20,7 @@ import { TeamSchedulePage } from "@/containers/TeamPage/TeamSchedulePage";
 import { TeamRosterPage } from "@/containers/TeamPage/TeamRosterPage";
 import { TeamLineupsPage } from "@/containers/TeamPage/TeamLineupsPage";
 import { TeamStatsPage } from "@/containers/TeamPage/TeamStatsPage";
+import { TeamShotMapPage } from "@/containers/TeamPage/TeamShotMapPage";
 import { AdminPage } from "@/containers/Admin/AdminPage";
 import { SyncDashboardPage } from "@/containers/Admin/SyncDashboardPage";
 import { NewSyncRunPage } from "@/containers/Admin/NewSyncRunPage";
@@ -96,6 +97,7 @@ export function App() {
         <Route path="roster" element={<TeamRosterPage />} />
         <Route path="lineups" element={<TeamLineupsPage />} />
         <Route path="stats" element={<TeamStatsPage />} />
+        <Route path="shots" element={<TeamShotMapPage />} />
       </Route>
       <Route
         path="/admin"

@@ -1161,7 +1161,7 @@
     "title": "Season shot-density heatmap (offense & defense) on the team page",
     "description": "Season-aggregate shot-location heatmaps for a team \u2014 one for shots generated (offense) and one for shots conceded (defense), both normalized to the offensive-zone frame so the shapes compare directly. This is the hockeyviz shotMap reference. Kernel-density surface via d3-contour (contourDensity \u2192 filled contour bands over the Rink component) \u2014 adopted in the TASK-133 revisit after prototyping against ~4,800 real shots; it only reads well at season volume, not single games. Absolute density, showing the for-vs-against contrast for one team \u2014 NOT relative to league average (that needs a league baseline grid, TASK-136). Shots-for come from ShotLocationList (TASK-108); shots-against need TASK-135. Raw shot density, not xG-weighted, per EPIC-18's decision.",
     "type": "feature",
-    "status": "backlog"
+    "status": "done"
   },
   {
     "id": "TASK-116",
