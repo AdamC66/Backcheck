@@ -21,7 +21,7 @@ QA is manual: `make start`, open http://localhost:5173, exercise the changed pag
 ## Conventions
 - Decisions: check docs/DECISIONS.md before any architectural or dependency choice; log new ones there.
 - Planning: task status lives in planning/data/tasks.json. Edit only the `status` field, keep existing escaping, validate with `python3 planning/validate.py`.
-- Workers run lint/autofix on touched files only. Full test suites run once, at commit time, by the foreman.
+- Run tests when a change needs them (the spec/test file for the code you touched). Full suites are not needed before every commit; they run during QA and before push.
 
 ## Never
 - Commit, push, or amend unless the task body says to. No Co-Authored-By lines.

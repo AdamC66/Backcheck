@@ -38,7 +38,7 @@ A change is done when:
 
 ## Running tests
 
-- Don't run the full test suite after every small edit (a styling tweak, a one-line fix). Save a manual run for a real chunk of new/changed logic, and always run the full suite immediately before committing anything — not delegated to a git hook.
+- Run tests when a change needs them: the spec/test file for the code you touched. Don't run the full suite after small edits or before every commit; run it during QA and before pushing — not delegated to a git hook.
 - RuboCop/ESLint autofix on touched files is cheap and fine to run freely — this rule is about full suite runs specifically.
 
 ## Decisions
